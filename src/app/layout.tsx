@@ -3,6 +3,7 @@ import { Poppins, PT_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const fontPoppins = Poppins({
   subsets: ["latin"],
@@ -17,8 +18,8 @@ const fontPtSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FitFlow - Your Personal Training Platform",
-  description: "Manage your students, workouts, and progress with FitFlow.",
+  title: "FitFlow - Sua Plataforma de Treinamento Pessoal",
+  description: "Gerencie seus alunos, treinos e progresso com a FitFlow.",
 };
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -40,8 +41,15 @@ export default function RootLayout({
           fontPtSans.variable
         )}
       >
-        {children}
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
