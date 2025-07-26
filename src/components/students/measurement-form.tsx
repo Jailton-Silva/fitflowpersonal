@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -33,7 +34,7 @@ import { Loader2 } from "lucide-react";
 const formSchema = z.object({
   weight: z.preprocess((val) => Number(val), z.number().positive("O peso deve ser um número positivo.")),
   height: z.preprocess((val) => Number(val), z.number().positive("A altura deve ser um número positivo.")),
-  body_fat: z.preprocess((val) => Number(val), z.number().min(0, "O percentual de gordura não pode ser negativo.").optional()),
+  body_fat: z.preprocess((val) => (val === "" ? undefined : Number(val)), z.number().min(0, "O percentual de gordura não pode ser negativo.").optional()),
   notes: z.string().optional(),
 });
 
@@ -83,6 +84,7 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
         description: `Nova avaliação física registrada com sucesso.`,
       });
       setIsOpen(false);
+      form.reset();
       router.refresh(); // Atualiza a página para mostrar a nova medição
     }
     setIsSubmitting(false);
@@ -135,7 +137,7 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
                 <FormItem>
                   <FormLabel>Gordura Corporal (%)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.1" placeholder="18.2" {...field} />
+                    <Input type="number" step="0.1" placeholder="18.2" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -148,7 +150,7 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
                 <FormItem>
                   <FormLabel>Notas da Avaliação</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Observações sobre a avaliação, dobras cutâneas, etc." {...field} />
+                    <Textarea placeholder="Observações sobre a avaliação, dobras cutâneas, etc." {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
