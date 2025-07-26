@@ -101,3 +101,22 @@
     transition: background 0s;
   }
 }
+
+@media print {
+  body {
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  #printable-area {
+    padding: 1rem;
+  }
+  .bg-card, .bg-muted\/50 {
+    border: 1px solid #e2e8f0; /* light gray border for cards */
+    box-shadow: none;
+  }
+}
