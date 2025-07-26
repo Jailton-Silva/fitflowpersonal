@@ -70,9 +70,9 @@ async function getDashboardStats(from: string, to: string) {
   const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
   const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
 
-  const { count: weekAppointments } = await supabase
+  const { data: appointments, error } = await supabase
     .from('appointments')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
     .eq('trainer_id', trainerId)
     .gte('start_time', startOfCurrentWeek.toISOString())
     .lte('end_time', endOfCurrentWeek.toISOString());
@@ -80,7 +80,7 @@ async function getDashboardStats(from: string, to: string) {
   return {
     totalStudents: totalStudents ?? 0,
     activeWorkouts: activeWorkouts ?? 0,
-    weekAppointments: weekAppointments ?? 0,
+    weekAppointments: appointments?.length ?? 0,
     studentsCountLastMonth: studentsCountLastMonth ?? 0,
   };
 }
