@@ -2,12 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, CalendarIcon, Phone, Edit, PlusCircle } from "lucide-react";
+import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, Calendar as CalendarIcon, Phone, Edit, PlusCircle } from "lucide-react";
 import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Workout } from "@/lib/definitions";
+import { Workout, Measurement } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
 import StudentForm from "@/components/students/student-form";
 import MeasurementForm from "@/components/students/measurement-form";
@@ -48,7 +48,7 @@ async function getStudentMeasurements(studentId: string) {
         .from('measurements')
         .select('*')
         .eq('student_id', studentId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true }); // Order ascending for chart
     
     if (error) {
         console.error("Erro ao buscar medições do aluno:", error);
@@ -160,7 +160,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </MeasurementForm>
                     </CardHeader>
                     <CardContent>
-                        <MeasurementsHistory studentId={student.id} measurements={measurements as any[]} />
+                        <MeasurementsHistory studentId={student.id} measurements={measurements as Measurement[]} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -193,7 +193,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                     <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <ProgressChart measurements={measurements} />
+                   <ProgressChart measurements={measurements as Measurement[]} />
                 </CardContent>
             </Card>
 
