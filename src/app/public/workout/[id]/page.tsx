@@ -1,41 +1,20 @@
+
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, User, Calendar, Lock, Video } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Workout, WorkoutExercise } from "@/lib/definitions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
-async function getWorkoutForPublic(workoutId: string) {
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data, error } = await supabase
-        .from('workouts')
-        .select(`
-            *,
-            students (
-                name
-            )
-        `)
-        .eq('id', workoutId)
-        .single();
-    
-    if (error) {
-        console.error("Error fetching workout:", error);
-        return null;
-    }
-
-    return data;
-}
+import { Badge } from "@/components/ui/badge";
 
 const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
-    if (!videoUrl.includes('youtube.com/watch?v=')) {
-        return <p>URL do vídeo inválida.</p>
+    if (!videoUrl || !videoUrl.includes('youtube.com/watch?v=')) {
+        return <p className="text-center text-red-500">URL do vídeo do YouTube inválida ou não fornecida.</p>
     }
     const videoId = videoUrl.split('v=')[1].split('&')[0];
     const embedUrl = `https://www.youtube.com/embed/${videoId}`;
@@ -48,60 +27,143 @@ const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            className="rounded-lg"
         ></iframe>
     );
 };
 
 
-async function verifyPassword(formData: FormData) {
-    'use server'
-    const password = formData.get('password') as string;
-    const workoutId = formData.get('workoutId') as string;
+async function getWorkoutForPublic(workoutId: string) {
+    try {
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
 
-    if (!password || !workoutId) {
-        return { error: 'ID do treino e senha são obrigatórios' };
+        const { data: workoutData, error: workoutError } = await supabase
+            .from('workouts')
+            .select('*, students(id, name)')
+            .eq('id', workoutId)
+            .single();
+
+        if (workoutError || !workoutData) {
+            console.error("[ Server ] Error fetching workout:", workoutError);
+            return null;
+        }
+
+        const exerciseIds = workoutData.exercises.map((e: WorkoutExercise) => e.exercise_id);
+
+        const { data: exercisesDetails, error: exercisesError } = await supabase
+            .from('exercises')
+            .select('id, video_url')
+            .in('id', exerciseIds);
+
+        if (exercisesError) {
+            console.error("[ Server ] Error fetching exercise details:", exercisesError);
+            // We can still proceed without video urls
+        }
+
+        // Create a map for quick lookup
+        const videoUrlMap = new Map(exercisesDetails?.map(e => [e.id, e.video_url]));
+
+        // Combine workout data with exercise video urls
+        const combinedWorkout = {
+            ...workoutData,
+            exercises: workoutData.exercises.map((e: WorkoutExercise) => ({
+                ...e,
+                video_url: videoUrlMap.get(e.exercise_id) || null
+            }))
+        };
+        
+        return combinedWorkout as Workout;
+    } catch (e) {
+        console.error("[ Server ] Exception in getWorkoutForPublic", e);
+        return null;
     }
-    
+}
+
+
+async function verifyPassword(formData: FormData) {
+    "use server"
+    const password = formData.get("password") as string;
+    const workoutId = formData.get("workoutId") as string;
+
     const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        { auth: { persistSession: false } }
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     
     const { data, error } = await supabase
-        .from('workouts')
-        .select('access_password')
-        .eq('id', workoutId)
-        .single();
+      .from('workouts')
+      .select('access_password')
+      .eq('id', workoutId)
+      .single();
 
     if (error || !data) {
-        return { error: 'Treino não encontrado' };
+      return { success: false, message: 'Treino não encontrado.' };
     }
-    if (data.access_password !== password) {
-        return { error: 'Senha incorreta' };
+    
+    if (data.access_password === password) {
+        return { success: true, message: 'Acesso liberado!' };
+    } else {
+        return { success: false, message: 'Senha incorreta.' };
     }
-
-    // Instead of setting cookies, we pass a search param to indicate success
-    const { headers } = await import('next/headers');
-    const url = new URL(headers().get('referer')!);
-    url.searchParams.set('verified', 'true');
-    const { redirect } = await import('next/navigation');
-    redirect(url.toString());
 }
 
-const WorkoutView = ({ workout }: { workout: any }) => {
+export default async function PublicWorkoutPage({ 
+    params,
+    searchParams 
+}: { 
+    params: { id: string };
+    searchParams: { token?: string; error?: string };
+}) {
+    const workout = await getWorkoutForPublic(params.id);
+    
+    if (!workout) {
+        notFound();
+    }
+    
+    // If workout has no password, grant access immediately
+    const hasPassword = !!workout.access_password;
+    const isVerified = searchParams.token === workout.access_password;
+
+    if (hasPassword && !isVerified) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background p-4">
+                <Card className="w-full max-w-sm">
+                    <form action={`/public/workout/${params.id}?token=${workout.access_password}`} method="POST">
+                         <CardHeader>
+                            <CardTitle className="text-xl font-headline flex items-center gap-2"><Lock className="text-primary"/> Acesso Restrito</CardTitle>
+                            <CardDescription>
+                                Este treino é protegido por senha. Por favor, insira a senha fornecida pelo seu personal trainer.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             {searchParams.error && <p className="text-sm font-medium text-destructive">{searchParams.error}</p>}
+                             <div className="space-y-2">
+                                <Label htmlFor="password">Senha de Acesso</Label>
+                                <Input id="password" name="password" type="password" required />
+                             </div>
+                             <Button type="submit" className="w-full ripple">Acessar Treino</Button>
+                        </CardContent>
+                    </form>
+                </Card>
+            </div>
+        )
+    }
+
     return (
-        <>
-            <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="bg-background text-foreground p-4 md:p-8">
+            <div className="max-w-4xl mx-auto">
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-3xl font-headline">{workout.name}</CardTitle>
-                                <CardDescription className="flex flex-col sm:flex-row items-start sm:items-center gap-x-4 gap-y-1 mt-2">
+                                <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
                                     <span className="flex items-center gap-2">
                                         <User className="h-4 w-4" />
-                                        <strong>Aluno:</strong> {workout.students?.name ?? 'Não identificado'}
+                                        Aluno: <span className="font-semibold">{workout.students?.name ?? 'Não especificado'}</span>
                                     </span>
                                     <span className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4" />
@@ -109,141 +171,111 @@ const WorkoutView = ({ workout }: { workout: any }) => {
                                     </span>
                                 </CardDescription>
                             </div>
-                            <Badge>Plano de Treino</Badge>
+                            <Badge variant="secondary">Plano de Treino</Badge>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        {workout.description && (
-                            <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
-                                <p>{workout.description}</p>
+                    <CardContent className="space-y-8">
+                         {workout.description && (
+                            <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                               <p>{workout.description}</p>
                             </div>
                         )}
+
                         {workout.diet_plan && (
-                            <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
-                               <h3 className="font-headline text-lg mb-2">Plano de Dieta</h3>
-                               <p>{workout.diet_plan}</p>
+                            <div className="p-4 border rounded-lg bg-muted/50">
+                                <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Dumbbell className="h-5 w-5 text-primary" />Plano de Dieta</h3>
+                                 <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                                   <p>{workout.diet_plan}</p>
+                                </div>
                             </div>
                         )}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
-                            {(workout.exercises as any[]).map((exercise, index) => (
-                                <Card key={index} className="bg-muted/50">
-                                    <CardHeader>
-                                        <div className="flex justify-between items-center">
-                                            <CardTitle className="text-lg font-headline flex items-center gap-2">
-                                                {exercise.name}
-                                            </CardTitle>
-                                             {exercise.video_url && (
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="flex items-center gap-2 ripple">
-                                                            <Video className="h-4 w-4" />
-                                                            Ver Vídeo
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="max-w-3xl">
-                                                        <DialogHeader>
-                                                            <DialogTitle>{exercise.name}</DialogTitle>
-                                                        </DialogHeader>
-                                                        <VideoPlayer videoUrl={exercise.video_url} />
-                                                    </DialogContent>
-                                                </Dialog>
-                                            )}
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                            <div>
-                                                <p className="font-semibold">Séries</p>
-                                                <p>{exercise.sets || '-'}</p>
+
+                        <div>
+                            <h3 className="text-lg font-headline flex items-center gap-2 mb-4"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
+                            <div className="space-y-4">
+                                {(workout.exercises as WorkoutExercise[]).map((exercise, index) => (
+                                    <Card key={index}>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-center">
+                                                <CardTitle className="text-lg font-headline">{exercise.name}</CardTitle>
+                                                {exercise.video_url && (
+                                                     <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                                                <Video className="h-4 w-4" />
+                                                                Ver Vídeo
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-w-2xl">
+                                                            <DialogHeader>
+                                                                <DialogTitle>{exercise.name}</DialogTitle>
+                                                            </DialogHeader>
+                                                            <VideoPlayer videoUrl={exercise.video_url} />
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                )}
                                             </div>
-                                            <div>
-                                                <p className="font-semibold">Repetições</p>
-                                                <p>{exercise.reps || '-'}</p>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                <div>
+                                                    <p className="font-semibold text-muted-foreground">Séries</p>
+                                                    <p className="text-lg font-bold">{exercise.sets || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-muted-foreground">Repetições</p>
+                                                    <p className="text-lg font-bold">{exercise.reps || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-muted-foreground">Carga</p>
+                                                    <p className="text-lg font-bold">{exercise.load ? `${exercise.load} kg` : '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-muted-foreground">Descanso</p>
+                                                    <p className="text-lg font-bold">{exercise.rest ? `${exercise.rest} s` : '-'}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-semibold">Carga</p>
-                                                <p>{exercise.load ? `${exercise.load} kg` : '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Descanso</p>
-                                                <p>{exercise.rest ? `${exercise.rest} s` : '-'}</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
-            </main>
-            <footer className="py-6 w-full text-center border-t">
-                <p className="text-xs text-muted-foreground">&copy; 2024 FitFlow. Powered by modern technology.</p>
-            </footer>
-        </>
-    );
-};
-
-const PasswordForm = ({ workoutId, error }: { workoutId: string, error?: string }) => {
-    return (
-        <main className="flex-1 flex items-center justify-center p-4">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle className="text-2xl font-headline flex items-center gap-2">
-                        <Lock className="h-6 w-6 text-primary" />
-                        Acesso Protegido
-                    </CardTitle>
-                    <CardDescription>
-                        Este treino é privado. Por favor, insira a senha para visualizar.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form action={verifyPassword} className="space-y-4">
-                        <input type="hidden" name="workoutId" value={workoutId} />
-                        <div className="space-y-2">
-                            <label htmlFor="password">Senha</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            />
-                        </div>
-                        {error && <p className="text-sm text-destructive">{error}</p>}
-                        <Button type="submit" className="w-full ripple">Acessar Treino</Button>
-                    </form>
-                </CardContent>
-            </Card>
+                <footer className="text-center mt-8">
+                    <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} FitFlow. Potencializado para seu sucesso.</p>
+                </footer>
+            </div>
         </main>
     );
-};
+}
 
-export default async function PublicWorkoutPage({
-    params,
-    searchParams
-}: {
-    params: { id: string };
-    searchParams: { verified?: string, error?: string };
-}) {
+// Rota para tratar o POST da senha e redirecionar
+export async function POST(request: Request, { params }: { params: { id: string } }) {
+    const formData = await request.formData();
+    const password = formData.get("password") as string;
     const workoutId = params.id;
-    const isVerified = searchParams.verified === 'true';
+    
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    
+    const { data, error } = await supabase
+      .from('workouts')
+      .select('access_password')
+      .eq('id', workoutId)
+      .single();
 
-    const workout = await getWorkoutForPublic(workoutId);
-    if (!workout) {
-        notFound();
+    const redirectUrl = new URL(request.url);
+
+    if (error || !data || data.access_password !== password) {
+        redirectUrl.searchParams.set('error', 'Senha incorreta. Tente novamente.');
+        return Response.redirect(redirectUrl, 303);
     }
     
-    // Scenario 1: No password required, just show the workout
-    if (!workout.access_password) {
-        return <WorkoutView workout={workout} />;
-    }
-
-    // Scenario 2: Password required and it has been verified
-    if (workout.access_password && isVerified) {
-        return <WorkoutView workout={workout} />;
-    }
-
-    // Scenario 3: Password required, show the password form
-    return <PasswordForm workoutId={workoutId} error={searchParams.error} />;
+    // Se a senha estiver correta, redirecionamos para a mesma página, mas com um "token" de sucesso.
+    redirectUrl.searchParams.set('token', data.access_password);
+    redirectUrl.searchParams.delete('error');
+    return Response.redirect(redirectUrl, 303);
 }
