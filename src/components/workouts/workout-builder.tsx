@@ -1,0 +1,229 @@
+"use client";
+
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Student, Exercise } from "@/lib/definitions";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { Textarea } from "../ui/textarea";
+import AiAssistant from "./ai-assistant";
+
+const workoutSchema = z.object({
+  name: z.string().min(3, "Workout name is required"),
+  student_id: z.string().min(1, "Please select a student"),
+  description: z.string().optional(),
+  exercises: z.array(
+    z.object({
+      exercise_id: z.string(),
+      name: z.string(),
+      sets: z.string().optional(),
+      reps: z.string().optional(),
+      load: z.string().optional(),
+      rest: z.string().optional(),
+    })
+  ),
+});
+
+type WorkoutBuilderProps = {
+  students: Pick<Student, 'id' | 'name'>[];
+  exercises: Exercise[];
+};
+
+export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof workoutSchema>>({
+    resolver: zodResolver(workoutSchema),
+    defaultValues: {
+      name: "",
+      student_id: "",
+      description: "",
+      exercises: [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "exercises",
+  });
+
+  const onSubmit = async (values: z.infer<typeof workoutSchema>) => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: trainer } = await supabase
+      .from("trainers")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+      
+    if (!trainer) return;
+
+    const { error } = await supabase.from("workouts").insert([
+      { ...values, trainer_id: trainer.id }
+    ]);
+    
+    if (error) {
+      toast({ title: "Error creating workout", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success!", description: "Workout plan created successfully." });
+      router.push("/workouts");
+      router.refresh();
+    }
+  };
+
+  const addExercise = (exercise: Exercise) => {
+    append({
+      exercise_id: exercise.id,
+      name: exercise.name,
+      sets: "",
+      reps: "",
+      load: "",
+      rest: "",
+    });
+  };
+
+  const addRecommendedExercises = (recommended: {exerciseRecommendations: string, explanation: string}) => {
+     const names = recommended.exerciseRecommendations.split(',').map(e => e.trim().toLowerCase());
+     const exercisesToAdd = exercises.filter(e => names.includes(e.name.toLowerCase()));
+     exercisesToAdd.forEach(addExercise);
+     toast({
+       title: "AI Recommendations Added",
+       description: "Exercises have been added to the plan. Review and adjust details.",
+     })
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Plan Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workout Name</FormLabel>
+                      <FormControl><Input placeholder="e.g., Week 1 - Full Body" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="student_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign to Student</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {students.map((student) => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl><Textarea placeholder="Optional notes for the workout" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Exercises</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
+                    <h4 className="font-semibold">{field.name}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <Input {...form.register(`exercises.${index}.sets`)} placeholder="Sets" />
+                        <Input {...form.register(`exercises.${index}.reps`)} placeholder="Reps" />
+                        <Input {...form.register(`exercises.${index}.load`)} placeholder="Load (kg)" />
+                        <Input {...form.register(`exercises.${index}.rest`)} placeholder="Rest (s)" />
+                    </div>
+                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => remove(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                 {fields.length === 0 && <p className="text-muted-foreground text-center py-4">No exercises added yet.</p>}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+             <AiAssistant onAddExercises={addRecommendedExercises} studentId={form.watch('student_id')} />
+             <Card>
+                <CardHeader>
+                    <CardTitle>Exercise Library</CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-96 overflow-y-auto">
+                    <div className="space-y-2">
+                        {exercises.map((exercise) => (
+                            <div key={exercise.id} className="flex items-center justify-between">
+                                <span>{exercise.name}</span>
+                                <Button type="button" size="sm" variant="outline" onClick={() => addExercise(exercise)}>
+                                    <PlusCircle className="h-4 w-4 mr-2" />
+                                    Add
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+             </Card>
+          </div>
+        </div>
+        
+        <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+            <Button type="submit" className="ripple">Create Workout Plan</Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
