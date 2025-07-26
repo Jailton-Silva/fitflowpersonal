@@ -8,7 +8,30 @@ import StudentForm from "@/components/students/student-form";
 
 async function getStudents(): Promise<Student[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("students").select("*");
+   const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data: trainer } = await supabase
+    .from('trainers')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!trainer) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("trainer_id", trainer.id)
+    .order("name", { ascending: true });
+
   if (error) {
     console.error("Erro ao buscar alunos:", error);
     return [];

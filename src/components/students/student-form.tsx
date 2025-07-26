@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
@@ -55,30 +56,63 @@ type StudentFormProps = {
 
 export default function StudentForm({ children, student }: StudentFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: student?.name ?? "",
-      email: student?.email ?? "",
-      phone: student?.phone ?? "",
-      birth_date: student?.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : "",
-      gender: student?.gender,
-      status: student?.status ?? "active",
-      goals: student?.goals ?? "",
-      medical_conditions: student?.medical_conditions ?? "",
+      name: "",
+      email: "",
+      phone: "",
+      birth_date: "",
+      gender: undefined,
+      status: "active",
+      goals: "",
+      medical_conditions: "",
     },
   });
 
+  useEffect(() => {
+    if (student) {
+        form.reset({
+            name: student.name ?? "",
+            email: student.email ?? "",
+            phone: student.phone ?? "",
+            birth_date: student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : "",
+            gender: student.gender,
+            status: student.status ?? "active",
+            goals: student.goals ?? "",
+            medical_conditions: student.medical_conditions ?? "",
+        });
+    } else {
+        form.reset({
+            name: "",
+            email: "",
+            phone: "",
+            birth_date: "",
+            gender: undefined,
+            status: "active",
+            goals: "",
+            medical_conditions: "",
+        });
+    }
+  }, [student, isOpen, form]);
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
     const supabase = createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user) {
+        toast({ title: "Erro de autenticação", description: "Usuário não encontrado.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
 
     const { data: trainer, error: trainerError } = await supabase
         .from("trainers")
@@ -87,22 +121,21 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         .single();
     
     if (trainerError || !trainer) {
-        toast({
-            title: "Erro",
-            description: "Não foi possível encontrar o perfil do treinador.",
-            variant: "destructive",
-        });
+        toast({ title: "Erro", description: "Não foi possível encontrar o perfil do treinador.", variant: "destructive" });
+        setIsSubmitting(false);
         return;
     }
 
+    const submissionData = { ...values, trainer_id: trainer.id };
+
     const { error } = student
-      ? await supabase.from("students").update({...values, trainer_id: trainer.id}).eq("id", student.id)
-      : await supabase.from("students").insert([{...values, trainer_id: trainer.id}]);
+      ? await supabase.from("students").update(submissionData).eq("id", student.id)
+      : await supabase.from("students").insert([submissionData]);
 
     if (error) {
       toast({
-        title: "Erro",
-        description: `Falha ao salvar aluno: ${error.message}`,
+        title: "Erro ao salvar aluno",
+        description: error.message,
         variant: "destructive",
       });
     } else {
@@ -113,6 +146,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
       setIsOpen(false);
       router.refresh();
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -161,7 +195,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o status" />
@@ -206,7 +240,10 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 <SheetClose asChild>
                     <Button type="button" variant="outline">Cancelar</Button>
                 </SheetClose>
-                <Button type="submit" className="ripple">Salvar alterações</Button>
+                <Button type="submit" disabled={isSubmitting} className="ripple">
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Salvar
+                </Button>
             </SheetFooter>
           </form>
         </Form>

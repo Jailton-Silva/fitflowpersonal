@@ -29,6 +29,7 @@ export const columns: ColumnDef<Student>[] = [
         </Button>
       );
     },
+     cell: ({ row }) => <div className="pl-4">{row.getValue("name")}</div>,
   },
   {
     accessorKey: "email",
@@ -58,12 +59,26 @@ export const columns: ColumnDef<Student>[] = [
 
       return (
         <div className="text-right">
-            <StudentForm student={student}>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Abrir menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
-            </StudentForm>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Abrir menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <StudentForm student={student}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  Editar Aluno
+                </DropdownMenuItem>
+              </StudentForm>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                Excluir Aluno
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       );
     },
