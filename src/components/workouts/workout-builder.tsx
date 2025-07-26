@@ -64,6 +64,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     defaultValues: workout ? 
     {
       ...workout,
+      diet_plan: workout.diet_plan ?? "",
     }
     : {
       name: "",
@@ -80,6 +81,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     if (workout) {
       form.reset({
         ...workout,
+        diet_plan: workout.diet_plan ?? "",
       });
     }
   }, [workout, form]);
@@ -93,11 +95,16 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     const supabase = createClient();
     
     let error;
+    
+    const submissionData = {
+        ...values,
+        diet_plan: values.diet_plan || null,
+    };
 
     if (isEditMode) {
       const { error: updateError } = await supabase
         .from("workouts")
-        .update(values)
+        .update(submissionData)
         .eq("id", workout.id);
       error = updateError;
     } else {
@@ -113,7 +120,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
       if (!trainer) return;
 
       const { error: insertError } = await supabase.from("workouts").insert([
-        { ...values, trainer_id: trainer.id }
+        { ...submissionData, trainer_id: trainer.id }
       ]);
       error = insertError;
     }

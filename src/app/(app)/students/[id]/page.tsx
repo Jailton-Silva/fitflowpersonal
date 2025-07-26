@@ -2,13 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, CalendarIcon, Phone } from "lucide-react";
+import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, CalendarIcon, Phone, Edit, PlusCircle } from "lucide-react";
 import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
+import StudentForm from "@/components/students/student-form";
+import MeasurementForm from "@/components/students/measurement-form";
+import MeasurementsHistory from "@/components/students/measurements-history";
 
 async function getStudentData(studentId: string) {
     const supabase = createClient();
@@ -39,14 +42,32 @@ async function getStudentWorkouts(studentId: string) {
     return data;
 }
 
+async function getStudentMeasurements(studentId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false });
+    
+    if (error) {
+        console.error("Erro ao buscar medições do aluno. Verifique se a tabela 'measurements' existe.", error);
+        return [];
+    }
+    return data;
+}
 
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
     const student = await getStudentData(params.id);
-    const workouts = await getStudentWorkouts(params.id);
-
     if (!student) {
         notFound();
     }
+    
+    const [workouts, measurements] = await Promise.all([
+        getStudentWorkouts(params.id),
+        getStudentMeasurements(params.id)
+    ]);
+
 
     const age = student.birth_date ? differenceInYears(new Date(), new Date(student.birth_date)) : 'N/A';
 
@@ -74,6 +95,12 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </div>
                     )}
                 </div>
+                 <StudentForm student={student}>
+                    <Button variant="outline">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar Aluno
+                    </Button>
+                </StudentForm>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,12 +149,18 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                 </Card>
             </div>
              <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Evolução Física</CardTitle>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
+                        <MeasurementForm studentId={student.id}>
+                            <Button size="sm">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Nova Avaliação
+                            </Button>
+                        </MeasurementForm>
                     </CardHeader>
                     <CardContent>
-                       <ProgressChart />
+                        <MeasurementsHistory measurements={measurements as any[]} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -141,7 +174,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                                    <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                        <div>
                                            <p className="font-semibold">{workout.name}</p>
-                                           <p className="text-sm text-muted-foreground">{workout.exercises.length} exercícios</p>
+                                           <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
                                        </div>
                                        <Button variant="outline" size="sm" asChild>
                                            <Link href={`/workouts/${workout.id}`}>Ver Plano</Link>
@@ -150,11 +183,19 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                                ))}
                            </ul>
                        ) : (
-                           <p className="text-muted-foreground">Nenhum treino recente encontrado.</p>
+                           <p className="text-muted-foreground text-center py-4">Nenhum treino recente encontrado.</p>
                        )}
                     </CardContent>
                 </Card>
             </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
+                </CardHeader>
+                <CardContent>
+                   <ProgressChart />
+                </CardContent>
+            </Card>
 
         </div>
     );

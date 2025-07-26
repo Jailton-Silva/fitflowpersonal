@@ -55,9 +55,10 @@ export type Workout = {
   name: string;
   description?: string;
   diet_plan?: string;
-  exercises: WorkoutExercise[];
+  exercises: WorkoutExercise[] | any[];
   created_at: string;
   updated_at: string;
+  students: any;
 };
 
 export type Appointment = {
@@ -72,3 +73,13 @@ export type Appointment = {
   created_at: string;
   updated_at: string;
 };
+
+export type Measurement = {
+  id: string;
+  student_id: string;
+  created_at: string;
+  weight: number;
+  height: number;
+  body_fat?: number;
+  notes?: string;
+}
