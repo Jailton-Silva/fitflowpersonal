@@ -16,26 +16,29 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
-import { Appointment } from '@/lib/definitions';
+import { ChevronLeft, ChevronRight, PlusCircle, Edit } from 'lucide-react';
+import { Appointment, Student } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import AppointmentForm from './appointment-form';
 
-const AppointmentBadge = ({ appointment }: { appointment: Appointment }) => {
+const AppointmentBadge = ({ appointment, students }: { appointment: Appointment; students: Pick<Student, 'id' | 'name'>[] }) => {
     const statusVariant = {
         scheduled: 'bg-blue-500/20 text-blue-700 border-blue-500',
         completed: 'bg-green-500/20 text-green-700 border-green-500',
         cancelled: 'bg-red-500/20 text-red-700 border-red-500',
     }
     return (
-        <div className={cn("text-xs p-1 rounded-md overflow-hidden truncate", statusVariant[appointment.status])}>
+       <AppointmentForm appointment={appointment} students={students}>
+        <div className={cn("text-xs p-1 rounded-md overflow-hidden truncate cursor-pointer hover:opacity-80", statusVariant[appointment.status])}>
             <span className="font-semibold">{format(new Date(appointment.start_time), 'HH:mm')}</span> {appointment.title}
         </div>
+      </AppointmentForm>
     )
 }
 
 
-export function MonthView({ appointments }: { appointments: Appointment[] }) {
+export function MonthView({ appointments, students }: { appointments: Appointment[]; students: Pick<Student, 'id' | 'name'>[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -53,10 +56,12 @@ export function MonthView({ appointments }: { appointments: Appointment[] }) {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-         <Button className="ripple hidden sm:flex">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Novo Agendamento
-        </Button>
+         <AppointmentForm students={students}>
+            <Button className="ripple hidden sm:flex">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Novo Agendamento
+            </Button>
+        </AppointmentForm>
       </div>
     );
   };
@@ -105,7 +110,7 @@ export function MonthView({ appointments }: { appointments: Appointment[] }) {
           >
             <span className="font-bold self-end">{formattedDate}</span>
             <div className='flex-1 space-y-1 overflow-y-auto'>
-                {appointmentsOnDay.map(apt => <AppointmentBadge key={apt.id} appointment={apt} />)}
+                {appointmentsOnDay.map(apt => <AppointmentBadge key={apt.id} appointment={apt} students={students} />)}
             </div>
           </div>
         );

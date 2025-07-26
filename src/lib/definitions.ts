@@ -72,6 +72,10 @@ export type Appointment = {
   status: 'scheduled' | 'completed' | 'cancelled';
   created_at: string;
   updated_at: string;
+  students: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 export type Measurement = {

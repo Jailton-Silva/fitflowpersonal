@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Appointment } from "@/lib/definitions";
+import { Appointment, Student } from "@/lib/definitions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MonthView } from "@/components/schedule/month-view";
 import { WeekView } from "@/components/schedule/week-view";
@@ -51,7 +51,7 @@ async function getScheduleData(studentId?: string, status?: string) {
 
     return { 
         appointments: (appointments as Appointment[]) ?? [],
-        students: students ?? []
+        students: (students as Pick<Student, 'id' | 'name'>[]) ?? []
     };
 }
 
@@ -76,12 +76,12 @@ export default async function SchedulePage({
                 </TabsList>
                 <TabsContent value="month">
                     <div className="rounded-md border bg-card p-4">
-                        <MonthView appointments={appointments} />
+                        <MonthView appointments={appointments} students={students} />
                     </div>
                 </TabsContent>
                 <TabsContent value="week">
                     <div className="rounded-md border bg-card p-4">
-                        <WeekView appointments={appointments} />
+                        <WeekView appointments={appointments} students={students} />
                     </div>
                 </TabsContent>
             </Tabs>
