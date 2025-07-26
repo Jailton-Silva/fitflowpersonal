@@ -18,7 +18,7 @@ export function ScheduleFilters({ students }: ScheduleFiltersProps) {
 
     const handleFilterChange = (key: 'student' | 'status', value: string) => {
         const newParams = new URLSearchParams(searchParams.toString());
-        if (value) {
+        if (value && value !== 'all') {
             newParams.set(key, value);
         } else {
             newParams.delete(key);
@@ -36,13 +36,13 @@ export function ScheduleFilters({ students }: ScheduleFiltersProps) {
         <div className="flex flex-col sm:flex-row gap-2">
             <Select
                 onValueChange={(value) => handleFilterChange('student', value)}
-                value={searchParams.get('student') ?? ''}
+                value={searchParams.get('student') ?? 'all'}
             >
                 <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filtrar por aluno..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">Todos os alunos</SelectItem>
+                    <SelectItem value="all">Todos os alunos</SelectItem>
                     {students.map(student => (
                         <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
                     ))}
@@ -51,13 +51,13 @@ export function ScheduleFilters({ students }: ScheduleFiltersProps) {
 
             <Select
                 onValueChange={(value) => handleFilterChange('status', value)}
-                value={searchParams.get('status') ?? ''}
+                value={searchParams.get('status') ?? 'all'}
             >
                 <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filtrar por status..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">Todos os status</SelectItem>
+                    <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="scheduled">Agendado</SelectItem>
                     <SelectItem value="completed">Concluído</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
