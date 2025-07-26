@@ -2,16 +2,16 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
-const data = [
-  { month: "Jan", completed: 30, scheduled: 40 },
-  { month: "Fev", completed: 35, scheduled: 42 },
-  { month: "Mar", completed: 40, scheduled: 45 },
-  { month: "Abr", completed: 42, scheduled: 48 },
-  { month: "Mai", completed: 48, scheduled: 50 },
-  { month: "Jun", completed: 52, scheduled: 55 },
-]
+export type EngagementData = { month: string; completed: number; scheduled: number }[];
 
-export default function EngagementChart() {
+export default function EngagementChart({ data }: { data: EngagementData }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        <p className="text-muted-foreground">Não há dados de engajamento para exibir.</p>
+      </div>
+    );
+  }
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">

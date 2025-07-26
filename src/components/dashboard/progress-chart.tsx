@@ -2,31 +2,34 @@
 
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-const data = [
-  { name: "Jan", weight: 85, bodyFat: 22 },
-  { name: "Fev", weight: 84, bodyFat: 21 },
-  { name: "Mar", weight: 82, bodyFat: 20 },
-  { name: "Abr", weight: 81, bodyFat: 19 },
-  { name: "Mai", weight: 80, bodyFat: 18.5 },
-  { name: "Jun", weight: 79, bodyFat: 17.8 },
-]
+export type ProgressData = { name: string; weight: number; bodyFat: number }[];
 
-export default function ProgressChart() {
+export default function ProgressChart({ data }: { data: ProgressData }) {
+   if (!data || data.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        <p className="text-muted-foreground">Não há dados de progresso para exibir.</p>
+      </div>
+    );
+  }
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
-          <YAxis yAxisId="left" label={{ value: 'Peso (kg)', angle: -90, position: 'insideLeft' }} />
-          <YAxis yAxisId="right" orientation="right" label={{ value: 'Gordura Corporal (%)', angle: -90, position: 'insideRight' }} />
+          <YAxis yAxisId="left" unit="kg" name="Peso" domain={['dataMin - 2', 'dataMax + 2']} />
+          <YAxis yAxisId="right" orientation="right" unit="%" name="Gordura Corporal" domain={['dataMin - 2', 'dataMax + 2']}/>
           <Tooltip
             contentStyle={{
               background: "hsl(var(--card))",
               borderColor: "hsl(var(--border))",
               borderRadius: "var(--radius)",
             }}
-            formatter={(value, name) => [value, name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)']}
+            formatter={(value, name) => [
+              (value as number).toFixed(1),
+              name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)'
+            ]}
           />
           <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} />
           <Line yAxisId="right" type="monotone" dataKey="bodyFat" name="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} />
