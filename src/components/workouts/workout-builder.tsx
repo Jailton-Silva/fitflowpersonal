@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2, Loader2, Video } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, Video, RefreshCw } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
@@ -86,7 +86,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
         description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
-        exercises: workout.exercises.map(e => ({
+        exercises: (workout.exercises || []).map(e => ({
           ...e, 
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
         }))
@@ -184,6 +184,11 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
      })
   }
 
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-8);
+    form.setValue('access_password', newPassword);
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -253,7 +258,14 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Senha de Acesso (Opcional)</FormLabel>
-                      <FormControl><Input type="password" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} /></FormControl>
+                       <div className="flex items-center gap-2">
+                            <FormControl>
+                                <Input type="text" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <Button type="button" variant="outline" size="icon" onClick={generatePassword}>
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
+                        </div>
                        <FormDescription>Se preenchida, o aluno precisará desta senha para ver o treino.</FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -268,21 +280,21 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
               </CardHeader>
               <CardContent className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-semibold flex-1 pr-2">{field.name}</h4>
-                      <div className="flex items-center gap-2">
-                        {field.video_url && (
-                          <Button asChild variant="outline" size="sm">
-                            <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm">
-                              <Video className="h-4 w-4"/> Ver vídeo
-                            </a>
-                          </Button>
-                        )}
-                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => remove(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                  <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
+                     <div className="flex justify-between items-start gap-4">
+                        <h4 className="font-semibold flex-1 pr-2 mt-1">{field.name}</h4>
+                        <div className="flex items-center gap-2">
+                           {field.video_url && (
+                            <Button asChild variant="outline" size="sm">
+                                <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm">
+                                <Video className="h-4 w-4"/> Ver vídeo
+                                </a>
+                            </Button>
+                            )}
+                            <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <Input {...form.register(`exercises.${index}.sets`)} placeholder="Séries" />

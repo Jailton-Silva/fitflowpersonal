@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Poppins, PT_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,6 +21,7 @@ const fontPtSans = PT_Sans({
 export const metadata: Metadata = {
   title: "FitFlow - Sua Plataforma de Treinamento Pessoal",
   description: "Gerencie seus alunos, treinos e progresso com a FitFlow.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
