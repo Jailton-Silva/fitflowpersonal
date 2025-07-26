@@ -1,56 +1,84 @@
-"use client";
+"use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { subDays, format } from "date-fns";
+import * as React from "react"
+import { format, subDays } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { DateRange } from "react-day-picker"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
-export function DateRangeFilter() {
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+export function DateRangeFilter({
+  className,
+}: React.HTMLAttributes<HTMLDivElement>) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleDateChange = (days: number) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    const to = new Date();
-    const from = subDays(to, days);
-    
-    newParams.set("from", format(from, "yyyy-MM-dd"));
-    newParams.set("to", format(to, "yyyy-MM-dd"));
-    
-    router.push(`${pathname}?${newParams.toString()}`);
-  };
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
   
-  const isActive = (days: number) => {
-    const from = searchParams.get('from');
-    if (!from) return false;
-    const expectedFrom = format(subDays(new Date(), days), "yyyy-MM-dd");
-    return from === expectedFrom;
-  }
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: from ? new Date(from) : subDays(new Date(), 30),
+    to: to ? new Date(to) : new Date(),
+  })
+
+  React.useEffect(() => {
+    if (date?.from && date?.to) {
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.set("from", format(date.from, "yyyy-MM-dd"));
+        newParams.set("to", format(date.to, "yyyy-MM-dd"));
+        router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    }
+  }, [date, pathname, router, searchParams]);
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant={isActive(7) ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleDateChange(7)}
-      >
-        Últimos 7 dias
-      </Button>
-      <Button
-        variant={isActive(30) ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleDateChange(30)}
-      >
-        Últimos 30 dias
-      </Button>
-      <Button
-        variant={isActive(90) ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleDateChange(90)}
-      >
-        Últimos 90 dias
-      </Button>
+    <div className={cn("grid gap-2", className)}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id="date"
+            variant={"outline"}
+            className={cn(
+              "w-[300px] justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, y", {locale: ptBR})} -{" "}
+                  {format(date.to, "LLL dd, y", {locale: ptBR})}
+                </>
+              ) : (
+                format(date.from, "LLL dd, y", {locale: ptBR})
+              )
+            ) : (
+              <span>Selecione uma data</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={setDate}
+            numberOfMonths={2}
+            locale={ptBR}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
-  );
+  )
 }
