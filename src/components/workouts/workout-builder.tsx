@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -60,7 +61,12 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
   const { toast } = useToast();
   const form = useForm<z.infer<typeof workoutSchema>>({
     resolver: zodResolver(workoutSchema),
-    defaultValues: workout || {
+    defaultValues: workout ? 
+    {
+      ...workout,
+      diet_plan: workout.diet_plan || "",
+    }
+    : {
       name: "",
       student_id: "",
       description: "",
@@ -73,7 +79,10 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
 
   useEffect(() => {
     if (workout) {
-      form.reset(workout);
+      form.reset({
+        ...workout,
+        diet_plan: workout.diet_plan || "",
+      });
     }
   }, [workout, form]);
 
