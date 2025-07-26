@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2 } from "lucide-react";
-import { useFormState, useFormStatus } from "react-dom";
-import { useEffect } from "react";
+import { useFormStatus } from "react-dom";
+import { useEffect, useActionState } from "react";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
         <Button type="submit" className="w-full ripple" disabled={pending}>
-            {pending && <Loader2 className="animate-spin" />}
+            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Acessar Treino
         </Button>
     )
@@ -22,7 +22,7 @@ function SubmitButton() {
 
 export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
     const { toast } = useToast();
-    const [state, formAction] = useFormState(verifyPassword, { error: null });
+    const [state, formAction] = useActionState(verifyPassword, { error: null });
 
     useEffect(() => {
         if (state?.error) {
