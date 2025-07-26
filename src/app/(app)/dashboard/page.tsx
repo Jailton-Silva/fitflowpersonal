@@ -9,10 +9,16 @@ import {
 import { Users, Dumbbell, Calendar, Activity } from "lucide-react";
 import EngagementChart from "@/components/dashboard/engagement-chart";
 import ProgressChart from "@/components/dashboard/progress-chart";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { from?: string; to?: string };
+}) {
   const supabase = createClient();
   // In a real app, you would fetch this data from your database
+  // and apply the date filters from searchParams
   const stats = {
     totalStudents: 12,
     activeWorkouts: 8,
@@ -21,7 +27,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
+        <DateRangeFilter />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
