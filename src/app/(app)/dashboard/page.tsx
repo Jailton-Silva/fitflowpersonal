@@ -10,7 +10,7 @@ import { Users, Dumbbell, Calendar, Activity } from "lucide-react";
 import EngagementChart from "@/components/dashboard/engagement-chart";
 import ProgressChart from "@/components/dashboard/progress-chart";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { subDays, startOfWeek, endOfWeek, format } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, format, parse } from 'date-fns';
 
 async function getDashboardStats(from: string, to: string) {
   const supabase = createClient();
@@ -90,13 +90,10 @@ export default async function DashboardPage({
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const from = searchParams.from ? new Date(searchParams.from) : subDays(new Date(), 30);
-  const to = searchParams.to ? new Date(searchParams.to) : new Date();
+  const to = searchParams.to || format(new Date(), 'yyyy-MM-dd');
+  const from = searchParams.from || format(subDays(new Date(), 30), 'yyyy-MM-dd');
 
-  const formattedFrom = format(from, 'yyyy-MM-dd');
-  const formattedTo = format(to, 'yyyy-MM-dd');
-
-  const stats = await getDashboardStats(formattedFrom, formattedTo);
+  const stats = await getDashboardStats(from, to);
 
   return (
     <div className="space-y-6">

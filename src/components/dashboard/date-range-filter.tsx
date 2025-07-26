@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
+import { format, parse } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon } from "lucide-react"
@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/popover"
 
 type DateRangeFilterProps = React.HTMLAttributes<HTMLDivElement> & {
-    defaultFrom: Date;
-    defaultTo: Date;
+    defaultFrom: string;
+    defaultTo: string;
 }
 
 export function DateRangeFilter({
@@ -31,8 +31,8 @@ export function DateRangeFilter({
   const searchParams = useSearchParams();
 
   const [date, setDate] = React.useState<DateRange | undefined>({
-      from: defaultFrom,
-      to: defaultTo,
+      from: parse(defaultFrom, "yyyy-MM-dd", new Date()),
+      to: parse(defaultTo, "yyyy-MM-dd", new Date()),
   });
 
   React.useEffect(() => {
