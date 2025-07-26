@@ -14,26 +14,26 @@ import {z} from 'genkit';
 const ExerciseRecommendationsInputSchema = z.object({
   studentProfile: z
     .string()
-    .describe('The profile of the student, including goals, medical conditions, and current fitness level.'),
+    .describe('O perfil do aluno, incluindo objetivos, condições médicas e nível de condicionamento físico atual.'),
   workoutHistory: z
     .string()
-    .describe('The workout history of the student, including exercises performed and results.'),
+    .describe('O histórico de treinos do aluno, incluindo exercícios realizados e resultados.'),
   trainerPreferences: z
     .string()
-    .describe('The preferences of the trainer, including preferred exercises and training styles.'),
+    .describe('As preferências do treinador, incluindo exercícios preferidos e estilos de treinamento.'),
 });
 export type ExerciseRecommendationsInput = z.infer<typeof ExerciseRecommendationsInputSchema>;
 
 const ExerciseRecommendationsOutputSchema = z.object({
   exerciseRecommendations: z
     .string()
-    .describe('A list of exercise recommendations tailored to the student profile and goals, separated by commas.'),
+    .describe('Uma lista de nomes de exercícios recomendados, separados por vírgulas e em português.'),
   explanation: z
     .string()
-    .describe('An explanation of why the exercises are recommended, based on the student profile, workout history, and trainer preferences.'),
+    .describe('Uma explicação em português do motivo pelo qual os exercícios são recomendados, com base no perfil do aluno, histórico de treinos e preferências do treinador.'),
   dietPlan: z
     .string()
-    .describe('A suggested diet plan based on the student profile and goals.'),
+    .describe('Um plano de dieta sugerido em português, com base no perfil e nos objetivos do aluno.'),
 });
 export type ExerciseRecommendationsOutput = z.infer<typeof ExerciseRecommendationsOutputSchema>;
 
@@ -45,15 +45,15 @@ const prompt = ai.definePrompt({
   name: 'exerciseRecommendationsPrompt',
   input: {schema: ExerciseRecommendationsInputSchema},
   output: {schema: ExerciseRecommendationsOutputSchema},
-  prompt: `You are an expert personal trainer and nutritionist specializing in exercise and diet recommendations.
+  prompt: `Você é um personal trainer e nutricionista especialista em recomendações de exercícios e dieta para o público brasileiro. Responda sempre em português do Brasil.
 
-  Given the following student profile, workout history, and trainer preferences, provide a list of exercise recommendations tailored to the student profile and goals.
-  Also, create a suggested diet plan based on the student's profile and goals.
-  Explain why the exercises are recommended, based on the student profile, workout history, and trainer preferences.
+  Com base no perfil do aluno, histórico de treinos e preferências do treinador fornecidos, gere uma lista de nomes de exercícios recomendados.
+  Além disso, crie um plano de dieta sugerido.
+  Explique por que os exercícios são recomendados, com base nos dados fornecidos.
 
-  Student Profile: {{{studentProfile}}}
-  Workout History: {{{workoutHistory}}}
-  Trainer Preferences: {{{trainerPreferences}}}
+  Perfil do Aluno: {{{studentProfile}}}
+  Histórico de Treinos: {{{workoutHistory}}}
+  Preferências do Treinador: {{{trainerPreferences}}}
   `,
 });
 

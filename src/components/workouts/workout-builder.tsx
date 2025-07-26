@@ -87,12 +87,12 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     }
   }, [workout, form]);
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "exercises",
   });
 
-  const onSubmit = async (values: z.infer<typeof workoutSchema>) => {
+  const onSubmit = async (values: z.infer<typeof workoutSchema>>) => {
     const supabase = createClient();
     
     let error;
@@ -147,18 +147,28 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
   };
 
   const handleRecommendation = (recommended: ExerciseRecommendationsOutput) => {
-     const names = recommended.exerciseRecommendations.split(',').map(e => e.trim().toLowerCase());
-     const exercisesToAdd = exercises.filter(e => names.includes(e.name.toLowerCase()));
+     const recommendedNames = recommended.exerciseRecommendations.split(',').map(e => e.trim().toLowerCase());
      
-     // Remove existing exercises before adding new ones
-     remove();
-     exercisesToAdd.forEach(addExercise);
+     const exercisesToAdd = exercises
+        .filter(e => recommendedNames.includes(e.name.toLowerCase()))
+        .map(e => ({
+            exercise_id: e.id,
+            name: e.name,
+            sets: "3", // Default values, can be adjusted
+            reps: "12",
+            load: "",
+            rest: "60",
+        }));
+     
+     replace(exercisesToAdd);
 
      form.setValue('diet_plan', recommended.dietPlan);
+     form.setValue('name', `Plano de Treino IA - ${new Date().toLocaleDateString('pt-BR')}`);
+     form.setValue('description', recommended.explanation);
 
      toast({
-       title: "Recomendações da IA adicionadas",
-       description: "Exercícios e plano de dieta foram adicionados. Revise e ajuste os detalhes.",
+       title: "Recomendações da IA aplicadas",
+       description: "Exercícios, plano de dieta e detalhes do treino foram preenchidos. Revise e ajuste se necessário.",
      })
   }
 
