@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Workout } from "@/lib/definitions";
+import { Workout, Student, Exercise } from "@/lib/definitions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,22 +11,81 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlusCircle, Dumbbell } from "lucide-react";
+import { WorkoutFilters } from "@/components/workouts/workout-filters";
 
-async function getWorkouts() {
+async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; }) {
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("workouts")
-    .select("*, students(name)");
+    .select("*, students(id, name)");
+
+  if (filters.studentId) {
+    query = query.eq('student_id', filters.studentId);
+  }
+  if (filters.from) {
+    query = query.gte('created_at', filters.from);
+  }
+  if (filters.to) {
+    query = query.lte('created_at', filters.to);
+  }
+  if (filters.exerciseIds && filters.exerciseIds.length > 0) {
+    // This is a simplified filter. It checks if any of the selected exercises are present.
+    // A more complex query would be needed for 'AND' logic (contains ALL selected exercises).
+    // The `exercises` column is JSONB. We can use `->>` to get exercise_id as text and check if it's in our list.
+    // Supabase RPC or more complex query might be better for performance on large datasets.
+    // For now, filtering post-query for simplicity.
+  }
+
+  const { data, error } = await query;
   
   if (error) {
     console.error("Erro ao buscar treinos:", error);
     return [];
   }
+
+  // Post-query filtering for exercises
+  if (filters.exerciseIds && filters.exerciseIds.length > 0) {
+    return (data as Workout[]).filter(workout => 
+      filters.exerciseIds?.every(filterId => 
+        (workout.exercises as any[]).some(ex => ex.exercise_id === filterId)
+      )
+    );
+  }
+
   return data;
 }
 
-export default async function WorkoutsPage() {
-  const workouts = await getWorkouts();
+async function getFilterData() {
+    const supabase = createClient();
+    const studentsPromise = supabase.from("students").select("id, name").order('name');
+    const exercisesPromise = supabase.from("exercises").select("id, name").order('name');
+
+    const [studentsResult, exercisesResult] = await Promise.all([
+        studentsPromise,
+        exercisesPromise
+    ]);
+
+    return {
+        students: (studentsResult.data as Pick<Student, 'id' | 'name'>[]) ?? [],
+        exercises: (exercisesResult.data as Pick<Exercise, 'id' | 'name'>[]) ?? [],
+    }
+}
+
+
+export default async function WorkoutsPage({
+  searchParams,
+}: {
+  searchParams: { student?: string; exercises?: string | string[]; from?: string; to?: string; };
+}) {
+  const exerciseIds = Array.isArray(searchParams.exercises) ? searchParams.exercises : (searchParams.exercises ? [searchParams.exercises] : []);
+  const workouts = await getWorkouts({ 
+      studentId: searchParams.student, 
+      exerciseIds: exerciseIds,
+      from: searchParams.from,
+      to: searchParams.to,
+  });
+  const { students, exercises } = await getFilterData();
+
 
   return (
     <div className="space-y-6">
@@ -39,9 +98,12 @@ export default async function WorkoutsPage() {
           </Link>
         </Button>
       </div>
+      
+      <WorkoutFilters students={students} exercises={exercises} />
+      
       {workouts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {workouts.map((workout: any) => (
+          {(workouts as Workout[]).map((workout: Workout) => (
             <Card key={workout.id} className="flex flex-col">
               <CardHeader>
                 <CardTitle>{workout.name}</CardTitle>
@@ -68,9 +130,9 @@ export default async function WorkoutsPage() {
         </div>
       ) : (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">Nenhum Treino Ainda</h2>
+          <h2 className="text-xl font-semibold">Nenhum Treino Encontrado</h2>
           <p className="text-muted-foreground mt-2">
-            Comece criando um novo plano de treino.
+            Tente ajustar seus filtros ou crie um novo plano de treino.
           </p>
           <Button asChild className="mt-4 ripple">
             <Link href="/workouts/new">

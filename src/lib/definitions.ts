@@ -58,7 +58,10 @@ export type Workout = {
   exercises: WorkoutExercise[] | any[];
   created_at: string;
   updated_at: string;
-  students: any;
+  students: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 export type Appointment = {
