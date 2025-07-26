@@ -29,6 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import React from "react";
+import Link from "next/link";
 
 
 async function deleteStudent(studentId: string, onComplete: () => void, onError: (error: any) => void) {
@@ -110,7 +111,14 @@ export const columns: ColumnDef<Student>[] = [
         </Button>
       );
     },
-     cell: ({ row }) => <div className="pl-4">{row.getValue("name")}</div>,
+     cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <Link href={`/students/${student.id}`} className="pl-4 font-medium text-primary hover:underline">
+            {row.getValue("name")}
+          </Link>
+        )
+     },
   },
   {
     accessorKey: "email",
