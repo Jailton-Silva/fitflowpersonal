@@ -71,7 +71,8 @@ export default function ExerciseForm({ children, exercise }: ExerciseFormProps) 
             form.reset({
                 name: exercise.name,
                 description: exercise.description ?? "",
-                muscle_groups: exercise.muscle_groups as any ?? "", // Will be transformed
+                // Convert array to comma-separated string for the form input
+                muscle_groups: (exercise.muscle_groups as any)?.join(', ') ?? "",
                 equipment: exercise.equipment ?? "",
                 video_url: exercise.video_url ?? "",
                 instructions: exercise.instructions ?? "",
@@ -156,7 +157,7 @@ export default function ExerciseForm({ children, exercise }: ExerciseFormProps) 
                 <FormItem>
                   <FormLabel>Grupos Musculares</FormLabel>
                   <FormControl>
-                    <Input placeholder="Peito, Tríceps, Ombro" {...field} value={Array.isArray(field.value) ? field.value.join(', ') : ''} />
+                    <Input placeholder="Peito, Tríceps, Ombro" {...field} value={field.value as any} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
