@@ -30,19 +30,30 @@ export function DateRangeFilter({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: defaultFrom,
-    to: defaultTo,
-  })
+  const [date, setDate] = React.useState<DateRange | undefined>(undefined);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    if (date?.from && date?.to) {
+    setIsClient(true);
+    setDate({
+        from: defaultFrom,
+        to: defaultTo,
+    })
+  }, [defaultFrom, defaultTo]);
+
+
+  React.useEffect(() => {
+    if (isClient && date?.from && date?.to) {
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.set("from", format(date.from, "yyyy-MM-dd"));
         newParams.set("to", format(date.to, "yyyy-MM-dd"));
         router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
-  }, [date, pathname, router, searchParams]);
+  }, [date, pathname, router, searchParams, isClient]);
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className={cn("grid gap-2", className)}>
