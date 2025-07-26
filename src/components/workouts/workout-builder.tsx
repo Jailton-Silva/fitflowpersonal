@@ -81,10 +81,15 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
   useEffect(() => {
     if (workout) {
       form.reset({
-        ...workout,
+        name: workout.name,
+        student_id: workout.student_id,
+        description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
-        exercises: workout.exercises.map(e => ({...e, video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined }))
+        exercises: workout.exercises.map(e => ({
+          ...e, 
+          video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
+        }))
       });
     }
   }, [workout, form, exercises]);
@@ -226,7 +231,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Descrição/Notas do Treino</FormLabel>
-                      <FormControl><Textarea placeholder="Notas opcionais para o treino" {...field} /></FormControl>
+                      <FormControl><Textarea placeholder="Notas opcionais para o treino" {...field} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -237,7 +242,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Plano de Dieta</FormLabel>
-                      <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} /></FormControl>
+                      <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
