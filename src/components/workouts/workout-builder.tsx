@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Student, Exercise } from "@/lib/definitions";
+import { Student, Exercise, Workout } from "@/lib/definitions";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 
@@ -38,7 +39,7 @@ const workoutSchema = z.object({
   diet_plan: z.string().optional(),
   exercises: z.array(
     z.object({
-      exercise_id: z.string(),
+      exercise_id: z.string().optional(), // Becomes optional as we might have just the name
       name: z.string(),
       sets: z.string().optional(),
       reps: z.string().optional(),
@@ -51,14 +52,15 @@ const workoutSchema = z.object({
 type WorkoutBuilderProps = {
   students: Pick<Student, 'id' | 'name'>[];
   exercises: Exercise[];
+  workout?: Workout;
 };
 
-export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderProps) {
+export default function WorkoutBuilder({ students, exercises, workout }: WorkoutBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof workoutSchema>>({
     resolver: zodResolver(workoutSchema),
-    defaultValues: {
+    defaultValues: workout || {
       name: "",
       student_id: "",
       description: "",
@@ -67,6 +69,14 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
     },
   });
 
+  const isEditMode = !!workout;
+
+  useEffect(() => {
+    if (workout) {
+      form.reset(workout);
+    }
+  }, [workout, form]);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "exercises",
@@ -74,25 +84,37 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
 
   const onSubmit = async (values: z.infer<typeof workoutSchema>) => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    
+    let error;
 
-    const { data: trainer } = await supabase
-      .from("trainers")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-      
-    if (!trainer) return;
+    if (isEditMode) {
+      const { error: updateError } = await supabase
+        .from("workouts")
+        .update(values)
+        .eq("id", workout.id);
+      error = updateError;
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+  
+      const { data: trainer } = await supabase
+        .from("trainers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+        
+      if (!trainer) return;
 
-    const { error } = await supabase.from("workouts").insert([
-      { ...values, trainer_id: trainer.id }
-    ]);
+      const { error: insertError } = await supabase.from("workouts").insert([
+        { ...values, trainer_id: trainer.id }
+      ]);
+      error = insertError;
+    }
     
     if (error) {
-      toast({ title: "Erro ao criar treino", description: error.message, variant: "destructive" });
+      toast({ title: `Erro ao ${isEditMode ? 'atualizar' : 'criar'} treino`, description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Sucesso!", description: "Plano de treino criado com sucesso." });
+      toast({ title: "Sucesso!", description: `Plano de treino ${isEditMode ? 'atualizado' : 'criado'} com sucesso.` });
       router.push("/workouts");
       router.refresh();
     }
@@ -146,7 +168,7 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Atribuir ao Aluno</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {students.map((student) => (
@@ -234,7 +256,10 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
         
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-            <Button type="submit" className="ripple">Criar Plano de Treino</Button>
+            <Button type="submit" disabled={form.formState.isSubmitting} className="ripple">
+                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditMode ? 'Salvar Alterações' : 'Criar Plano de Treino'}
+            </Button>
         </div>
       </form>
     </Form>

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Printer, Utensils } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Printer, Utensils, Edit } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
@@ -44,10 +44,18 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                         Voltar para Treinos
                     </Link>
                 </Button>
-                 <Button variant="outline">
-                    <Printer className="mr-2 h-4 w-4" />
-                    Imprimir
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline">
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir
+                    </Button>
+                    <Button asChild className="ripple">
+                        <Link href={`/workouts/${workout.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                        </Link>
+                    </Button>
+                </div>
             </div>
             <Card>
                 <CardHeader>
