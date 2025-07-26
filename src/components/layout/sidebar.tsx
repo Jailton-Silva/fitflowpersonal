@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, Users, Calendar, Menu } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Calendar, Menu, Sprout } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/students", label: "Alunos", icon: Users },
   { href: "/workouts", label: "Treinos", icon: Dumbbell },
   { href: "/schedule", label: "Agenda", icon: Calendar },
+  { href: "/exercises", label: "Exercícios", icon: Sprout },
 ];
 
 function NavContent() {
