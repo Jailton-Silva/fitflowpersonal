@@ -12,13 +12,9 @@ async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
     const { data, error } = await supabase
         .from('workouts')
-        .select(`
-            *,
-            students (
-                id,
-                name
-            )
-        `)
+        .select(
+            '*, students(id, name)'
+        )
         .eq('id', workoutId)
         .single();
 
@@ -78,7 +74,7 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                 </CardHeader>
                 <CardContent>
                     {workout.description && (
-                        <div className="prose prose-sm max-w-none text-muted-foreground mb-6">
+                        <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
                            <p>{workout.description}</p>
                         </div>
                     )}

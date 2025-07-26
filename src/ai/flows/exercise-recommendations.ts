@@ -51,6 +51,8 @@ const prompt = ai.definePrompt({
   Além disso, crie um plano de dieta sugerido.
   Explique por que os exercícios são recomendados, com base nos dados fornecidos.
 
+  IMPORTANTE: A sua resposta deve ser em texto plano (plain text). NÃO use Markdown, HTML, ou qualquer outra linguagem de marcação. Por exemplo, em vez de usar '**Café da manhã:**', use 'Café da manhã:'.
+
   Perfil do Aluno: {{{studentProfile}}}
   Histórico de Treinos: {{{workoutHistory}}}
   Preferências do Treinador: {{{trainerPreferences}}}
