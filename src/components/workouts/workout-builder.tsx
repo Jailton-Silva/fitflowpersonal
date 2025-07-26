@@ -51,6 +51,8 @@ const workoutSchema = z.object({
   ),
 });
 
+type WorkoutFormData = z.infer<typeof workoutSchema>;
+
 type WorkoutBuilderProps = {
   students: Pick<Student, 'id' | 'name'>[];
   exercises: Exercise[];
@@ -60,7 +62,7 @@ type WorkoutBuilderProps = {
 export default function WorkoutBuilder({ students, exercises, workout }: WorkoutBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof workoutSchema>>({
+  const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
     defaultValues: workout ? 
     {
@@ -92,7 +94,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     name: "exercises",
   });
 
-  const onSubmit = async (values: z.infer<typeof workoutSchema>>) => {
+  const onSubmit = async (values: WorkoutFormData) => {
     const supabase = createClient();
     
     let error;
