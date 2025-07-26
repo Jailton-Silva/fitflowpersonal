@@ -5,7 +5,27 @@ import { createClient } from "@/lib/supabase/server";
 
 async function getAppointments() {
     const supabase = createClient();
-    const { data, error } = await supabase.from('appointments').select('*, students(name)');
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return [];
+    }
+    
+    const { data: trainer } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (!trainer) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('appointments')
+        .select('*, students(name)')
+        .eq('trainer_id', trainer.id);
+
     if (error) {
         console.error("Error fetching appointments:", error);
         return [];
