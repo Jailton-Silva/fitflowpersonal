@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, CalendarIcon, Phone } from "lucide-react";
 import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Workout } from "@/lib/definitions";
 
 async function getStudentData(studentId: string) {
     const supabase = createClient();
@@ -20,9 +23,25 @@ async function getStudentData(studentId: string) {
     return student;
 }
 
+async function getStudentWorkouts(studentId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from("workouts")
+        .select("*")
+        .eq("student_id", studentId)
+        .order("created_at", { ascending: false });
+    
+    if (error) {
+        console.error("Erro ao buscar treinos do aluno:", error);
+        return [];
+    }
+    return data;
+}
+
 
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
     const student = await getStudentData(params.id);
+    const workouts = await getStudentWorkouts(params.id);
 
     if (!student) {
         notFound();
@@ -115,7 +134,23 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Treinos Recentes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-muted-foreground">Em breve: Lista de treinos recentes aqui.</p>
+                       {workouts.length > 0 ? (
+                           <ul className="space-y-3">
+                               {workouts.map((workout: Workout) => (
+                                   <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                       <div>
+                                           <p className="font-semibold">{workout.name}</p>
+                                           <p className="text-sm text-muted-foreground">{workout.exercises.length} exercícios</p>
+                                       </div>
+                                       <Button variant="outline" size="sm" asChild>
+                                           <Link href={`/workouts/${workout.id}`}>Ver Plano</Link>
+                                       </Button>
+                                   </li>
+                               ))}
+                           </ul>
+                       ) : (
+                           <p className="text-muted-foreground">Nenhum treino recente encontrado.</p>
+                       )}
                     </CardContent>
                 </Card>
             </div>
