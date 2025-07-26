@@ -27,7 +27,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitButton } from "@/components/auth/submit-button";
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { message: string };
+}) {
 
   const signIn = async (formData: FormData) => {
     "use server";
@@ -42,7 +46,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      return redirect("/login?message=Could not authenticate user");
+      return redirect("/login?message=Não foi possível autenticar o usuário");
     }
 
     return redirect("/dashboard");
@@ -55,12 +59,17 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
              <Dumbbell className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl text-center font-headline">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl text-center font-headline">Bem-vindo de Volta</CardTitle>
           <CardDescription className="text-center">
-            Enter your email below to login to your account
+            Digite seu e-mail abaixo para fazer login em sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {searchParams?.message && (
+            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md">
+              {searchParams.message}
+            </div>
+          )}
           <form className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -68,18 +77,18 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="m@exemplo.com"
                 required
               />
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <Link
                   href="#"
                   className="ml-auto inline-block text-sm underline"
                 >
-                  Forgot your password?
+                  Esqueceu sua senha?
                 </Link>
               </div>
               <Input id="password" name="password" type="password" required />
@@ -92,9 +101,9 @@ export default function LoginPage() {
             </SubmitButton>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Não tem uma conta?{" "}
             <Link href="/signup" className="underline">
-              Sign up
+              Cadastre-se
             </Link>
           </div>
         </CardContent>

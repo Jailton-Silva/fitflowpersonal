@@ -10,9 +10,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/students", label: "Students", icon: Users },
-  { href: "/workouts", label: "Workouts", icon: Dumbbell },
-  { href: "/schedule", label: "Schedule", icon: Calendar },
+  { href: "/students", label: "Alunos", icon: Users },
+  { href: "/workouts", label: "Treinos", icon: Dumbbell },
+  { href: "/schedule", label: "Agenda", icon: Calendar },
 ];
 
 function NavContent() {
@@ -59,7 +59,7 @@ export function Sidebar() {
           <SheetTrigger asChild>
              <Button variant="outline" size="icon" className="shrink-0 md:hidden m-4">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Alternar menu de navegação</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">

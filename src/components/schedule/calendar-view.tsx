@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { format, startOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
+import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -28,7 +29,7 @@ export function CalendarView({ appointments }: { appointments: Appointment[] }) 
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold font-headline">{format(currentDate, "MMMM yyyy")}</h2>
+                <h2 className="text-xl font-semibold font-headline capitalize">{format(currentDate, "MMMM yyyy", { locale: ptBR })}</h2>
                 <div className="flex gap-2">
                     <Button variant="outline" size="icon" onClick={prevWeek}>
                         <ChevronLeft className="h-4 w-4" />
@@ -41,8 +42,8 @@ export function CalendarView({ appointments }: { appointments: Appointment[] }) 
             <div className="grid grid-cols-7 gap-2">
                 {week.map((day) => (
                     <div key={day.toString()} className="border rounded-lg p-2 bg-background">
-                        <h3 className="text-center font-semibold text-sm">
-                            {format(day, "EEE")}
+                        <h3 className="text-center font-semibold text-sm capitalize">
+                            {format(day, "EEE", { locale: ptBR })}
                         </h3>
                         <p className={`text-center text-lg font-bold ${!isSameMonth(day, currentDate) && "text-muted-foreground"}`}>
                             {format(day, "d")}

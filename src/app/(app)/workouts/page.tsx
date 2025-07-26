@@ -19,7 +19,7 @@ async function getWorkouts() {
     .select("*, students(name)");
   
   if (error) {
-    console.error("Error fetching workouts:", error);
+    console.error("Erro ao buscar treinos:", error);
     return [];
   }
   return data;
@@ -31,11 +31,11 @@ export default async function WorkoutsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold font-headline">Workout Plans</h1>
+        <h1 className="text-3xl font-bold font-headline">Planos de Treino</h1>
         <Button asChild className="ripple">
           <Link href="/workouts/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Create Workout
+            Criar Treino
           </Link>
         </Button>
       </div>
@@ -46,34 +46,34 @@ export default async function WorkoutsPage() {
               <CardHeader>
                 <CardTitle>{workout.name}</CardTitle>
                 <CardDescription>
-                  For: {workout.students?.name ?? "N/A"}
+                  Para: {workout.students?.name ?? "N/A"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Dumbbell className="mr-2 h-4 w-4" />
                   <span>
-                    {workout.exercises.length} exercise
+                    {workout.exercises.length} exercício
                     {workout.exercises.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button variant="outline" className="w-full">View Plan</Button>
+                 <Button variant="outline" className="w-full">Ver Plano</Button>
               </CardFooter>
             </Card>
           ))}
         </div>
       ) : (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">No Workouts Yet</h2>
+          <h2 className="text-xl font-semibold">Nenhum Treino Ainda</h2>
           <p className="text-muted-foreground mt-2">
-            Get started by creating a new workout plan.
+            Comece criando um novo plano de treino.
           </p>
           <Button asChild className="mt-4 ripple">
             <Link href="/workouts/new">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Create Workout
+              Criar Treino
             </Link>
           </Button>
         </div>

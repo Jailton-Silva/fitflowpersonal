@@ -32,8 +32,8 @@ import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 
 const workoutSchema = z.object({
-  name: z.string().min(3, "Workout name is required"),
-  student_id: z.string().min(1, "Please select a student"),
+  name: z.string().min(3, "O nome do treino é obrigatório"),
+  student_id: z.string().min(1, "Por favor, selecione um aluno"),
   description: z.string().optional(),
   exercises: z.array(
     z.object({
@@ -88,9 +88,9 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
     ]);
     
     if (error) {
-      toast({ title: "Error creating workout", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao criar treino", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Success!", description: "Workout plan created successfully." });
+      toast({ title: "Sucesso!", description: "Plano de treino criado com sucesso." });
       router.push("/workouts");
       router.refresh();
     }
@@ -112,8 +112,8 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
      const exercisesToAdd = exercises.filter(e => names.includes(e.name.toLowerCase()));
      exercisesToAdd.forEach(addExercise);
      toast({
-       title: "AI Recommendations Added",
-       description: "Exercises have been added to the plan. Review and adjust details.",
+       title: "Recomendações da IA adicionadas",
+       description: "Os exercícios foram adicionados ao plano. Revise e ajuste os detalhes.",
      })
   }
 
@@ -124,7 +124,7 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
           <div className="md:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Plan Details</CardTitle>
+                <CardTitle>Detalhes do Plano</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -132,8 +132,8 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Workout Name</FormLabel>
-                      <FormControl><Input placeholder="e.g., Week 1 - Full Body" {...field} /></FormControl>
+                      <FormLabel>Nome do Treino</FormLabel>
+                      <FormControl><Input placeholder="Ex: Semana 1 - Corpo Inteiro" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -143,9 +143,9 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                   name="student_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assign to Student</FormLabel>
+                      <FormLabel>Atribuir ao Aluno</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {students.map((student) => (
                             <SelectItem key={student.id} value={student.id}>
@@ -163,8 +163,8 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl><Textarea placeholder="Optional notes for the workout" {...field} /></FormControl>
+                      <FormLabel>Descrição</FormLabel>
+                      <FormControl><Textarea placeholder="Notas opcionais para o treino" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -174,24 +174,24 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
 
             <Card>
               <CardHeader>
-                <CardTitle>Exercises</CardTitle>
+                <CardTitle>Exercícios</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
                     <h4 className="font-semibold">{field.name}</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <Input {...form.register(`exercises.${index}.sets`)} placeholder="Sets" />
+                        <Input {...form.register(`exercises.${index}.sets`)} placeholder="Séries" />
                         <Input {...form.register(`exercises.${index}.reps`)} placeholder="Reps" />
-                        <Input {...form.register(`exercises.${index}.load`)} placeholder="Load (kg)" />
-                        <Input {...form.register(`exercises.${index}.rest`)} placeholder="Rest (s)" />
+                        <Input {...form.register(`exercises.${index}.load`)} placeholder="Carga (kg)" />
+                        <Input {...form.register(`exercises.${index}.rest`)} placeholder="Descanso (s)" />
                     </div>
                      <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => remove(index)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
-                 {fields.length === 0 && <p className="text-muted-foreground text-center py-4">No exercises added yet.</p>}
+                 {fields.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhum exercício adicionado ainda.</p>}
               </CardContent>
             </Card>
           </div>
@@ -200,7 +200,7 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
              <AiAssistant onAddExercises={addRecommendedExercises} studentId={form.watch('student_id')} />
              <Card>
                 <CardHeader>
-                    <CardTitle>Exercise Library</CardTitle>
+                    <CardTitle>Biblioteca de Exercícios</CardTitle>
                 </CardHeader>
                 <CardContent className="max-h-96 overflow-y-auto">
                     <div className="space-y-2">
@@ -209,7 +209,7 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                                 <span>{exercise.name}</span>
                                 <Button type="button" size="sm" variant="outline" onClick={() => addExercise(exercise)}>
                                     <PlusCircle className="h-4 w-4 mr-2" />
-                                    Add
+                                    Adicionar
                                 </Button>
                             </div>
                         ))}
@@ -220,8 +220,8 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
         </div>
         
         <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit" className="ripple">Create Workout Plan</Button>
+            <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
+            <Button type="submit" className="ripple">Criar Plano de Treino</Button>
         </div>
       </form>
     </Form>

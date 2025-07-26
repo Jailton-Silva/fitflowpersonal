@@ -19,10 +19,10 @@ export default async function SchedulePage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold font-headline">Schedule</h1>
+                <h1 className="text-3xl font-bold font-headline">Agenda</h1>
                 <Button className="ripple">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    New Appointment
+                    Novo Agendamento
                 </Button>
             </div>
             <div className="rounded-md border bg-card p-4">

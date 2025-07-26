@@ -23,7 +23,7 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
     const handleGenerate = async () => {
         if (!studentId) {
             toast({
-                title: "Please select a student first",
+                title: "Por favor, selecione um aluno primeiro",
                 variant: "destructive"
             });
             return;
@@ -35,23 +35,23 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
             const {data: workouts, error: workoutError} = await supabase.from("workouts").select("name, exercises").eq("student_id", studentId);
             
             if(studentError || workoutError) {
-                throw new Error("Could not fetch student data");
+                throw new Error("Não foi possível buscar os dados do aluno");
             }
             
-            const studentProfile = `Goals: ${student.goals}. Medical Conditions: ${student.medical_conditions}`;
+            const studentProfile = `Objetivos: ${student.goals}. Condições Médicas: ${student.medical_conditions}`;
             const workoutHistory = workouts.map(w => `${w.name}: ${w.exercises.map(e => e.name).join(', ')}`).join('; ');
 
             const result = await getExerciseRecommendations({
-                studentProfile: studentProfile || "No profile provided.",
-                workoutHistory: workoutHistory || "No history provided.",
-                trainerPreferences: trainerPrefs || "No preferences provided.",
+                studentProfile: studentProfile || "Nenhum perfil fornecido.",
+                workoutHistory: workoutHistory || "Nenhum histórico fornecido.",
+                trainerPreferences: trainerPrefs || "Nenhuma preferência fornecida.",
             });
             onAddExercises(result);
         } catch (error) {
             console.error(error);
             toast({
-                title: "AI Assistant Error",
-                description: "Could not generate recommendations. Please try again.",
+                title: "Erro no Assistente de IA",
+                description: "Não foi possível gerar recomendações. Por favor, tente novamente.",
                 variant: "destructive"
             });
         } finally {
@@ -64,15 +64,15 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline">
                     <Sparkles className="text-primary" />
-                    AI Assistant
+                    Assistente IA
                 </CardTitle>
                 <CardDescription>
-                    Get smart exercise recommendations based on student data.
+                    Obtenha recomendações de exercícios inteligentes com base nos dados do aluno.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea 
-                    placeholder="Trainer Preferences (e.g., focus on compound lifts, avoid high-impact exercises)"
+                    placeholder="Preferências do treinador (ex: foco em levantamentos compostos, evitar exercícios de alto impacto)"
                     value={trainerPrefs}
                     onChange={(e) => setTrainerPrefs(e.target.value)}
                 />
@@ -82,7 +82,7 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
                     ) : (
                         <Sparkles className="mr-2 h-4 w-4" />
                     )}
-                    Generate Recommendations
+                    Gerar Recomendações
                 </Button>
             </CardContent>
         </Card>

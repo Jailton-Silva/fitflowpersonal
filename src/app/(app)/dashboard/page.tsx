@@ -25,40 +25,40 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">+2 since last month</p>
+            <p className="text-xs text-muted-foreground">+2 desde o mês passado</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Workouts</CardTitle>
+            <CardTitle className="text-sm font-medium">Treinos Ativos</CardTitle>
             <Dumbbell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeWorkouts}</div>
-            <p className="text-xs text-muted-foreground">Assigned to students</p>
+            <p className="text-xs text-muted-foreground">Atribuídos aos alunos</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Week's Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium">Consultas da Semana</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.weekAppointments}</div>
-            <p className="text-xs text-muted-foreground">+5 scheduled this week</p>
+            <p className="text-xs text-muted-foreground">+5 agendadas esta semana</p>
           </CardContent>
         </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Physical Evolution</CardTitle>
-            <CardDescription>Average student progress over the last 6 months.</CardDescription>
+            <CardTitle className="font-headline">Evolução Física</CardTitle>
+            <CardDescription>Progresso médio dos alunos nos últimos 6 meses.</CardDescription>
           </CardHeader>
           <CardContent>
             <ProgressChart />
@@ -66,8 +66,8 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Student Engagement</CardTitle>
-            <CardDescription>Workouts completed vs. scheduled.</CardDescription>
+            <CardTitle className="font-headline">Engajamento dos Alunos</CardTitle>
+            <CardDescription>Treinos concluídos vs. agendados.</CardDescription>
           </CardHeader>
           <CardContent>
             <EngagementChart />

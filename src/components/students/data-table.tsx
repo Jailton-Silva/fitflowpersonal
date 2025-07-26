@@ -1,4 +1,4 @@
-"use client";
+{"use client";
 
 import * as React from "react";
 import {
@@ -55,7 +55,7 @@ export function DataTable<TData, TValue>({
     <div className="rounded-md border bg-card">
       <div className="p-4">
         <Input
-          placeholder="Filter by name..."
+          placeholder="Filtrar por nome..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -99,7 +99,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Nenhum resultado.
               </TableCell>
             </TableRow>
           )}
@@ -112,7 +112,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          Anterior
         </Button>
         <Button
           variant="outline"
@@ -120,7 +120,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          Próximo
         </Button>
       </div>
     </div>

@@ -38,8 +38,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Invalid email address."),
+  name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
+  email: z.string().email("Endereço de e-mail inválido."),
   phone: z.string().optional(),
   birth_date: z.string().optional(),
   gender: z.enum(["masculino", "feminino", "outro"]).optional(),
@@ -88,8 +88,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
     
     if (trainerError || !trainer) {
         toast({
-            title: "Error",
-            description: "Could not find trainer profile.",
+            title: "Erro",
+            description: "Não foi possível encontrar o perfil do treinador.",
             variant: "destructive",
         });
         return;
@@ -101,14 +101,14 @@ export default function StudentForm({ children, student }: StudentFormProps) {
 
     if (error) {
       toast({
-        title: "Error",
-        description: `Failed to save student: ${error.message}`,
+        title: "Erro",
+        description: `Falha ao salvar aluno: ${error.message}`,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Success!",
-        description: `Student ${student ? 'updated' : 'created'} successfully.`,
+        title: "Sucesso!",
+        description: `Aluno ${student ? 'atualizado' : 'criado'} com sucesso.`,
       });
       setIsOpen(false);
       router.refresh();
@@ -120,11 +120,11 @@ export default function StudentForm({ children, student }: StudentFormProps) {
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{student ? "Edit Student" : "Add New Student"}</SheetTitle>
+          <SheetTitle>{student ? "Editar Aluno" : "Adicionar Novo Aluno"}</SheetTitle>
           <SheetDescription>
             {student
-              ? "Update the details for this student."
-              : "Fill out the form to add a new student to your list."}
+              ? "Atualize os detalhes deste aluno."
+              : "Preencha o formulário para adicionar um novo aluno à sua lista."}
           </SheetDescription>
         </SheetHeader>
         <Form {...form}>
@@ -134,7 +134,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
@@ -149,7 +149,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="student@example.com" {...field} />
+                    <Input placeholder="aluno@exemplo.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -164,12 +164,12 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -181,9 +181,9 @@ export default function StudentForm({ children, student }: StudentFormProps) {
               name="goals"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Goals</FormLabel>
+                  <FormLabel>Objetivos</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Lose 10kg, build muscle" {...field} />
+                    <Textarea placeholder="Ex: Perder 10kg, construir músculos" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -194,9 +194,9 @@ export default function StudentForm({ children, student }: StudentFormProps) {
               name="medical_conditions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medical Conditions</FormLabel>
+                  <FormLabel>Condições Médicas</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Asthma, previous knee injury" {...field} />
+                    <Textarea placeholder="Ex: Asma, lesão anterior no joelho" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -204,9 +204,9 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             />
             <SheetFooter>
                 <SheetClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline">Cancelar</Button>
                 </SheetClose>
-                <Button type="submit" className="ripple">Save changes</Button>
+                <Button type="submit" className="ripple">Salvar alterações</Button>
             </SheetFooter>
           </form>
         </Form>

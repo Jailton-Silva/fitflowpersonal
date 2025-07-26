@@ -17,7 +17,11 @@ import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/auth/submit-button";
 
 
-export default function SignupPage() {
+export default function SignupPage({
+  searchParams,
+}: {
+  searchParams: { message: string };
+}) {
   const signUp = async (formData: FormData) => {
     "use server";
 
@@ -38,10 +42,10 @@ export default function SignupPage() {
     });
 
     if (error) {
-      return redirect("/signup?message=Could not authenticate user");
+      return redirect("/signup?message=Não foi possível autenticar o usuário");
     }
 
-    return redirect("/signup?message=Check email to continue sign in process");
+    return redirect("/signup?message=Verifique seu e-mail para continuar o processo de cadastro");
   };
 
   return (
@@ -51,15 +55,20 @@ export default function SignupPage() {
            <div className="flex justify-center mb-4">
              <Dumbbell className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl text-center font-headline">Create an Account</CardTitle>
+          <CardTitle className="text-2xl text-center font-headline">Crie sua Conta</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started with FitFlow
+            Insira suas informações para começar a usar o FitFlow
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {searchParams?.message && (
+            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md">
+              {searchParams.message}
+            </div>
+          )}
           <form className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Nome Completo</Label>
               <Input id="name" name="name" placeholder="John Doe" required />
             </div>
             <div className="grid gap-2">
@@ -68,23 +77,23 @@ export default function SignupPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="m@exemplo.com"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input id="password" name="password" type="password" required />
             </div>
              <SubmitButton
               formAction={signUp}
               className="w-full ripple"
             >
-              Sign Up
+              Cadastrar
             </SubmitButton>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            Já tem uma conta?{" "}
             <Link href="/login" className="underline">
               Login
             </Link>

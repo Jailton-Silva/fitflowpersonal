@@ -29,7 +29,7 @@ export async function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full">
             <CircleUser className="h-5 w-5" />
-            <span className="sr-only">Toggle user menu</span>
+            <span className="sr-only">Menu do usuário</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -37,14 +37,14 @@ export async function Header() {
           <DropdownMenuSeparator />
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <span>Configurações</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <form action={signOut}>
             <button type="submit" className="w-full">
               <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+                  <span>Sair</span>
               </DropdownMenuItem>
             </button>
           </form>

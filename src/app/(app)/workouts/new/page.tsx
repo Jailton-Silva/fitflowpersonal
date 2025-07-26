@@ -9,10 +9,10 @@ async function getStudentsAndExercises() {
     const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
 
     if (studentsResult.error) {
-        console.error("Error fetching students", studentsResult.error);
+        console.error("Erro ao buscar alunos", studentsResult.error);
     }
     if (exercisesResult.error) {
-        console.error("Error fetching exercises", exercisesResult.error);
+        console.error("Erro ao buscar exercícios", exercisesResult.error);
     }
 
     return {
@@ -28,7 +28,7 @@ export default async function NewWorkoutPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold font-headline">Create New Workout</h1>
+        <h1 className="text-3xl font-bold font-headline">Criar Novo Treino</h1>
       </div>
       <WorkoutBuilder students={students} exercises={exercises} />
     </div>

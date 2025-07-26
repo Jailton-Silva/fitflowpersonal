@@ -24,7 +24,7 @@ export const columns: ColumnDef<Student>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Name
+          Nome
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -39,16 +39,17 @@ export const columns: ColumnDef<Student>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
+      const statusText = status === 'active' ? 'Ativo' : 'Inativo';
       return (
         <Badge variant={status === "active" ? "default" : "secondary"}>
-          {status}
+          {statusText}
         </Badge>
       );
     },
   },
   {
     accessorKey: "goals",
-    header: "Goals",
+    header: "Objetivos",
   },
   {
     id: "actions",
@@ -59,7 +60,7 @@ export const columns: ColumnDef<Student>[] = [
         <div className="text-right">
             <StudentForm student={student}>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">Abrir menu</span>
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
             </StudentForm>

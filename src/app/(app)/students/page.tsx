@@ -10,7 +10,7 @@ async function getStudents(): Promise<Student[]> {
   const supabase = createClient();
   const { data, error } = await supabase.from("students").select("*");
   if (error) {
-    console.error("Error fetching students:", error);
+    console.error("Erro ao buscar alunos:", error);
     return [];
   }
   return data as Student[];
@@ -22,11 +22,11 @@ export default async function StudentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold font-headline">Students</h1>
+        <h1 className="text-3xl font-bold font-headline">Alunos</h1>
         <StudentForm>
           <Button className="ripple">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Add Student
+            Adicionar Aluno
           </Button>
         </StudentForm>
       </div>

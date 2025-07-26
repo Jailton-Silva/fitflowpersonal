@@ -4,10 +4,10 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Responsive
 
 const data = [
   { month: "Jan", completed: 30, scheduled: 40 },
-  { month: "Feb", completed: 35, scheduled: 42 },
+  { month: "Fev", completed: 35, scheduled: 42 },
   { month: "Mar", completed: 40, scheduled: 45 },
-  { month: "Apr", completed: 42, scheduled: 48 },
-  { month: "May", completed: 48, scheduled: 50 },
+  { month: "Abr", completed: 42, scheduled: 48 },
+  { month: "Mai", completed: 48, scheduled: 50 },
   { month: "Jun", completed: 52, scheduled: 55 },
 ]
 
@@ -26,9 +26,9 @@ export default function EngagementChart() {
               borderRadius: "var(--radius)",
             }}
           />
-          <Legend />
-          <Bar dataKey="scheduled" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="completed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+          <Legend formatter={(value) => value === 'completed' ? 'Concluídos' : 'Agendados'}/>
+          <Bar dataKey="scheduled" name="Agendados" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
