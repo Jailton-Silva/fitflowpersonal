@@ -42,6 +42,7 @@ export type Exercise = {
 export type WorkoutExercise = {
   exercise_id: string;
   name: string;
+  video_url?: string; // Add video_url here for UI purposes
   sets?: string;
   reps?: string;
   load?: string;
@@ -55,12 +56,13 @@ export type Workout = {
   name: string;
   description?: string;
   diet_plan?: string;
-  exercises: WorkoutExercise[] | any[];
+  exercises: WorkoutExercise[];
   created_at: string;
   updated_at: string;
   students: {
     id: string;
     name: string;
+    avatar_url?: string;
   } | null;
 };
 

@@ -4,7 +4,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Printer, Edit, Utensils } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Printer, Edit, Utensils, Share2 } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { Workout } from "@/lib/definitions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
@@ -35,6 +36,7 @@ export default function WorkoutDetailPage() {
     const workoutId = params.id as string;
     const [workout, setWorkout] = useState<Workout | null>(null);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (workoutId) {
@@ -80,8 +82,13 @@ export default function WorkoutDetailPage() {
         notFound();
     }
 
-    const handlePrint = () => {
-        window.print();
+    const handleShare = () => {
+        const url = `${window.location.origin}/public/workout/${workout.id}`;
+        navigator.clipboard.writeText(url);
+        toast({
+            title: "Link Copiado!",
+            description: "O link de compartilhamento do treino foi copiado para a área de transferência.",
+        });
     }
 
     return (
@@ -94,9 +101,9 @@ export default function WorkoutDetailPage() {
                     </Link>
                 </Button>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handlePrint}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir
+                    <Button variant="outline" onClick={handleShare}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Compartilhar
                     </Button>
                     <Button asChild className="ripple">
                         <Link href={`/workouts/${workout.id}/edit`}>
@@ -169,6 +176,13 @@ export default function WorkoutDetailPage() {
                                             <p>{exercise.rest ? `${exercise.rest} s` : '-'}</p>
                                         </div>
                                     </div>
+                                    {exercise.video_url && (
+                                        <div className="mt-4">
+                                            <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                                                Ver vídeo de execução
+                                            </a>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         ))}

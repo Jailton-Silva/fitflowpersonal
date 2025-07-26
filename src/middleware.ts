@@ -60,12 +60,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!session && (pathname.startsWith("/dashboard") || pathname.startsWith("/students") || pathname.startsWith("/workouts") || pathname.startsWith("/schedule"))) {
+  // Protect authenticated routes
+  const protectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises"];
+  if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
     const url = new URL("/login", request.url);
     url.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(url);
   }
 
+  // Redirect authenticated users from login/signup
   if (session && (pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -74,5 +77,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/students/:path*", "/workouts/:path*", "/schedule/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/students/:path*", "/workouts/:path*", "/schedule/:path*", "/exercises/:path*", "/login", "/signup"],
 };

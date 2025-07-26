@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, Video } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
@@ -43,6 +43,7 @@ const workoutSchema = z.object({
     z.object({
       exercise_id: z.string().optional(), // Becomes optional as we might have just the name
       name: z.string(),
+      video_url: z.string().optional(),
       sets: z.string().optional(),
       reps: z.string().optional(),
       load: z.string().optional(),
@@ -85,9 +86,10 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
       form.reset({
         ...workout,
         diet_plan: workout.diet_plan ?? "",
+        exercises: workout.exercises.map(e => ({...e, video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined }))
       });
     }
-  }, [workout, form]);
+  }, [workout, form, exercises]);
 
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
@@ -99,9 +101,11 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     
     let error;
     
+    // Remove video_url from submission data as it's not a DB field
     const submissionData = {
         ...values,
         diet_plan: values.diet_plan || null,
+        exercises: values.exercises.map(({ video_url, ...rest}) => rest),
     };
 
     if (isEditMode) {
@@ -141,6 +145,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     append({
       exercise_id: exercise.id,
       name: exercise.name,
+      video_url: exercise.video_url,
       sets: "",
       reps: "",
       load: "",
@@ -156,6 +161,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
         .map(e => ({
             exercise_id: e.id,
             name: e.name,
+            video_url: e.video_url,
             sets: "3", // Default values, can be adjusted
             reps: "12",
             load: "",
@@ -247,7 +253,14 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
               <CardContent className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
-                    <h4 className="font-semibold">{field.name}</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-semibold">{field.name}</h4>
+                      {field.video_url && (
+                          <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                            <Video className="h-4 w-4"/> Ver vídeo
+                          </a>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <Input {...form.register(`exercises.${index}.sets`)} placeholder="Séries" />
                         <Input {...form.register(`exercises.${index}.reps`)} placeholder="Reps" />
