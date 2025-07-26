@@ -126,7 +126,13 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         return;
     }
 
-    const submissionData = { ...values, trainer_id: trainer.id };
+    const submissionData: any = { 
+        ...values, 
+        trainer_id: trainer.id,
+        birth_date: values.birth_date || null,
+        phone: values.phone || null,
+        gender: values.gender || null,
+    };
 
     const { error } = student
       ? await supabase.from("students").update(submissionData).eq("id", student.id)
@@ -189,6 +195,56 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="(99) 99999-9999" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="birth_date"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Data de Nascimento</FormLabel>
+                    <FormControl>
+                        <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Gênero</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="masculino">Masculino</SelectItem>
+                            <SelectItem value="feminino">Feminino</SelectItem>
+                            <SelectItem value="outro">Outro</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            </div>
              <FormField
               control={form.control}
               name="status"
