@@ -33,7 +33,6 @@ import { PlusCircle, Trash2, Loader2, Video } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
-import Link from "next/link";
 
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
@@ -269,16 +268,21 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
               </CardHeader>
               <CardContent className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold">{field.name}</h4>
-                      {field.video_url && (
-                        <Button asChild variant="outline" size="sm">
-                          <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm">
-                            <Video className="h-4 w-4"/> Ver vídeo
-                          </a>
+                  <div key={field.id} className="p-4 border rounded-lg space-y-2">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-semibold flex-1 pr-2">{field.name}</h4>
+                      <div className="flex items-center gap-2">
+                        {field.video_url && (
+                          <Button asChild variant="outline" size="sm">
+                            <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm">
+                              <Video className="h-4 w-4"/> Ver vídeo
+                            </a>
+                          </Button>
+                        )}
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
-                      )}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <Input {...form.register(`exercises.${index}.sets`)} placeholder="Séries" />
@@ -286,9 +290,6 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                         <Input {...form.register(`exercises.${index}.load`)} placeholder="Carga (kg)" />
                         <Input {...form.register(`exercises.${index}.rest`)} placeholder="Descanso (s)" />
                     </div>
-                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => remove(index)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
                   </div>
                 ))}
                  {fields.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhum exercício adicionado ainda.</p>}

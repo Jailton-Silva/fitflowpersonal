@@ -4,7 +4,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Printer, Edit, Utensils, Share2, Video } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Edit, Utensils, Share2, Video } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
