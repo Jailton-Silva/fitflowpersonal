@@ -51,7 +51,7 @@ async function getStudentMeasurements(studentId: string) {
         .order('created_at', { ascending: false });
     
     if (error) {
-        console.error("Erro ao buscar medições do aluno. Verifique se a tabela 'measurements' existe.", error);
+        console.error("Erro ao buscar medições do aluno:", error);
         return [];
     }
     return data;
@@ -126,7 +126,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </div>
                         <div className="flex items-center">
                             <Weight className="mr-2 h-4 w-4 text-muted-foreground"/>
-                            <strong>Peso:</strong>
+                            <strong>Peso Atual:</strong>
                             <span className="ml-2">{student.weight ? `${student.weight} kg` : 'N/A'}</span>
                         </div>
                     </CardContent>
@@ -141,7 +141,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg font-headline flex items-center"><Shield className="mr-2"/> Saúde</CardTitle>
+                        <CardTitle className="text-lg font-headline flex items-center"><Shield className="mr-2"/> Obs. Saúde</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm">{student.medical_conditions || "Nenhuma condição médica informada."}</p>
@@ -193,7 +193,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                     <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <ProgressChart />
+                   <ProgressChart measurements={measurements} />
                 </CardContent>
             </Card>
 

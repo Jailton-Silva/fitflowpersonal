@@ -3,12 +3,12 @@
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 const data = [
-  { name: "Jan", weight: 85, bodyFat: 22 },
-  { name: "Fev", weight: 84, bodyFat: 21 },
-  { name: "Mar", weight: 82, bodyFat: 20 },
-  { name: "Abr", weight: 81, bodyFat: 19 },
-  { name: "Mai", weight: 80, bodyFat: 18.5 },
-  { name: "Jun", weight: 79, bodyFat: 17.8 },
+  { name: "Jan", weight: 85, body_fat: 22 },
+  { name: "Fev", weight: 84, body_fat: 21 },
+  { name: "Mar", weight: 82, body_fat: 20 },
+  { name: "Abr", weight: 81, body_fat: 19 },
+  { name: "Mai", weight: 80, body_fat: 18.5 },
+  { name: "Jun", weight: 79, body_fat: 17.8 },
 ]
 
 export default function ProgressChart({measurements}: {measurements?: any[]}) {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,6 +46,8 @@ const formSchema = z.object({
   birth_date: z.string().optional(),
   gender: z.enum(["masculino", "feminino", "outro"]).optional(),
   status: z.enum(["active", "inactive"]),
+  height: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().positive("A altura deve ser um número positivo.").optional()),
+  weight: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().positive("O peso deve ser um número positivo.").optional()),
   goals: z.string().optional(),
   medical_conditions: z.string().optional(),
 });
@@ -69,6 +72,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
       birth_date: "",
       gender: undefined,
       status: "active",
+      height: undefined,
+      weight: undefined,
       goals: "",
       medical_conditions: "",
     },
@@ -83,6 +88,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             birth_date: student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : "",
             gender: student.gender,
             status: student.status ?? "active",
+            height: student.height ?? undefined,
+            weight: student.weight ?? undefined,
             goals: student.goals ?? "",
             medical_conditions: student.medical_conditions ?? "",
         });
@@ -94,6 +101,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             birth_date: "",
             gender: undefined,
             status: "active",
+            height: undefined,
+            weight: undefined,
             goals: "",
             medical_conditions: "",
         });
@@ -132,6 +141,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         birth_date: values.birth_date || null,
         phone: values.phone || null,
         gender: values.gender || null,
+        height: values.height || null,
+        weight: values.weight || null,
     };
 
     const { error } = student
@@ -202,7 +213,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input placeholder="(99) 99999-9999" {...field} />
+                    <Input placeholder="(99) 99999-9999" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -216,7 +227,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                     <FormItem>
                     <FormLabel>Data de Nascimento</FormLabel>
                     <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -244,6 +255,34 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                         </FormItem>
                     )}
                     />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+               <FormField
+                  control={form.control}
+                  name="height"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Altura (cm)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="175" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Peso (kg)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="80.5" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
              <FormField
               control={form.control}
@@ -273,7 +312,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 <FormItem>
                   <FormLabel>Objetivos</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Ex: Perder 10kg, construir músculos" {...field} />
+                    <Textarea placeholder="Ex: Perder 10kg, construir músculos" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -284,9 +323,9 @@ export default function StudentForm({ children, student }: StudentFormProps) {
               name="medical_conditions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Condições Médicas</FormLabel>
+                  <FormLabel>Obs. Saúde</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Ex: Asma, lesão anterior no joelho" {...field} />
+                    <Textarea placeholder="Ex: Asma, lesão anterior no joelho" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
