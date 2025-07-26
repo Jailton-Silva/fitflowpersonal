@@ -57,6 +57,7 @@ export type Workout = {
   description?: string;
   diet_plan?: string;
   exercises: WorkoutExercise[];
+  access_password?: string | null;
   created_at: string;
   updated_at: string;
   students: {

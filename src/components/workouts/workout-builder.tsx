@@ -39,6 +39,7 @@ const workoutSchema = z.object({
   student_id: z.string().min(1, "Por favor, selecione um aluno"),
   description: z.string().optional(),
   diet_plan: z.string().optional(),
+  access_password: z.string().optional(),
   exercises: z.array(
     z.object({
       exercise_id: z.string().optional(), // Becomes optional as we might have just the name
@@ -65,16 +66,12 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
   const { toast } = useToast();
   const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
-    defaultValues: workout ? 
-    {
-      ...workout,
-      diet_plan: workout.diet_plan ?? "",
-    }
-    : {
+    defaultValues: {
       name: "",
       student_id: "",
       description: "",
       diet_plan: "",
+      access_password: "",
       exercises: [],
     },
   });
@@ -86,6 +83,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
       form.reset({
         ...workout,
         diet_plan: workout.diet_plan ?? "",
+        access_password: workout.access_password ?? "",
         exercises: workout.exercises.map(e => ({...e, video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined }))
       });
     }
@@ -105,6 +103,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     const submissionData = {
         ...values,
         diet_plan: values.diet_plan || null,
+        access_password: values.access_password || null,
         exercises: values.exercises.map(({ video_url, ...rest}) => rest),
     };
 
@@ -239,6 +238,18 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                     <FormItem>
                       <FormLabel>Plano de Dieta</FormLabel>
                       <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="access_password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha de Acesso (Opcional)</FormLabel>
+                      <FormControl><Input type="password" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} /></FormControl>
+                       <FormDescription>Se preenchida, o aluno precisará desta senha para ver o treino.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
