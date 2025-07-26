@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,6 +30,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Measurement } from "@/lib/definitions";
 
 const formSchema = z.object({
   weight: z.preprocess((val) => Number(val), z.number().positive("O peso deve ser um número positivo.")),
@@ -41,13 +42,15 @@ const formSchema = z.object({
 type MeasurementFormProps = {
   children: React.ReactNode;
   studentId: string;
+  measurement?: Measurement;
 };
 
-export default function MeasurementForm({ children, studentId }: MeasurementFormProps) {
+export default function MeasurementForm({ children, studentId, measurement }: MeasurementFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const isEditMode = !!measurement;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,6 +62,25 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
     },
   });
 
+  useEffect(() => {
+    if (isOpen && measurement) {
+      form.reset({
+        weight: measurement.weight,
+        height: measurement.height,
+        body_fat: measurement.body_fat ?? undefined,
+        notes: measurement.notes ?? "",
+      });
+    } else if (isOpen && !measurement) {
+       form.reset({
+            weight: 0,
+            height: 0,
+            body_fat: undefined,
+            notes: "",
+        });
+    }
+  }, [isOpen, measurement, form]);
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     const supabase = createClient();
@@ -69,23 +91,25 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
         body_fat: values.body_fat || null,
         notes: values.notes || null,
     };
+    
+    const { error } = isEditMode 
+      ? await supabase.from("measurements").update(submissionData).eq("id", measurement.id)
+      : await supabase.from("measurements").insert([submissionData]);
 
-    const { error } = await supabase.from("measurements").insert([submissionData]);
 
     if (error) {
       toast({
-        title: "Erro ao salvar avaliação",
-        description: "Verifique se a tabela 'measurements' foi criada corretamente no banco de dados. " + error.message,
+        title: `Erro ao salvar avaliação`,
+        description: "Verifique os dados e tente novamente. " + error.message,
         variant: "destructive",
       });
     } else {
       toast({
         title: "Sucesso!",
-        description: `Nova avaliação física registrada com sucesso.`,
+        description: `Avaliação física ${isEditMode ? 'atualizada' : 'registrada'} com sucesso.`,
       });
       setIsOpen(false);
-      form.reset();
-      router.refresh(); // Atualiza a página para mostrar a nova medição
+      router.refresh(); 
     }
     setIsSubmitting(false);
   };
@@ -95,9 +119,9 @@ export default function MeasurementForm({ children, studentId }: MeasurementForm
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Registrar Nova Avaliação Física</SheetTitle>
+          <SheetTitle>{isEditMode ? 'Editar Avaliação Física' : 'Registrar Nova Avaliação Física'}</SheetTitle>
           <SheetDescription>
-            Preencha os campos abaixo com as novas medidas do aluno.
+            {isEditMode ? 'Atualize as medidas desta avaliação.' : 'Preencha os campos abaixo com as novas medidas do aluno.'}
           </SheetDescription>
         </SheetHeader>
         <Form {...form}>

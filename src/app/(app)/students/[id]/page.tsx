@@ -160,7 +160,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </MeasurementForm>
                     </CardHeader>
                     <CardContent>
-                        <MeasurementsHistory measurements={measurements as any[]} />
+                        <MeasurementsHistory studentId={student.id} measurements={measurements as any[]} />
                     </CardContent>
                 </Card>
                  <Card>

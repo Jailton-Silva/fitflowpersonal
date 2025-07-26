@@ -1,3 +1,4 @@
+
 "use client";
 
 import { format } from "date-fns";
@@ -10,17 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Measurement } from "@/lib/definitions";
+import { Edit } from "lucide-react";
+import { Button } from "../ui/button";
+import MeasurementForm from "./measurement-form";
 
-type Measurement = {
-    id: string;
-    created_at: string;
-    weight: number;
-    height: number;
-    body_fat?: number;
-    notes?: string;
-}
-
-export default function MeasurementsHistory({ measurements }: { measurements: Measurement[] }) {
+export default function MeasurementsHistory({ studentId, measurements }: { studentId: string, measurements: Measurement[] }) {
   if (measurements.length === 0) {
     return <p className="text-muted-foreground text-center py-4">Nenhuma avaliação física registrada ainda.</p>;
   }
@@ -34,6 +30,7 @@ export default function MeasurementsHistory({ measurements }: { measurements: Me
             <TableHead className="text-right">Peso</TableHead>
             <TableHead className="text-right">Altura</TableHead>
             <TableHead className="text-right">Gordura %</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
@@ -43,6 +40,13 @@ export default function MeasurementsHistory({ measurements }: { measurements: Me
                 <TableCell className="text-right">{m.weight} kg</TableCell>
                 <TableCell className="text-right">{m.height} cm</TableCell>
                 <TableCell className="text-right">{m.body_fat ? `${m.body_fat}%` : '-'}</TableCell>
+                <TableCell className="text-right">
+                    <MeasurementForm studentId={studentId} measurement={m}>
+                        <Button variant="ghost" size="icon">
+                           <Edit className="h-4 w-4" />
+                        </Button>
+                    </MeasurementForm>
+                </TableCell>
             </TableRow>
             ))}
         </TableBody>
