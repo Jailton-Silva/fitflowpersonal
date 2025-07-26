@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
+import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
 
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
@@ -145,13 +146,19 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
     });
   };
 
-  const addRecommendedExercises = (recommended: {exerciseRecommendations: string, explanation: string}) => {
+  const handleRecommendation = (recommended: ExerciseRecommendationsOutput) => {
      const names = recommended.exerciseRecommendations.split(',').map(e => e.trim().toLowerCase());
      const exercisesToAdd = exercises.filter(e => names.includes(e.name.toLowerCase()));
+     
+     // Remove existing exercises before adding new ones
+     remove();
      exercisesToAdd.forEach(addExercise);
+
+     form.setValue('diet_plan', recommended.dietPlan);
+
      toast({
        title: "Recomendações da IA adicionadas",
-       description: "Os exercícios foram adicionados ao plano. Revise e ajuste os detalhes.",
+       description: "Exercícios e plano de dieta foram adicionados. Revise e ajuste os detalhes.",
      })
   }
 
@@ -246,7 +253,7 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
           </div>
 
           <div className="space-y-6">
-             <AiAssistant onAddExercises={addRecommendedExercises} studentId={form.watch('student_id')} />
+             <AiAssistant onRecommendation={handleRecommendation} studentId={form.watch('student_id')} />
              <Card>
                 <CardHeader>
                     <CardTitle>Biblioteca de Exercícios</CardTitle>

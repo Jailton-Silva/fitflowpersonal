@@ -12,10 +12,10 @@ import { createClient } from "@/lib/supabase/client";
 
 type AiAssistantProps = {
     studentId: string;
-    onAddExercises: (recommendations: ExerciseRecommendationsOutput) => void;
+    onRecommendation: (recommendations: ExerciseRecommendationsOutput) => void;
 };
 
-export default function AiAssistant({ studentId, onAddExercises }: AiAssistantProps) {
+export default function AiAssistant({ studentId, onRecommendation }: AiAssistantProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [trainerPrefs, setTrainerPrefs] = useState("");
     const { toast } = useToast();
@@ -31,14 +31,14 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
         setIsLoading(true);
         try {
             const supabase = createClient();
-            const {data: student, error: studentError} = await supabase.from("students").select("goals, medical_conditions").eq("id", studentId).single();
+            const {data: student, error: studentError} = await supabase.from("students").select("goals, medical_conditions, weight, height").eq("id", studentId).single();
             const {data: workouts, error: workoutError} = await supabase.from("workouts").select("name, exercises").eq("student_id", studentId);
             
             if(studentError || workoutError) {
                 throw new Error("Não foi possível buscar os dados do aluno");
             }
             
-            const studentProfile = `Objetivos: ${student.goals}. Condições Médicas: ${student.medical_conditions}`;
+            const studentProfile = `Objetivos: ${student.goals}. Condições Médicas: ${student.medical_conditions}. Peso: ${student.weight}kg. Altura: ${student.height}cm.`;
             const workoutHistory = workouts.map(w => `${w.name}: ${w.exercises.map(e => e.name).join(', ')}`).join('; ');
 
             const result = await getExerciseRecommendations({
@@ -46,7 +46,7 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
                 workoutHistory: workoutHistory || "Nenhum histórico fornecido.",
                 trainerPreferences: trainerPrefs || "Nenhuma preferência fornecida.",
             });
-            onAddExercises(result);
+            onRecommendation(result);
         } catch (error) {
             console.error(error);
             toast({
@@ -67,12 +67,12 @@ export default function AiAssistant({ studentId, onAddExercises }: AiAssistantPr
                     Assistente IA
                 </CardTitle>
                 <CardDescription>
-                    Obtenha recomendações de exercícios inteligentes com base nos dados do aluno.
+                    Obtenha recomendações de exercícios e dieta com base nos dados do aluno.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea 
-                    placeholder="Preferências do treinador (ex: foco em levantamentos compostos, evitar exercícios de alto impacto)"
+                    placeholder="Preferências do treinador (ex: foco em levantamentos compostos, evitar exercícios de alto impacto, dieta low-carb)"
                     value={trainerPrefs}
                     onChange={(e) => setTrainerPrefs(e.target.value)}
                 />

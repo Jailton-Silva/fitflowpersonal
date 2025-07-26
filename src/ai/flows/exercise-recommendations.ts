@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Provides AI-powered exercise recommendations based on a student's profile and goals.
+ * @fileOverview Provides AI-powered exercise and diet recommendations based on a student's profile and goals.
  *
  * - getExerciseRecommendations - A function that handles the exercise recommendation process.
  * - ExerciseRecommendationsInput - The input type for the getExerciseRecommendations function.
@@ -27,10 +27,13 @@ export type ExerciseRecommendationsInput = z.infer<typeof ExerciseRecommendation
 const ExerciseRecommendationsOutputSchema = z.object({
   exerciseRecommendations: z
     .string()
-    .describe('A list of exercise recommendations tailored to the student profile and goals.'),
+    .describe('A list of exercise recommendations tailored to the student profile and goals, separated by commas.'),
   explanation: z
     .string()
     .describe('An explanation of why the exercises are recommended, based on the student profile, workout history, and trainer preferences.'),
+  dietPlan: z
+    .string()
+    .describe('A suggested diet plan based on the student profile and goals.'),
 });
 export type ExerciseRecommendationsOutput = z.infer<typeof ExerciseRecommendationsOutputSchema>;
 
@@ -42,17 +45,16 @@ const prompt = ai.definePrompt({
   name: 'exerciseRecommendationsPrompt',
   input: {schema: ExerciseRecommendationsInputSchema},
   output: {schema: ExerciseRecommendationsOutputSchema},
-  prompt: `You are an expert personal trainer specializing in exercise recommendations.
+  prompt: `You are an expert personal trainer and nutritionist specializing in exercise and diet recommendations.
 
   Given the following student profile, workout history, and trainer preferences, provide a list of exercise recommendations tailored to the student profile and goals.
+  Also, create a suggested diet plan based on the student's profile and goals.
   Explain why the exercises are recommended, based on the student profile, workout history, and trainer preferences.
 
   Student Profile: {{{studentProfile}}}
   Workout History: {{{workoutHistory}}}
   Trainer Preferences: {{{trainerPreferences}}}
-
-  Exercise Recommendations:
-  `, // Ensure that the prompt ends in `Exercise Recommendations:` so the AI includes that in its response, to fit the schema.
+  `,
 });
 
 const exerciseRecommendationsFlow = ai.defineFlow(
