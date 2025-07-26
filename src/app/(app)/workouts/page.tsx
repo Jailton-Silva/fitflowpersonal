@@ -42,14 +42,14 @@ export default async function WorkoutsPage() {
       {workouts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {workouts.map((workout: any) => (
-            <Card key={workout.id}>
+            <Card key={workout.id} className="flex flex-col">
               <CardHeader>
                 <CardTitle>{workout.name}</CardTitle>
                 <CardDescription>
                   Para: {workout.students?.name ?? "N/A"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Dumbbell className="mr-2 h-4 w-4" />
                   <span>
@@ -59,7 +59,9 @@ export default async function WorkoutsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button variant="outline" className="w-full">Ver Plano</Button>
+                 <Button variant="outline" className="w-full" asChild>
+                    <Link href={`/workouts/${workout.id}`}>Ver Plano</Link>
+                 </Button>
               </CardFooter>
             </Card>
           ))}
