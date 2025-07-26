@@ -4,7 +4,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Printer, Edit, Utensils, Share2 } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Printer, Edit, Utensils, Share2, Video } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { Workout } from "@/lib/definitions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
@@ -30,6 +31,26 @@ async function getWorkoutDetails(workoutId: string) {
     }
     return data;
 }
+
+const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
+    if (!videoUrl.includes('youtube.com/watch?v=')) {
+        return <p>URL do vídeo inválida.</p>
+    }
+    const videoId = videoUrl.split('v=')[1].split('&')[0];
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    return (
+        <iframe
+            width="100%"
+            height="315"
+            src={embedUrl}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+        ></iframe>
+    );
+};
+
 
 export default function WorkoutDetailPage() {
     const params = useParams();
@@ -153,9 +174,27 @@ export default function WorkoutDetailPage() {
                         {(workout.exercises as any[]).map((exercise, index) => (
                              <Card key={index} className="bg-muted/50">
                                 <CardHeader>
-                                    <CardTitle className="text-lg font-headline flex items-center gap-2">
-                                        {exercise.name}
-                                    </CardTitle>
+                                    <div className="flex justify-between items-center">
+                                        <CardTitle className="text-lg font-headline flex items-center gap-2">
+                                            {exercise.name}
+                                        </CardTitle>
+                                        {exercise.video_url && (
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                                        <Video className="h-4 w-4" />
+                                                        Ver Vídeo
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-3xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle>{exercise.name}</DialogTitle>
+                                                    </DialogHeader>
+                                                    <VideoPlayer videoUrl={exercise.video_url} />
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -176,13 +215,6 @@ export default function WorkoutDetailPage() {
                                             <p>{exercise.rest ? `${exercise.rest} s` : '-'}</p>
                                         </div>
                                     </div>
-                                    {exercise.video_url && (
-                                        <div className="mt-4">
-                                            <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
-                                                Ver vídeo de execução
-                                            </a>
-                                        </div>
-                                    )}
                                 </CardContent>
                             </Card>
                         ))}

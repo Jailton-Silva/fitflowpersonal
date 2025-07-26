@@ -33,6 +33,7 @@ import { PlusCircle, Trash2, Loader2, Video } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
+import Link from "next/link";
 
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
@@ -272,9 +273,11 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
                     <div className="flex justify-between items-center">
                       <h4 className="font-semibold">{field.name}</h4>
                       {field.video_url && (
-                          <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                        <Button asChild variant="outline" size="sm">
+                          <a href={field.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm">
                             <Video className="h-4 w-4"/> Ver vídeo
                           </a>
+                        </Button>
                       )}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
