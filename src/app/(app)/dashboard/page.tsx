@@ -90,16 +90,19 @@ export default async function DashboardPage({
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const from = searchParams.from ? format(new Date(searchParams.from), 'yyyy-MM-dd') : format(subDays(new Date(), 30), 'yyyy-MM-dd');
-  const to = searchParams.to ? format(new Date(searchParams.to), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+  const from = searchParams.from ? new Date(searchParams.from) : subDays(new Date(), 30);
+  const to = searchParams.to ? new Date(searchParams.to) : new Date();
 
-  const stats = await getDashboardStats(from, to);
+  const formattedFrom = format(from, 'yyyy-MM-dd');
+  const formattedTo = format(to, 'yyyy-MM-dd');
+
+  const stats = await getDashboardStats(formattedFrom, formattedTo);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
-        <DateRangeFilter />
+        <DateRangeFilter defaultFrom={from} defaultTo={to} />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format, subDays } from "date-fns"
+import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon } from "lucide-react"
@@ -16,19 +16,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+type DateRangeFilterProps = React.HTMLAttributes<HTMLDivElement> & {
+    defaultFrom: Date;
+    defaultTo: Date;
+}
+
 export function DateRangeFilter({
   className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+  defaultFrom,
+  defaultTo
+}: DateRangeFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-  
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: from ? new Date(from) : subDays(new Date(), 30),
-    to: to ? new Date(to) : new Date(),
+    from: defaultFrom,
+    to: defaultTo,
   })
 
   React.useEffect(() => {
