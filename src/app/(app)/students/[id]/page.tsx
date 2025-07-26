@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout } from "@/lib/definitions";
+import ProgressChart from "@/components/students/progress-chart";
 
 async function getStudentData(studentId: string) {
     const supabase = createClient();
@@ -126,7 +127,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Evolução Física</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Em breve: Gráficos de progresso aqui.</p>
+                       <ProgressChart />
                     </CardContent>
                 </Card>
                  <Card>
