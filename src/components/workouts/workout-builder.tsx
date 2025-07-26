@@ -35,6 +35,7 @@ const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
   student_id: z.string().min(1, "Por favor, selecione um aluno"),
   description: z.string().optional(),
+  diet_plan: z.string().optional(),
   exercises: z.array(
     z.object({
       exercise_id: z.string(),
@@ -61,6 +62,7 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
       name: "",
       student_id: "",
       description: "",
+      diet_plan: "",
       exercises: [],
     },
   });
@@ -163,8 +165,19 @@ export default function WorkoutBuilder({ students, exercises }: WorkoutBuilderPr
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>Descrição/Notas do Treino</FormLabel>
                       <FormControl><Textarea placeholder="Notas opcionais para o treino" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="diet_plan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Plano de Dieta</FormLabel>
+                      <FormControl><Textarea placeholder="Descreva as orientações da dieta. Ex: Café da manhã: Ovos mexidos. Almoço: Frango grelhado com salada." rows={5} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

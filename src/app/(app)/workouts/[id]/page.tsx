@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Printer } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Printer, Utensils } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
@@ -74,12 +74,20 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                            <p>{workout.description}</p>
                         </div>
                     )}
+                     {workout.diet_plan && (
+                        <div className="mb-6">
+                            <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Utensils className="h-5 w-5 text-primary" />Plano de Dieta</h3>
+                            <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                                <p>{workout.diet_plan}</p>
+                            </div>
+                        </div>
+                    )}
                     <div className="space-y-4">
+                        <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
                         {workout.exercises.map((exercise, index) => (
                              <Card key={index} className="bg-muted/50">
                                 <CardHeader>
                                     <CardTitle className="text-lg font-headline flex items-center gap-2">
-                                        <Dumbbell className="h-5 w-5 text-primary" />
                                         {exercise.name}
                                     </CardTitle>
                                 </CardHeader>
