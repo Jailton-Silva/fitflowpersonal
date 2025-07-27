@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon, X } from "lucide-react"
+import { CalendarIcon, Check, X } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "../ui/command"
+import { cn } from "@/lib/utils"
 
 type WorkoutFiltersProps = {
     students: Pick<Student, 'id' | 'name'>[];
@@ -83,15 +84,15 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
          router.push(pathname, { scroll: false });
     }
 
-    const hasActiveFilters = searchParams.has('student') || searchParams.has('from') || searchParams.has('to') || searchParams.has('exercises');
+    const hasActiveFilters = searchParams.has('student') || searchParams.has('from') || searchParams.has('to') || searchParams.getAll('exercises').length > 0;
 
     return (
-        <div className="flex flex-col sm:flex-row gap-2 p-4 border rounded-lg bg-card">
+        <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-card">
             <Select
                 onValueChange={handleStudentChange}
                 value={searchParams.get('student') ?? 'all'}
             >
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-auto sm:min-w-[200px] flex-1">
                     <SelectValue placeholder="Filtrar por aluno..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -107,7 +108,7 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
                 <Button
                     id="date"
                     variant={"outline"}
-                    className="w-full sm:w-[300px] justify-start text-left font-normal"
+                    className="w-full sm:w-auto sm:min-w-[240px] justify-start text-left font-normal flex-1"
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date?.from ? (
@@ -139,9 +140,9 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
 
              <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full sm:w-[250px] justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal flex-1">
                         Exercícios
-                        {selectedExercises.length > 0 && <Badge variant="secondary" className="ml-2">{selectedExercises.length}</Badge>}
+                        {selectedExercises.length > 0 && <Badge variant="secondary" className="ml-auto">{selectedExercises.length}</Badge>}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[250px] p-0" align="start">
@@ -163,8 +164,8 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
                                             }
                                         }}
                                      >
-                                         <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"}`}>
-                                           <X className="h-4 w-4" />
+                                         <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                           <Check className="h-4 w-4" />
                                          </div>
                                          <span>{exercise.name}</span>
                                      </CommandItem>

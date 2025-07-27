@@ -25,7 +25,7 @@ export default async function ExercisesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold font-headline">Biblioteca de Exercícios</h1>
         <ExerciseForm>
           <Button className="ripple">

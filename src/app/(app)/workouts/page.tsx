@@ -89,7 +89,7 @@ export default async function WorkoutsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold font-headline">Planos de Treino</h1>
         <Button asChild className="ripple">
           <Link href="/workouts/new">

@@ -44,24 +44,26 @@ export function MonthView({ appointments, students }: { appointments: Appointmen
 
   const renderHeader = () => {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <h2 className="text-xl font-semibold font-headline capitalize">
           {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-         <AppointmentForm students={students}>
-            <Button className="ripple flex-1 sm:flex-none">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Novo Agendamento
+        <div className='flex items-center gap-2'>
+            <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                <ChevronLeft className="h-4 w-4" />
             </Button>
-        </AppointmentForm>
+            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                <ChevronRight className="h-4 w-4" />
+            </Button>
+            </div>
+            <AppointmentForm students={students}>
+                <Button className="ripple flex-1 sm:flex-none">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Agendar
+                </Button>
+            </AppointmentForm>
+        </div>
       </div>
     );
   };
@@ -71,7 +73,7 @@ export function MonthView({ appointments, students }: { appointments: Appointmen
     const date = startOfWeek(currentMonth, { weekStartsOn: 1 });
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div className="text-center font-semibold text-sm capitalize text-muted-foreground" key={i}>
+        <div className="text-center font-semibold text-xs sm:text-sm capitalize text-muted-foreground" key={i}>
           {format(addDays(date, i), 'EEE', { locale: ptBR })}
         </div>
       );

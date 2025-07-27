@@ -70,17 +70,17 @@ export default async function SchedulePage({
                 <ScheduleFilters students={students} />
             </div>
             <Tabs defaultValue={searchParams.view || "month"} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-sm">
+                <TabsList className="grid w-full grid-cols-2 max-w-[200px] sm:max-w-sm">
                     <TabsTrigger value="month">Mês</TabsTrigger>
                     <TabsTrigger value="week">Semana</TabsTrigger>
                 </TabsList>
                 <TabsContent value="month">
-                    <div className="rounded-md border bg-card p-4">
+                    <div className="rounded-md border bg-card p-2 sm:p-4">
                         <MonthView appointments={appointments} students={students} />
                     </div>
                 </TabsContent>
                 <TabsContent value="week">
-                    <div className="rounded-md border bg-card p-4">
+                    <div className="rounded-md border bg-card p-2 sm:p-4">
                         <WeekView appointments={appointments} students={students} />
                     </div>
                 </TabsContent>

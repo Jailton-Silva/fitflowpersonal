@@ -53,24 +53,26 @@ export function WeekView({ appointments, students }: { appointments: Appointment
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <h2 className="text-xl font-semibold font-headline capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
         </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={prevWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={nextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className='flex items-center gap-2'>
+            <div className="flex gap-2">
+                <Button variant="outline" size="icon" onClick={prevWeek}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={nextWeek}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
+            <AppointmentForm students={students}>
+                <Button className="ripple flex-1 sm:flex-none">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                     Agendar
+                </Button>
+            </AppointmentForm>
         </div>
-        <AppointmentForm students={students}>
-            <Button className="ripple flex-1 sm:flex-none">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Novo Agendamento
-            </Button>
-        </AppointmentForm>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
         {week.map((day) => (
