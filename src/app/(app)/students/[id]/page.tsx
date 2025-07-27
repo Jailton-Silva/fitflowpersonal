@@ -2,16 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, Calendar as CalendarIcon, Phone, Edit, PlusCircle } from "lucide-react";
+import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, Calendar as CalendarIcon, Phone, Edit, PlusCircle, History } from "lucide-react";
 import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Workout, Measurement } from "@/lib/definitions";
+import { Workout, Measurement, WorkoutSession } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
 import StudentForm from "@/components/students/student-form";
 import MeasurementForm from "@/components/students/measurement-form";
 import MeasurementsHistory from "@/components/students/measurements-history";
+import SessionsHistory from "@/components/students/sessions-history";
 
 async function getStudentData(studentId: string) {
     const supabase = createClient();
@@ -57,15 +58,34 @@ async function getStudentMeasurements(studentId: string) {
     return data;
 }
 
+async function getStudentWorkoutSessions(studentId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('workout_sessions')
+        .select(`
+            *,
+            workouts ( name )
+        `)
+        .eq('student_id', studentId)
+        .order('started_at', { ascending: false });
+
+    if (error) {
+        console.error("Erro ao buscar sessões de treino do aluno:", error);
+        return [];
+    }
+    return data;
+}
+
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
     const student = await getStudentData(params.id);
     if (!student) {
         notFound();
     }
     
-    const [workouts, measurements] = await Promise.all([
+    const [workouts, measurements, sessions] = await Promise.all([
         getStudentWorkouts(params.id),
-        getStudentMeasurements(params.id)
+        getStudentMeasurements(params.id),
+        getStudentWorkoutSessions(params.id)
     ]);
 
 
@@ -188,6 +208,14 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                     </CardContent>
                 </Card>
             </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-headline flex items-center"><History className="mr-2"/> Histórico de Sessões de Treino</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <SessionsHistory sessions={sessions as any[]} />
+                </CardContent>
+            </Card>
              <Card>
                 <CardHeader>
                     <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
