@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleUser, Settings, LogOut } from "lucide-react";
+import { CircleUser, Settings, LogOut, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
