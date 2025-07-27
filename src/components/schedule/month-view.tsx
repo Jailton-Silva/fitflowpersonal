@@ -31,7 +31,7 @@ const AppointmentBadge = ({ appointment, students }: { appointment: Appointment;
     return (
        <AppointmentForm appointment={appointment} students={students}>
         <div className={cn("text-xs p-1 rounded-md overflow-hidden truncate cursor-pointer hover:opacity-80", statusVariant[appointment.status])}>
-            <span className="font-semibold">{format(new Date(appointment.start_time), 'HH:mm')}</span> {appointment.title}
+            <span className="font-semibold hidden sm:inline">{format(new Date(appointment.start_time), 'HH:mm')}</span> {appointment.title}
         </div>
       </AppointmentForm>
     )
@@ -44,7 +44,7 @@ export function MonthView({ appointments, students }: { appointments: Appointmen
 
   const renderHeader = () => {
     return (
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="text-xl font-semibold font-headline capitalize">
           {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h2>
@@ -57,7 +57,7 @@ export function MonthView({ appointments, students }: { appointments: Appointmen
           </Button>
         </div>
          <AppointmentForm students={students}>
-            <Button className="ripple hidden sm:flex">
+            <Button className="ripple flex-1 sm:flex-none">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Novo Agendamento
             </Button>
@@ -101,14 +101,14 @@ export function MonthView({ appointments, students }: { appointments: Appointmen
         days.push(
           <div
             className={cn(
-              'relative flex flex-col h-28 p-2 border-t border-r border-border bg-background transition-colors hover:bg-muted/50',
+              'relative flex flex-col h-24 sm:h-28 p-1 sm:p-2 border-t border-r border-border bg-background transition-colors hover:bg-muted/50',
               !isSameMonth(day, monthStart) ? 'text-muted-foreground bg-muted/20' : '',
               isSameDay(day, selectedDate) ? 'bg-primary/10' : ''
             )}
             key={day.toString()}
             onClick={() => setSelectedDate(cloneDay)}
           >
-            <span className="font-bold self-end">{formattedDate}</span>
+            <span className="font-bold self-end text-xs sm:text-base">{formattedDate}</span>
             <div className='flex-1 space-y-1 overflow-y-auto'>
                 {appointmentsOnDay.map(apt => <AppointmentBadge key={apt.id} appointment={apt} students={students} />)}
             </div>

@@ -28,7 +28,7 @@ export default function MeasurementsHistory({ studentId, measurements }: { stude
             <TableRow>
             <TableHead>Data</TableHead>
             <TableHead className="text-right">Peso</TableHead>
-            <TableHead className="text-right">Altura</TableHead>
+            <TableHead className="text-right hidden sm:table-cell">Altura</TableHead>
             <TableHead className="text-right">Gordura %</TableHead>
             <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -36,9 +36,9 @@ export default function MeasurementsHistory({ studentId, measurements }: { stude
         <TableBody>
             {measurements.map((m) => (
             <TableRow key={m.id}>
-                <TableCell>{format(new Date(m.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
+                <TableCell className="font-medium">{format(new Date(m.created_at), "dd/MM/yy", { locale: ptBR })}</TableCell>
                 <TableCell className="text-right">{m.weight} kg</TableCell>
-                <TableCell className="text-right">{m.height} cm</TableCell>
+                <TableCell className="text-right hidden sm:table-cell">{m.height} cm</TableCell>
                 <TableCell className="text-right">{m.body_fat ? `${m.body_fat}%` : '-'}</TableCell>
                 <TableCell className="text-right">
                     <MeasurementForm studentId={studentId} measurement={m}>

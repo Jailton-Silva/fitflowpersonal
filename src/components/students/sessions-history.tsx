@@ -61,16 +61,16 @@ export default function SessionsHistory({ sessions }: { sessions: EnrichedSessio
         <TableHeader>
             <TableRow>
             <TableHead>Treino</TableHead>
-            <TableHead>Data de Início</TableHead>
+            <TableHead className="hidden sm:table-cell">Data de Início</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Exercícios Concluídos</TableHead>
+            <TableHead className="text-right">Exercícios</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
             {formattedSessions.map((session) => (
             <TableRow key={session.id}>
-                <TableCell className="font-medium">{session.workouts?.name ?? 'Treino não encontrado'}</TableCell>
-                <TableCell>{session.formattedDate}</TableCell>
+                <TableCell className="font-medium max-w-[150px] truncate">{session.workouts?.name ?? 'Treino não encontrado'}</TableCell>
+                <TableCell className="hidden sm:table-cell">{session.formattedDate}</TableCell>
                 <TableCell>
                     {session.completed_at ? (
                          <Badge variant="default">Finalizado</Badge>

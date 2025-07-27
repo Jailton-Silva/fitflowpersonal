@@ -113,7 +113,7 @@ export default function StudentDetailPage() {
         };
 
         fetchData();
-    }, [studentId]);
+    }, [studentId, supabase]);
 
     const filteredMeasurements = useMemo(() => {
         const fromDate = measurementsFilter.range?.from ? new Date(measurementsFilter.range.from.setHours(0,0,0,0)) : null;
@@ -197,7 +197,7 @@ export default function StudentDetailPage() {
                 </StudentForm>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  <Card>
                     <CardHeader><CardTitle className="text-lg font-headline flex items-center"><User className="mr-2"/> Detalhes Pessoais</CardTitle></CardHeader>
                     <CardContent className="space-y-2 text-sm">
@@ -211,7 +211,7 @@ export default function StudentDetailPage() {
                  <Card><CardHeader><CardTitle className="text-lg font-headline flex items-center"><Shield className="mr-2"/> Obs. Saúde</CardTitle></CardHeader><CardContent><p className="text-sm">{student.medical_conditions || "Nenhuma condição médica informada."}</p></CardContent></Card>
             </div>
             
-             <div className="grid md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-center">

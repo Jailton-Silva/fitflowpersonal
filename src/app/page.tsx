@@ -75,29 +75,29 @@ export default function LandingPage() {
                   <div className="flex items-start gap-4">
                       <CheckCircle className="mt-1 h-6 w-6 text-primary" />
                       <div>
-                          <h3 className="text-lg font-bold font-headline">Personal trainer autônomo</h3>
-                          <p className="text-sm text-muted-foreground">Que quer profissionalizar sua atuação e entregar mais valor.</p>
+                          <h3 className="text-lg font-bold font-headline text-left">Personal trainer autônomo</h3>
+                          <p className="text-sm text-muted-foreground text-left">Que quer profissionalizar sua atuação e entregar mais valor.</p>
                       </div>
                   </div>
                    <div className="flex items-start gap-4">
                       <CheckCircle className="mt-1 h-6 w-6 text-primary" />
                       <div>
-                          <h3 className="text-lg font-bold font-headline">Instrutores e Coaches</h3>
-                          <p className="text-sm text-muted-foreground">Que precisam organizar seus treinos e monitorar o progresso real dos alunos.</p>
+                          <h3 className="text-lg font-bold font-headline text-left">Instrutores e Coaches</h3>
+                          <p className="text-sm text-muted-foreground text-left">Que precisam organizar seus treinos e monitorar o progresso real dos alunos.</p>
                       </div>
                   </div>
                    <div className="flex items-start gap-4">
                       <CheckCircle className="mt-1 h-6 w-6 text-primary" />
                       <div>
-                          <h3 className="text-lg font-bold font-headline">Treinadores online</h3>
-                          <p className="text-sm text-muted-foreground">Que buscam escalar seus atendimentos com uma ferramenta tecnológica robusta.</p>
+                          <h3 className="text-lg font-bold font-headline text-left">Treinadores online</h3>
+                          <p className="text-sm text-muted-foreground text-left">Que buscam escalar seus atendimentos com uma ferramenta tecnológica robusta.</p>
                       </div>
                   </div>
                    <div className="flex items-start gap-4">
                       <CheckCircle className="mt-1 h-6 w-6 text-primary" />
                       <div>
-                          <h3 className="text-lg font-bold font-headline">Donos de estúdio</h3>
-                          <p className="text-sm text-muted-foreground">Que desejam padronizar o atendimento e gerenciar múltiplos treinadores.</p>
+                          <h3 className="text-lg font-bold font-headline text-left">Donos de estúdio</h3>
+                          <p className="text-sm text-muted-foreground text-left">Que desejam padronizar o atendimento e gerenciar múltiplos treinadores.</p>
                       </div>
                   </div>
               </div>
@@ -116,7 +116,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 lg:max-w-none mt-12">
+            <div className="mx-auto grid max-w-sm items-start gap-8 sm:max-w-none sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
               <Card>
                 <CardContent className="flex flex-col items-center text-center p-6 gap-4">
                   <Users className="h-12 w-12 text-primary" />
@@ -186,7 +186,7 @@ export default function LandingPage() {
                         </p>
                     </div>
                 </div>
-                <div className="mx-auto grid max-w-5xl items-stretch gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 lg:max-w-none mt-12">
+                <div className="mx-auto grid max-w-md items-stretch gap-8 sm:max-w-none sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
                     <Card className="flex flex-col">
                         <CardHeader className="pb-4">
                             <CardTitle className="font-headline text-2xl">Start</CardTitle>
@@ -247,7 +247,7 @@ export default function LandingPage() {
                         Nossa infraestrutura é moderna, segura e pronta para o crescimento do seu negócio.
                     </p>
                 </div>
-                <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-8">
+                <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-3 mt-8">
                      <div className="flex flex-col items-center gap-2">
                          <ShieldCheck className="h-10 w-10 text-primary" />
                          <h3 className="font-bold">Dados Seguros</h3>

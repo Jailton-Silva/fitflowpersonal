@@ -53,7 +53,7 @@ export function WeekView({ appointments, students }: { appointments: Appointment
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="text-xl font-semibold font-headline capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
         </h2>
@@ -66,7 +66,7 @@ export function WeekView({ appointments, students }: { appointments: Appointment
           </Button>
         </div>
         <AppointmentForm students={students}>
-            <Button className="ripple hidden sm:flex">
+            <Button className="ripple flex-1 sm:flex-none">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Novo Agendamento
             </Button>

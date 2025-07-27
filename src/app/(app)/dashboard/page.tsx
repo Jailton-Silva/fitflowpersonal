@@ -160,7 +160,7 @@ export default async function DashboardPage({
         <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
         <DateRangeFilter defaultFrom={from} defaultTo={to} />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
@@ -194,7 +194,7 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Evolução Física Média</CardTitle>
