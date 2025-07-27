@@ -20,7 +20,7 @@ function NavContent() {
   const pathname = usePathname();
   return (
     <>
-      <div className="flex h-16 items-center border-b px-6">
+      <div className="flex h-14 items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold font-headline">
           <Dumbbell className="h-6 w-6 text-primary" />
           <span className="">FitFlow</span>
@@ -55,19 +55,17 @@ export function Sidebar() {
             <NavContent />
         </div>
       </div>
-      <div className="md:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-             <Button variant="outline" size="icon" className="shrink-0 md:hidden m-4">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Alternar menu de navegação</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col p-0 w-64">
-             <NavContent />
-          </SheetContent>
+       <Sheet>
+        <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0 md:hidden absolute top-2 left-2 z-50">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Alternar menu de navegação</span>
+        </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="flex flex-col p-0 w-64">
+            <NavContent />
+        </SheetContent>
         </Sheet>
-      </div>
     </>
   );
 }

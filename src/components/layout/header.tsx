@@ -25,33 +25,41 @@ export async function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-end gap-4 border-b bg-card px-6">
-      <ThemeToggle />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <CircleUser className="h-5 w-5" />
-            <span className="sr-only">Menu do usuário</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel className="font-headline">{user?.email}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Configurações</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <form action={signOut}>
-            <button type="submit" className="w-full">
-              <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-              </DropdownMenuItem>
-            </button>
-          </form>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <header className="flex h-14 items-center justify-between md:justify-end gap-4 border-b bg-card px-6">
+       <div className="md:hidden">
+         <Link href="/dashboard" className="flex items-center gap-2 font-semibold font-headline">
+          <Dumbbell className="h-6 w-6 text-primary" />
+          <span className="">FitFlow</span>
+        </Link>
+       </div>
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" size="icon" className="rounded-full">
+              <CircleUser className="h-5 w-5" />
+              <span className="sr-only">Menu do usuário</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel className="font-headline">{user?.email}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <form action={signOut}>
+              <button type="submit" className="w-full">
+                <DropdownMenuItem>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                </DropdownMenuItem>
+              </button>
+            </form>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }
