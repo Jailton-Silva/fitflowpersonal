@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useActionState } from "react";
+import { useEffect } from "react";
+import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -22,7 +24,8 @@ function SubmitButton() {
 
 export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
     const { toast } = useToast();
-    const [state, formAction] = useActionState(verifyPassword, { error: null });
+    const router = useRouter();
+    const [state, formAction, isPending] = useActionState(verifyPassword, { error: null, success: false });
 
     useEffect(() => {
         if (state?.error) {
@@ -32,7 +35,11 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                 variant: "destructive",
             });
         }
-    }, [state, toast]);
+        if (state?.success) {
+            // Redirect on success
+            router.push(`/public/workout/${workoutId}`);
+        }
+    }, [state, toast, router, workoutId]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted">
