@@ -22,15 +22,20 @@ async function getStudentsAndExercises() {
 }
 
 
-export default async function NewWorkoutPage() {
+export default async function NewWorkoutPage({
+  searchParams,
+}: {
+  searchParams: { student_id?: string };
+}) {
   const { students, exercises } = await getStudentsAndExercises();
+  const studentId = searchParams.student_id;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold font-headline">Criar Novo Treino</h1>
       </div>
-      <WorkoutBuilder students={students} exercises={exercises} />
+      <WorkoutBuilder students={students} exercises={exercises} defaultStudentId={studentId} />
     </div>
   );
 }

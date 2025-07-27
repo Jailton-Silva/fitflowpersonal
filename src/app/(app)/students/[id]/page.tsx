@@ -20,7 +20,6 @@ import { useEffect, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
@@ -237,7 +236,14 @@ export default function StudentDetailPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                         <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
+                         <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
+                            <Button size="sm" variant="outline" asChild>
+                               <Link href={`/workouts/new?student_id=${student.id}`}>
+                                <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
+                                </Link>
+                           </Button>
+                        </div>
                          <div className="flex flex-col md:flex-row gap-2 pt-2">
                              <Input 
                                 placeholder="Buscar por nome do plano..."

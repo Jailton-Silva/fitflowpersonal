@@ -59,16 +59,17 @@ type WorkoutBuilderProps = {
   students: Pick<Student, 'id' | 'name'>[];
   exercises: Exercise[];
   workout?: Workout;
+  defaultStudentId?: string;
 };
 
-export default function WorkoutBuilder({ students, exercises, workout }: WorkoutBuilderProps) {
+export default function WorkoutBuilder({ students, exercises, workout, defaultStudentId }: WorkoutBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
   const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
     defaultValues: {
       name: "",
-      student_id: "",
+      student_id: defaultStudentId || "",
       description: "",
       diet_plan: "",
       access_password: "",
@@ -91,8 +92,10 @@ export default function WorkoutBuilder({ students, exercises, workout }: Workout
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
         }))
       });
+    } else if (defaultStudentId) {
+      form.setValue("student_id", defaultStudentId);
     }
-  }, [workout, form, exercises]);
+  }, [workout, defaultStudentId, form, exercises]);
 
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
