@@ -29,6 +29,7 @@ export default function SessionsHistory({ sessions }: { sessions: EnrichedSessio
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // This logic now runs only on the client, avoiding hydration mismatch.
     if (sessions) {
       const newFormattedSessions = sessions.map(session => ({
         ...session,
@@ -51,7 +52,7 @@ export default function SessionsHistory({ sessions }: { sessions: EnrichedSessio
   }
 
   if (!formattedSessions || formattedSessions.length === 0) {
-    return <p className="text-muted-foreground text-center py-4">Nenhuma sessão de treino registrada ainda.</p>;
+    return <p className="text-muted-foreground text-center py-4">Nenhuma sessão de treino encontrada para os filtros selecionados.</p>;
   }
 
   return (

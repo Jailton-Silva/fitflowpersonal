@@ -17,8 +17,8 @@ import { Button } from "../ui/button";
 import MeasurementForm from "./measurement-form";
 
 export default function MeasurementsHistory({ studentId, measurements }: { studentId: string, measurements: Measurement[] }) {
-  if (measurements.length === 0) {
-    return <p className="text-muted-foreground text-center py-4">Nenhuma avaliação física registrada ainda.</p>;
+  if (!measurements || measurements.length === 0) {
+    return <p className="text-muted-foreground text-center py-4">Nenhuma avaliação encontrada para os filtros selecionados.</p>;
   }
 
   return (

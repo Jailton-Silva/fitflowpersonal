@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -17,32 +18,46 @@ import {
 } from "@/components/ui/popover"
 
 type DateRangeFilterProps = React.HTMLAttributes<HTMLDivElement> & {
-    defaultFrom: string;
-    defaultTo: string;
+    defaultFrom?: string;
+    defaultTo?: string;
+    onDateChange?: (range: { from?: string; to?: string }) => void;
 }
 
 export function DateRangeFilter({
   className,
   defaultFrom,
-  defaultTo
+  defaultTo,
+  onDateChange
 }: DateRangeFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [date, setDate] = React.useState<DateRange | undefined>({
-      from: parse(defaultFrom, "yyyy-MM-dd", new Date()),
-      to: parse(defaultTo, "yyyy-MM-dd", new Date()),
+      from: defaultFrom ? parse(defaultFrom, "yyyy-MM-dd", new Date()) : undefined,
+      to: defaultTo ? parse(defaultTo, "yyyy-MM-dd", new Date()) : undefined,
   });
 
+  // This effect will run when `date` changes.
   React.useEffect(() => {
-    if (date?.from && date?.to) {
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.set("from", format(date.from, "yyyy-MM-dd"));
-        newParams.set("to", format(date.to, "yyyy-MM-dd"));
-        router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    const fromStr = date?.from ? format(date.from, "yyyy-MM-dd") : undefined;
+    const toStr = date?.to ? format(date.to, "yyyy-MM-dd") : undefined;
+
+    // If a callback is provided, use it. This is for client-side filtering.
+    if (onDateChange) {
+      onDateChange({ from: fromStr, to: toStr });
+    } else {
+      // Otherwise, update the URL search params. This is for server-side filtering.
+      const newParams = new URLSearchParams(searchParams.toString());
+      if (fromStr) newParams.set("from", fromStr);
+      else newParams.delete("from");
+
+      if (toStr) newParams.set("to", toStr);
+      else newParams.delete("to");
+      
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
-  }, [date, pathname, router, searchParams]);
+  }, [date, pathname, router, searchParams, onDateChange]);
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -67,7 +82,7 @@ export function DateRangeFilter({
                 format(date.from, "LLL dd, y", {locale: ptBR})
               )
             ) : (
-              <span>Selecione uma data</span>
+              <span>Selecione um período</span>
             )}
           </Button>
         </PopoverTrigger>
