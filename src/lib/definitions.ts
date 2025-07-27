@@ -24,6 +24,7 @@ export type Student = {
   medical_conditions?: string;
   status: 'active' | 'inactive';
   avatar_url?: string;
+  access_password?: string | null;
   created_at: string;
   updated_at: string;
 };
