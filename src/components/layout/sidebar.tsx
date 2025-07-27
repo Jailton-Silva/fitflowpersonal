@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { Dumbbell, LayoutDashboard, Users, Calendar, Menu, Sprout } from "lucide
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -20,14 +21,14 @@ function NavContent() {
   const pathname = usePathname();
   return (
     <>
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold font-headline">
           <Dumbbell className="h-6 w-6 text-primary" />
           <span className="">FitFlow</span>
         </Link>
       </div>
-      <div className="flex-1 overflow-auto py-2">
-        <nav className="grid items-start px-4 text-sm font-medium">
+      <div className="flex-1">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -50,19 +51,23 @@ function NavContent() {
 export function Sidebar() {
   return (
     <>
-      <div className="hidden border-r bg-card md:block w-64">
-        <div className="flex h-full max-h-screen flex-col">
+      <div className="hidden border-r bg-card md:block">
+        <div className="flex h-full max-h-screen flex-col gap-2">
             <NavContent />
         </div>
       </div>
        <Sheet>
         <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 md:hidden absolute top-2 left-2 z-50">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Alternar menu de navegação</span>
-        </Button>
+            <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Alternar menu de navegação</span>
+            </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col p-0 w-64">
+        <SheetContent side="left" className="flex flex-col p-0">
+             <SheetHeader className="p-4 border-b">
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Navegue pelas seções da plataforma.</SheetDescription>
+            </SheetHeader>
             <NavContent />
         </SheetContent>
         </Sheet>

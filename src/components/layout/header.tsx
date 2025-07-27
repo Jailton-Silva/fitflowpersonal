@@ -1,5 +1,6 @@
+
 import Link from "next/link";
-import { CircleUser, Settings, LogOut, Dumbbell } from "lucide-react";
+import { CircleUser, Settings, LogOut, Dumbbell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +13,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "../theme-toggle";
+import { Sidebar } from "./sidebar";
+import { Sheet, SheetTrigger, SheetContent } from "../ui/sheet";
 
 export async function Header() {
   const supabase = createClient();
@@ -25,12 +28,12 @@ export async function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between md:justify-end gap-4 border-b bg-card px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
        <div className="md:hidden">
-         <Link href="/dashboard" className="flex items-center gap-2 font-semibold font-headline">
-          <Dumbbell className="h-6 w-6 text-primary" />
-          <span className="">FitFlow</span>
-        </Link>
+        <Sidebar />
+       </div>
+       <div className="w-full flex-1">
+        {/* Adicione aqui qualquer elemento futuro para o header, como uma busca */}
        </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
