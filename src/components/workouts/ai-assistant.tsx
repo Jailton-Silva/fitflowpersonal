@@ -9,13 +9,15 @@ import { getExerciseRecommendations } from "@/ai/flows/exercise-recommendations"
 import type { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
+import { Exercise } from "@/lib/definitions";
 
 type AiAssistantProps = {
     studentId: string;
+    exercises: Exercise[];
     onRecommendation: (recommendations: ExerciseRecommendationsOutput) => void;
 };
 
-export default function AiAssistant({ studentId, onRecommendation }: AiAssistantProps) {
+export default function AiAssistant({ studentId, exercises, onRecommendation }: AiAssistantProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [trainerPrefs, setTrainerPrefs] = useState("");
     const { toast } = useToast();
@@ -39,12 +41,14 @@ export default function AiAssistant({ studentId, onRecommendation }: AiAssistant
             }
             
             const studentProfile = `Objetivos: ${student.goals}. Condições Médicas: ${student.medical_conditions}. Peso: ${student.weight}kg. Altura: ${student.height}cm.`;
-            const workoutHistory = workouts.map(w => `${w.name}: ${w.exercises.map(e => e.name).join(', ')}`).join('; ');
+            const workoutHistory = workouts.map(w => `${w.name}: ${(w.exercises as any[]).map(e => e.name).join(', ')}`).join('; ');
+            const availableExercises = exercises.map(e => e.name).join(', ');
 
             const result = await getExerciseRecommendations({
                 studentProfile: studentProfile || "Nenhum perfil fornecido.",
                 workoutHistory: workoutHistory || "Nenhum histórico fornecido.",
                 trainerPreferences: trainerPrefs || "Nenhuma preferência fornecida.",
+                availableExercises: availableExercises
             });
             onRecommendation(result);
         } catch (error) {

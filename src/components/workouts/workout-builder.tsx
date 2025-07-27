@@ -313,7 +313,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
           </div>
 
           <div className="space-y-6">
-             <AiAssistant onRecommendation={handleRecommendation} studentId={form.watch('student_id')} />
+             <AiAssistant onRecommendation={handleRecommendation} studentId={form.watch('student_id')} exercises={exercises} />
              <Card>
                 <CardHeader>
                     <CardTitle>Biblioteca de Exercícios</CardTitle>

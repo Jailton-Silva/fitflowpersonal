@@ -21,13 +21,16 @@ const ExerciseRecommendationsInputSchema = z.object({
   trainerPreferences: z
     .string()
     .describe('As preferências do treinador, incluindo exercícios preferidos e estilos de treinamento.'),
+  availableExercises: z
+    .string()
+    .describe('Uma lista de exercícios disponíveis na academia, separados por vírgula.'),
 });
 export type ExerciseRecommendationsInput = z.infer<typeof ExerciseRecommendationsInputSchema>;
 
 const ExerciseRecommendationsOutputSchema = z.object({
   exerciseRecommendations: z
     .string()
-    .describe('Uma lista de nomes de exercícios recomendados, separados por vírgulas e em português.'),
+    .describe('Uma lista de nomes de exercícios recomendados, separados por vírgulas e em português, selecionados a partir da lista de exercícios disponíveis.'),
   explanation: z
     .string()
     .describe('Uma explicação em português do motivo pelo qual os exercícios são recomendados, com base no perfil do aluno, histórico de treinos e preferências do treinador.'),
@@ -48,14 +51,18 @@ const prompt = ai.definePrompt({
   prompt: `Você é um personal trainer e nutricionista especialista em recomendações de exercícios e dieta para o público brasileiro. Responda sempre em português do Brasil.
 
   Com base no perfil do aluno, histórico de treinos e preferências do treinador fornecidos, gere uma lista de nomes de exercícios recomendados.
-  Além disso, crie um plano de dieta sugerido.
-  Explique por que os exercícios são recomendados, com base nos dados fornecidos.
+  
+  CRÍTICO: Você DEVE escolher os exercícios EXCLUSIVAMENTE da lista de "Exercícios Disponíveis" fornecida abaixo. Não invente ou sugira exercícios que não estão nesta lista.
+  A sua recomendação em 'exerciseRecommendations' deve ser uma string com os nomes dos exercícios da lista, separados por vírgula.
+
+  Além disso, crie um plano de dieta sugerido e explique por que os exercícios são recomendados, com base nos dados fornecidos.
 
   IMPORTANTE: A sua resposta deve ser em texto plano (plain text). NÃO use Markdown, HTML, ou qualquer outra linguagem de marcação. Por exemplo, em vez de usar '**Café da manhã:**', use 'Café da manhã:'.
 
   Perfil do Aluno: {{{studentProfile}}}
   Histórico de Treinos: {{{workoutHistory}}}
   Preferências do Treinador: {{{trainerPreferences}}}
+  Exercícios Disponíveis: {{{availableExercises}}}
   `,
 });
 
