@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { subDays } from "date-fns";
+import { DateRange } from "react-day-picker";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -82,9 +83,9 @@ export default function StudentDetailPage() {
     const [loading, setLoading] = useState(true);
 
     const [filterText, setFilterText] = useState("");
-    const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({
-        from: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-        to: format(new Date(), 'yyyy-MM-dd')
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: subDays(new Date(), 30),
+        to: new Date()
     });
 
     useEffect(() => {
@@ -116,8 +117,8 @@ export default function StudentDetailPage() {
     }, [studentId]);
 
     const filteredData = useMemo(() => {
-        const fromDate = dateRange.from ? parseISO(`${dateRange.from}T00:00:00`) : null;
-        const toDate = dateRange.to ? parseISO(`${dateRange.to}T23:59:59`) : null;
+        const fromDate = dateRange?.from ? new Date(dateRange.from.setHours(0,0,0,0)) : null;
+        const toDate = dateRange?.to ? new Date(dateRange.to.setHours(23,59,59,999)) : null;
         const lowerCaseFilter = filterText.toLowerCase();
 
         const filterByDate = (dateStr: string) => {
@@ -219,9 +220,9 @@ export default function StudentDetailPage() {
                         className="max-w-sm"
                     />
                     <DateRangeFilter
-                        defaultFrom={dateRange.from}
-                        defaultTo={dateRange.to}
-                        onDateChange={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                        defaultFrom={dateRange?.from?.toISOString().split('T')[0]}
+                        defaultTo={dateRange?.to?.toISOString().split('T')[0]}
+                        onDateChange={setDateRange}
                     />
                 </CardContent>
             </Card>
@@ -266,4 +267,3 @@ export default function StudentDetailPage() {
         </div>
     );
 }
-

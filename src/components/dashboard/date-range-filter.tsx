@@ -20,7 +20,7 @@ import {
 type DateRangeFilterProps = React.HTMLAttributes<HTMLDivElement> & {
     defaultFrom?: string;
     defaultTo?: string;
-    onDateChange?: (range: { from?: string; to?: string }) => void;
+    onDateChange?: (range: DateRange | undefined) => void;
 }
 
 export function DateRangeFilter({
@@ -33,41 +33,49 @@ export function DateRangeFilter({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [date, setDate] = React.useState<DateRange | undefined>({
+  const [date, setDate] = React.useState<DateRange | undefined>(() => ({
       from: defaultFrom ? parse(defaultFrom, "yyyy-MM-dd", new Date()) : undefined,
       to: defaultTo ? parse(defaultTo, "yyyy-MM-dd", new Date()) : undefined,
-  });
+  }));
+  const [isOpen, setIsOpen] = React.useState(false);
 
-  // This effect will run when `date` changes.
-  React.useEffect(() => {
-    const fromStr = date?.from ? format(date.from, "yyyy-MM-dd") : undefined;
-    const toStr = date?.to ? format(date.to, "yyyy-MM-dd") : undefined;
+  const handleSelect = (selectedDate: DateRange | undefined) => {
+    setDate(selectedDate);
 
-    // If a callback is provided, use it. This is for client-side filtering.
     if (onDateChange) {
-      onDateChange({ from: fromStr, to: toStr });
+      onDateChange(selectedDate);
     } else {
-      // Otherwise, update the URL search params. This is for server-side filtering.
+      // URL-based filtering for server components
       const newParams = new URLSearchParams(searchParams.toString());
-      if (fromStr) newParams.set("from", fromStr);
+      if (selectedDate?.from) newParams.set("from", format(selectedDate.from, "yyyy-MM-dd"));
       else newParams.delete("from");
 
-      if (toStr) newParams.set("to", toStr);
+      if (selectedDate?.to) newParams.set("to", format(selectedDate.to, "yyyy-MM-dd"));
       else newParams.delete("to");
-      
+
       router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
-  }, [date, pathname, router, searchParams, onDateChange]);
+    setIsOpen(false);
+  }
+  
+    // Sync state with default props if they change
+  React.useEffect(() => {
+    setDate({
+      from: defaultFrom ? parse(defaultFrom, 'yyyy-MM-dd', new Date()) : undefined,
+      to: defaultTo ? parse(defaultTo, 'yyyy-MM-dd', new Date()) : undefined,
+    });
+  }, [defaultFrom, defaultTo]);
+
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal sm:w-[300px]",
               !date && "text-muted-foreground"
             )}
           >
@@ -92,7 +100,7 @@ export function DateRangeFilter({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={setDate}
+            onSelect={handleSelect}
             numberOfMonths={2}
             locale={ptBR}
           />
