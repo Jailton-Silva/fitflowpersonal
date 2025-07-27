@@ -1,19 +1,19 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { cookies } from 'next/headers'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, Utensils, Share2, Video } from "lucide-react";
+import { Dumbbell, User, Calendar, Utensils, Video, CheckCircle, Flame } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { WorkoutExercise, Exercise, Student, Workout } from "@/lib/definitions";
+import { WorkoutExercise, Exercise, Student, Workout, WorkoutSession } from "@/lib/definitions";
 import { ExerciseCheck } from "@/components/workouts/exercise-check";
-import { getWorkoutSession, startWorkoutSession, getWorkoutDetails, verifyPassword } from "./actions";
-import { cookies } from "next/headers";
+import { getWorkoutSession, startWorkoutSession, getWorkoutDetails } from "./actions";
+import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 
@@ -36,107 +36,112 @@ const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
     );
 };
 
+const StartWorkoutButton = ({ workoutId, studentId }: { workoutId: string; studentId: string }) => {
+  const startWorkoutWithIds = startWorkoutSession.bind(null, workoutId, studentId);
+  return (
+    <form action={startWorkoutWithIds}>
+      <Button type="submit" size="lg" className="w-full sm:w-auto ripple">
+          <Flame className="mr-2 h-5 w-5" />
+          Iniciar Treino Agora
+      </Button>
+    </form>
+  )
+}
+
 
 export default async function PublicWorkoutPage({ params }: { params: { id: string } }) {
-    const workoutId = params.id;
-    const workout = await getWorkoutDetails(workoutId);
+    const workout = await getWorkoutDetails(params.id);
 
     if (!workout) {
         notFound();
     }
+    
+    // Password check
+    const cookieStore = cookies()
+    const isVerified = cookieStore.get(`workout_auth_${workout.id}`)?.value === 'true'
 
-    const cookieStore = cookies();
-    const isPasswordVerified = cookieStore.get(`workout_access_${workout.id}`)?.value === 'true';
-
-    if (workout.access_password && !isPasswordVerified) {
+    if (workout.access_password && !isVerified) {
         return <WorkoutPasswordForm workoutId={workout.id} />;
     }
-    
-    // The studentId is required to track session progress.
-    const studentId = workout.student_id;
-    if (!studentId) {
-        // Render a view-only version if studentId is not available
-        // Or handle as an error, here we'll just log and show a message
-        console.error("Workout is not associated with a student. Progress cannot be tracked.");
-        // Fall through to render a read-only view for now. A more robust solution could be a dedicated read-only component.
+
+    let session: WorkoutSession | null = null;
+    if (workout.id && workout.student_id) {
+        session = await getWorkoutSession(workout.id, workout.student_id);
     }
-
-    let session = null;
-    if(studentId) {
-        session = await getWorkoutSession(workoutId, studentId);
-        if (!session) {
-            session = await startWorkoutSession(workoutId, studentId);
-            if(!session) {
-                // Handle the case where session creation fails.
-                return <div>Erro ao iniciar a sessão de treino. Tente novamente.</div>
-            }
-        }
-    }
-
-
-    const completedExercisesSet = new Set(session?.completed_exercises || []);
 
     return (
-        <div className="min-h-screen bg-muted/40 font-body">
-            <main className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                 <header className="flex justify-between items-center py-4 mb-6">
-                    <div className="flex items-center gap-2">
-                        <Dumbbell className="h-6 w-6 text-primary" />
-                        <h1 className="text-2xl font-bold font-headline text-primary">FitFlow</h1>
-                    </div>
+        <div className="bg-background min-h-screen">
+            <header className="px-4 lg:px-6 h-16 flex items-center shadow-sm sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <Dumbbell className="h-6 w-6 text-primary" />
+                <h1 className="ml-2 text-2xl font-headline font-bold text-primary">FitFlow</h1>
+                <div className="ml-auto">
                     <ThemeToggle />
-                </header>
+                </div>
+            </header>
+            <main className="p-4 md:p-8">
                 <Card>
                     <CardHeader>
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                             <div>
                                 <CardTitle className="text-3xl font-headline">{workout.name}</CardTitle>
                                 <CardDescription className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-2">
+                                    <span className="flex items-center gap-2">
                                         <User className="h-4 w-4" />
-                                        <span>{(workout.students as any)?.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
+                                        <span>{workout.students?.name}</span>
+                                    </span>
+                                    <span className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4" />
                                         Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                                    </div>
+                                    </span>
                                 </CardDescription>
                             </div>
+                            <Badge>Plano de Treino</Badge>
                         </div>
                     </CardHeader>
                     <CardContent>
                         {workout.description && (
-                            <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
-                            <p>{workout.description}</p>
+                             <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
+                               <p>{workout.description}</p>
                             </div>
                         )}
-
+                        
                         {workout.diet_plan && (
-                             <div className="mb-6">
+                            <div className="mb-6 p-4 rounded-lg bg-muted/50">
                                 <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Utensils className="h-5 w-5 text-primary" />Plano de Dieta</h3>
                                 <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                                <p>{workout.diet_plan}</p>
+                                    <p>{workout.diet_plan}</p>
                                 </div>
                             </div>
                         )}
                         
                         <div className="space-y-4">
-                            <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios do Dia</h3>
-                            {(workout.exercises as WorkoutExercise[]).map((exercise, index) => (
-                                <Card key={`${exercise.exercise_id}-${index}`} className="bg-background/50 flex items-center p-4 gap-4">
-                                     {session && (
-                                        <ExerciseCheck 
-                                            sessionId={session.id} 
-                                            exerciseId={`${exercise.exercise_id}-${index}`} // Use a unique identifier for the exercise instance
-                                            isCompleted={completedExercisesSet.has(`${exercise.exercise_id}-${index}`)}
-                                        />
-                                    )}
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="font-semibold flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <h3 className="text-lg font-headline flex items-center gap-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
+                                {session && (
+                                    <div className="flex items-center gap-2 text-sm text-green-600 font-semibold p-2 rounded-md bg-green-500/10">
+                                        <CheckCircle className="h-5 w-5" />
+                                        <p>Treino iniciado em {format(new Date(session.started_at), "dd/MM/yy 'às' HH:mm", {locale: ptBR})}. Bom treino!</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {(!session && workout.student_id) && (
+                                <div className="text-center py-8">
+                                    <StartWorkoutButton workoutId={workout.id} studentId={workout.student_id} />
+                                    <p className="text-muted-foreground text-sm mt-2">Clique para registrar o início da sua sessão.</p>
+                                </div>
+                            )}
+
+                            {(workout.exercises as WorkoutExercise[]).map((exercise, index) => {
+                                const isCompleted = !!session?.completed_exercises?.includes(exercise.exercise_id);
+                                return (
+                                <Card key={index} className="bg-muted/50 flex flex-col sm:flex-row">
+                                    <CardHeader className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <CardTitle className="text-lg font-headline flex items-center gap-2">
                                                 {exercise.name}
-                                            </h4>
-                                            {exercise.video_url && (
+                                            </CardTitle>
+                                             {exercise.video_url && (
                                                 <Dialog>
                                                     <DialogTrigger asChild>
                                                         <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -153,27 +158,26 @@ export default async function PublicWorkoutPage({ params }: { params: { id: stri
                                                 </Dialog>
                                             )}
                                         </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm">
-                                            <div>
-                                                <p className="font-semibold text-muted-foreground">Séries</p>
-                                                <p>{exercise.sets || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-muted-foreground">Repetições</p>
-                                                <p>{exercise.reps || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-muted-foreground">Carga</p>
-                                                <p>{exercise.load ? `${exercise.load} kg` : '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-muted-foreground">Descanso</p>
-                                                <p>{exercise.rest ? `${exercise.rest} s` : '-'}</p>
-                                            </div>
+                                    </CardHeader>
+                                    <CardContent className="flex items-center gap-4 p-4 sm:p-6 w-full sm:w-auto">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm flex-1">
+                                            <div><p className="font-semibold">Séries</p><p>{exercise.sets || '-'}</p></div>
+                                            <div><p className="font-semibold">Repetições</p><p>{exercise.reps || '-'}</p></div>
+                                            <div><p className="font-semibold">Carga</p><p>{exercise.load ? `${exercise.load} kg` : '-'}</p></div>
+                                            <div><p className="font-semibold">Descanso</p><p>{exercise.rest ? `${exercise.rest} s` : '-'}</p></div>
                                         </div>
-                                    </div>
+                                        {session && (
+                                            <div className="pl-4 border-l">
+                                                <ExerciseCheck 
+                                                    sessionId={session.id} 
+                                                    exerciseId={exercise.exercise_id} 
+                                                    isCompleted={isCompleted}
+                                                />
+                                            </div>
+                                        )}
+                                    </CardContent>
                                 </Card>
-                            ))}
+                            )})}
                         </div>
                     </CardContent>
                 </Card>
@@ -181,3 +185,4 @@ export default async function PublicWorkoutPage({ params }: { params: { id: stri
         </div>
     );
 }
+
