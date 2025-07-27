@@ -39,33 +39,28 @@ export function DateRangeFilter({
   }));
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const handleSelect = (selectedDate: DateRange | undefined) => {
-    setDate(selectedDate);
-
-    if (onDateChange) {
-      onDateChange(selectedDate);
-    } else {
-      // URL-based filtering for server components
+  React.useEffect(() => {
+    // This effect handles URL-based state management for Server Components
+    // It does not run if onDateChange is provided
+    if (!onDateChange) {
       const newParams = new URLSearchParams(searchParams.toString());
-      if (selectedDate?.from) newParams.set("from", format(selectedDate.from, "yyyy-MM-dd"));
+      if (date?.from) newParams.set("from", format(date.from, "yyyy-MM-dd"));
       else newParams.delete("from");
 
-      if (selectedDate?.to) newParams.set("to", format(selectedDate.to, "yyyy-MM-dd"));
+      if (date?.to) newParams.set("to", format(date.to, "yyyy-MM-dd"));
       else newParams.delete("to");
-
+      
       router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    }
+  }, [date, onDateChange, pathname, router, searchParams]);
+
+  const handleSelect = (selectedDate: DateRange | undefined) => {
+    setDate(selectedDate);
+    if (onDateChange) {
+      onDateChange(selectedDate);
     }
     setIsOpen(false);
   }
-  
-    // Sync state with default props if they change
-  React.useEffect(() => {
-    setDate({
-      from: defaultFrom ? parse(defaultFrom, 'yyyy-MM-dd', new Date()) : undefined,
-      to: defaultTo ? parse(defaultTo, 'yyyy-MM-dd', new Date()) : undefined,
-    });
-  }, [defaultFrom, defaultTo]);
-
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -75,8 +70,9 @@ export function DateRangeFilter({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-full justify-start text-left font-normal sm:w-[300px]",
-              !date && "text-muted-foreground"
+              "w-full justify-start text-left font-normal h-9",
+              !date && "text-muted-foreground",
+              className
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />

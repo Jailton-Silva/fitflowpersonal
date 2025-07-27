@@ -82,11 +82,11 @@ export default function StudentDetailPage() {
     const [sessions, setSessions] = useState<EnrichedWorkoutSession[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [filterText, setFilterText] = useState("");
-    const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: subDays(new Date(), 30),
-        to: new Date()
-    });
+    // Filter states
+    const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+    const [workoutsFilter, setWorkoutsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+    const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+
 
     useEffect(() => {
         if (!studentId) return;
@@ -116,40 +116,44 @@ export default function StudentDetailPage() {
         fetchData();
     }, [studentId]);
 
-    const filteredData = useMemo(() => {
-        const fromDate = dateRange?.from ? new Date(dateRange.from.setHours(0,0,0,0)) : null;
-        const toDate = dateRange?.to ? new Date(dateRange.to.setHours(23,59,59,999)) : null;
-        const lowerCaseFilter = filterText.toLowerCase();
+    const filteredMeasurements = useMemo(() => {
+        const fromDate = measurementsFilter.range?.from ? new Date(measurementsFilter.range.from.setHours(0,0,0,0)) : null;
+        const toDate = measurementsFilter.range?.to ? new Date(measurementsFilter.range.to.setHours(23,59,59,999)) : null;
+        const lowerCaseFilter = measurementsFilter.text.toLowerCase();
 
-        const filterByDate = (dateStr: string) => {
-            if (!fromDate && !toDate) return true;
-            const itemDate = parseISO(dateStr);
-            if (fromDate && itemDate < fromDate) return false;
-            if (toDate && itemDate > toDate) return false;
-            return true;
-        };
-        
-        const filteredMeasurements = measurements.filter(m => 
-            filterByDate(m.created_at) &&
-            (m.notes?.toLowerCase().includes(lowerCaseFilter) || `peso ${m.weight}`.includes(lowerCaseFilter))
-        );
+        return measurements.filter(m => {
+            const itemDate = parseISO(m.created_at);
+            const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
+            const textMatch = !lowerCaseFilter || (m.notes?.toLowerCase().includes(lowerCaseFilter));
+            return dateMatch && textMatch;
+        });
+    }, [measurements, measurementsFilter]);
+    
+    const filteredWorkouts = useMemo(() => {
+        const fromDate = workoutsFilter.range?.from ? new Date(workoutsFilter.range.from.setHours(0,0,0,0)) : null;
+        const toDate = workoutsFilter.range?.to ? new Date(workoutsFilter.range.to.setHours(23,59,59,999)) : null;
+        const lowerCaseFilter = workoutsFilter.text.toLowerCase();
 
-        const filteredWorkouts = workouts.filter(w => 
-            filterByDate(w.created_at) &&
-            (w.name.toLowerCase().includes(lowerCaseFilter) || w.description?.toLowerCase().includes(lowerCaseFilter))
-        );
+        return workouts.filter(w => {
+            const itemDate = parseISO(w.created_at);
+            const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
+            const textMatch = !lowerCaseFilter || w.name.toLowerCase().includes(lowerCaseFilter) || w.description?.toLowerCase().includes(lowerCaseFilter);
+            return dateMatch && textMatch;
+        });
+    }, [workouts, workoutsFilter]);
 
-        const filteredSessions = sessions.filter(s =>
-            filterByDate(s.started_at) &&
-            (s.workouts?.name.toLowerCase().includes(lowerCaseFilter))
-        );
-        
-        return {
-            measurements: filteredMeasurements,
-            workouts: filteredWorkouts,
-            sessions: filteredSessions,
-        }
-    }, [measurements, workouts, sessions, filterText, dateRange]);
+    const filteredSessions = useMemo(() => {
+        const fromDate = sessionsFilter.range?.from ? new Date(sessionsFilter.range.from.setHours(0,0,0,0)) : null;
+        const toDate = sessionsFilter.range?.to ? new Date(sessionsFilter.range.to.setHours(23,59,59,999)) : null;
+        const lowerCaseFilter = sessionsFilter.text.toLowerCase();
+
+        return sessions.filter(s => {
+            const itemDate = parseISO(s.started_at);
+            const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
+            const textMatch = !lowerCaseFilter || s.workouts?.name.toLowerCase().includes(lowerCaseFilter);
+            return dateMatch && textMatch;
+        });
+    }, [sessions, sessionsFilter]);
 
 
     if (loading) {
@@ -208,41 +212,48 @@ export default function StudentDetailPage() {
                  <Card><CardHeader><CardTitle className="text-lg font-headline flex items-center"><Shield className="mr-2"/> Obs. Saúde</CardTitle></CardHeader><CardContent><p className="text-sm">{student.medical_conditions || "Nenhuma condição médica informada."}</p></CardContent></Card>
             </div>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg font-headline flex items-center gap-2"><Filter />Filtros de Histórico</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col md:flex-row gap-4">
-                    <Input 
-                        placeholder="Buscar por nome do treino, notas..."
-                        value={filterText}
-                        onChange={(e) => setFilterText(e.target.value)}
-                        className="max-w-sm"
-                    />
-                    <DateRangeFilter
-                        defaultFrom={dateRange?.from?.toISOString().split('T')[0]}
-                        defaultTo={dateRange?.to?.toISOString().split('T')[0]}
-                        onDateChange={setDateRange}
-                    />
-                </CardContent>
-            </Card>
-
              <div className="grid md:grid-cols-2 gap-6">
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                        <MeasurementForm studentId={student.id}>
-                            <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" />Nova Avaliação</Button>
-                        </MeasurementForm>
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
+                            <MeasurementForm studentId={student.id}>
+                                <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova</Button>
+                            </MeasurementForm>
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-2 pt-2">
+                            <Input 
+                                placeholder="Buscar por notas..."
+                                value={measurementsFilter.text}
+                                onChange={(e) => setMeasurementsFilter(prev => ({...prev, text: e.target.value}))}
+                                className="h-9"
+                            />
+                            <DateRangeFilter
+                                onDateChange={(range) => setMeasurementsFilter(prev => ({...prev, range}))}
+                            />
+                        </div>
                     </CardHeader>
-                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredData.measurements} /></CardContent>
+                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} /></CardContent>
                 </Card>
-                 <Card>
-                    <CardHeader><CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle></CardHeader>
+                <Card>
+                    <CardHeader>
+                         <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
+                         <div className="flex flex-col md:flex-row gap-2 pt-2">
+                             <Input 
+                                placeholder="Buscar por nome do plano..."
+                                value={workoutsFilter.text}
+                                onChange={(e) => setWorkoutsFilter(prev => ({...prev, text: e.target.value}))}
+                                className="h-9"
+                            />
+                            <DateRangeFilter
+                                onDateChange={(range) => setWorkoutsFilter(prev => ({...prev, range}))}
+                            />
+                        </div>
+                    </CardHeader>
                     <CardContent>
-                       {filteredData.workouts.length > 0 ? (
+                       {filteredWorkouts.length > 0 ? (
                            <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
-                               {filteredData.workouts.map((workout: Workout) => (
+                               {filteredWorkouts.map((workout: Workout) => (
                                    <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                        <div>
                                            <p className="font-semibold">{workout.name}</p>
@@ -256,13 +267,26 @@ export default function StudentDetailPage() {
                     </CardContent>
                 </Card>
             </div>
-             <Card>
-                <CardHeader><CardTitle className="text-lg font-headline flex items-center"><History className="mr-2"/> Histórico de Sessões de Treino</CardTitle></CardHeader>
-                <CardContent><SessionsHistory sessions={filteredData.sessions} /></CardContent>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-headline flex items-center"><History className="mr-2"/> Histórico de Sessões de Treino</CardTitle>
+                    <div className="flex flex-col md:flex-row gap-2 pt-2">
+                        <Input 
+                            placeholder="Buscar por nome do treino..."
+                            value={sessionsFilter.text}
+                            onChange={(e) => setSessionsFilter(prev => ({...prev, text: e.target.value}))}
+                            className="h-9"
+                        />
+                        <DateRangeFilter
+                            onDateChange={(range) => setSessionsFilter(prev => ({...prev, range}))}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent><SessionsHistory sessions={filteredSessions} /></CardContent>
             </Card>
              <Card>
                 <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle></CardHeader>
-                <CardContent><ProgressChart measurements={filteredData.measurements} /></CardContent>
+                <CardContent><ProgressChart measurements={filteredMeasurements} /></CardContent>
             </Card>
         </div>
     );
