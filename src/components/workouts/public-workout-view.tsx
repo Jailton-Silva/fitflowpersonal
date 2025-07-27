@@ -113,14 +113,6 @@ export default function PublicWorkoutView({ workout, initialIsAuthorized }: { wo
         }
     }
 
-    const handleShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast({
-            title: "Link Copiado!",
-            description: "O link de compartilhamento do treino foi copiado para a área de transferência.",
-        });
-    };
-
     if (loading) {
          return (
              <div className="flex flex-col min-h-screen bg-muted p-4 sm:p-8">
@@ -145,7 +137,6 @@ export default function PublicWorkoutView({ workout, initialIsAuthorized }: { wo
                     </div>
                      <div className="flex items-center gap-2">
                          <ThemeToggle />
-                        <Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4" /></Button>
                         <Button variant="outline" size="icon" onClick={() => window.print()}><Printer className="h-4 w-4" /></Button>
                     </div>
                 </div>
