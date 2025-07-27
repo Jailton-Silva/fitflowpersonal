@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "../theme-toggle";
 
 export async function Header() {
   const supabase = createClient();
@@ -25,6 +26,7 @@ export async function Header() {
 
   return (
     <header className="flex h-14 items-center justify-end gap-4 border-b bg-card px-6">
+      <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full">
