@@ -1,9 +1,25 @@
 import WorkoutBuilder from "@/components/workouts/workout-builder";
 import { createClient } from "@/lib/supabase/server";
 
-async function getStudentsAndExercises() {
+async function getWorkoutInitialData() {
     const supabase = createClient();
-    const studentsPromise = supabase.from("students").select("id, name").eq('status', 'active');
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { students: [], exercises: [] };
+    }
+
+    const { data: trainer } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (!trainer) {
+        return { students: [], exercises: [] };
+    }
+
+    const studentsPromise = supabase.from("students").select("id, name").eq('trainer_id', trainer.id).eq('status', 'active');
     const exercisesPromise = supabase.from("exercises").select("*");
 
     const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
@@ -27,7 +43,7 @@ export default async function NewWorkoutPage({
 }: {
   searchParams: { student_id?: string };
 }) {
-  const { students, exercises } = await getStudentsAndExercises();
+  const { students, exercises } = await getWorkoutInitialData();
   const studentId = searchParams.student_id;
 
   return (

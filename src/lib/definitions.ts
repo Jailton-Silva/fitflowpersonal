@@ -30,6 +30,7 @@ export type Student = {
 
 export type Exercise = {
   id: string;
+  // trainer_id?: string; // This should be added to the DB
   name: string;
   description?: string;
   muscle_groups?: string[];

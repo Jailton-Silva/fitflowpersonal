@@ -1,11 +1,27 @@
 import WorkoutBuilder from "@/components/workouts/workout-builder";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { Exercise } from "@/lib/definitions";
 
 async function getWorkoutData(workoutId: string) {
     const supabase = createClient();
-    const workoutPromise = supabase.from("workouts").select("*").eq("id", workoutId).single();
-    const studentsPromise = supabase.from("students").select("id, name").eq('status', 'active');
+     const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        notFound();
+    }
+     const { data: trainer } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (!trainer) {
+        notFound();
+    }
+
+    const workoutPromise = supabase.from("workouts").select("*").eq("id", workoutId).eq("trainer_id", trainer.id).single();
+    const studentsPromise = supabase.from("students").select("id, name").eq('trainer_id', trainer.id).eq('status', 'active');
     const exercisesPromise = supabase.from("exercises").select("*");
 
     const [workoutResult, studentsResult, exercisesResult] = await Promise.all([
@@ -27,7 +43,7 @@ async function getWorkoutData(workoutId: string) {
     return {
         workout: workoutResult.data,
         students: studentsResult.data ?? [],
-        exercises: exercisesResult.data ?? [],
+        exercises: (exercisesResult.data as Exercise[]) ?? [],
     }
 }
 
