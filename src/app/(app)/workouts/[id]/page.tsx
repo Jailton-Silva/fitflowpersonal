@@ -1,8 +1,7 @@
 
-"use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { notFound, useParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, User, Calendar, ArrowLeft, Edit, Utensils, Share2, Video } from "lucide-react";
 import { format } from 'date-fns';
@@ -10,140 +9,67 @@ import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
 import { Workout } from "@/lib/definitions";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import WorkoutDetailClient from "./client-page";
 
 async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        notFound();
+    }
+    const { data: trainer } = await supabase.from('trainers').select('id').eq('user_id', user.id).single();
+    if (!trainer) {
+        notFound();
+    }
+
     const { data, error } = await supabase
         .from('workouts')
         .select(
             '*, students(id, name)'
         )
         .eq('id', workoutId)
+        .eq('trainer_id', trainer.id) // Security check
         .single();
 
     if (error || !data) {
-        return null;
-    }
-    return data;
-}
-
-const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
-    if (!videoUrl.includes('youtube.com/watch?v=')) {
-        return <p>URL do vídeo inválida.</p>
-    }
-    const videoId = videoUrl.split('v=')[1].split('&')[0];
-    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    return (
-        <iframe
-            width="100%"
-            height="315"
-            src={embedUrl}
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-        ></iframe>
-    );
-};
-
-
-export default function WorkoutDetailPage() {
-    const params = useParams();
-    const workoutId = params.id as string;
-    const [workout, setWorkout] = useState<Workout | null>(null);
-    const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (workoutId) {
-            getWorkoutDetails(workoutId).then(data => {
-                setWorkout(data as Workout);
-                setLoading(false);
-            }).catch(() => setLoading(false));
-        }
-    }, [workoutId]);
-    
-    if (loading) {
-        return (
-             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-10 w-40" />
-                    <div className="flex gap-2">
-                        <Skeleton className="h-10 w-24" />
-                        <Skeleton className="h-10 w-24" />
-                    </div>
-                </div>
-                <Card>
-                    <CardHeader>
-                        <Skeleton className="h-8 w-3/4" />
-                        <div className="flex items-center gap-4 mt-2">
-                           <Skeleton className="h-5 w-48" />
-                           <Skeleton className="h-5 w-64" />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                       <Skeleton className="h-20 w-full" />
-                       <Skeleton className="h-12 w-1/4" />
-                       <div className="space-y-4">
-                           <Skeleton className="h-24 w-full" />
-                           <Skeleton className="h-24 w-full" />
-                       </div>
-                    </CardContent>
-                </Card>
-             </div>
-        )
-    }
-
-    if (!workout) {
         notFound();
     }
+    return data as Workout;
+}
 
-    const handleShare = () => {
-        const url = `${window.location.origin}/public/workout/${workout.id}`;
-        navigator.clipboard.writeText(url);
-        toast({
-            title: "Link Copiado!",
-            description: "O link de compartilhamento do treino foi copiado para a área de transferência.",
-        });
-    }
+
+export default async function WorkoutDetailPage({ params }: { params: { id: string } }) {
+    const workout = await getWorkoutDetails(params.id);
 
     return (
         <div className="space-y-6" id="printable-area">
-            <div className="flex justify-between items-center no-print">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 no-print">
                  <Button variant="outline" asChild>
                     <Link href="/workouts">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Voltar para Treinos
                     </Link>
                 </Button>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleShare}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Compartilhar
-                    </Button>
-                    <Button asChild className="ripple">
-                        <Link href={`/workouts/${workout.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                        </Link>
-                    </Button>
-                </div>
+                <WorkoutDetailClient workout={workout} />
             </div>
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                         <div>
                             <CardTitle className="text-3xl font-headline">{workout.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-4 mt-2">
-                                <Link href={`/students/${(workout.students as any)?.id}`} className="flex items-center gap-2 hover:underline">
-                                    <User className="h-4 w-4" />
-                                    <span>{(workout.students as any)?.name}</span>
-                                </Link>
+                            <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                                {workout.students?.id ? (
+                                    <Link href={`/students/${workout.students.id}`} className="flex items-center gap-2 hover:underline">
+                                        <User className="h-4 w-4" />
+                                        <span>{workout.students.name}</span>
+                                    </Link>
+                                ) : (
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <User className="h-4 w-4" />
+                                        <span>Aluno não encontrado</span>
+                                    </span>
+                                )}
                                 <span className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4" />
                                     Criado em {format(new Date(workout.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
@@ -178,22 +104,7 @@ export default function WorkoutDetailPage() {
                                         <CardTitle className="text-lg font-headline flex items-center gap-2">
                                             {exercise.name}
                                         </CardTitle>
-                                        {exercise.video_url && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                                        <Video className="h-4 w-4" />
-                                                        Ver Vídeo
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-3xl">
-                                                    <DialogHeader>
-                                                        <DialogTitle>{exercise.name}</DialogTitle>
-                                                    </DialogHeader>
-                                                    <VideoPlayer videoUrl={exercise.video_url} />
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
+                                        <WorkoutDetailClient workout={workout} exercise={exercise} />
                                     </div>
                                 </CardHeader>
                                 <CardContent>
