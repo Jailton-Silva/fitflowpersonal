@@ -1,3 +1,4 @@
+
 import { createClient } from "@/lib/supabase/server";
 import {
   Card,
@@ -25,7 +26,8 @@ async function getDashboardData(from: string, to: string) {
       weekAppointments: 0,
       studentsCountLastMonth: 0,
       progressData: [],
-      engagementData: []
+      engagementData: [],
+      overallEngagementRate: 0,
     };
   }
   
@@ -42,7 +44,8 @@ async function getDashboardData(from: string, to: string) {
       weekAppointments: 0,
       studentsCountLastMonth: 0,
       progressData: [],
-      engagementData: []
+      engagementData: [],
+      overallEngagementRate: 0,
     };
   }
 
@@ -94,6 +97,7 @@ async function getDashboardData(from: string, to: string) {
         studentsCountLastMonth: studentsCountLastMonth ?? 0,
         progressData: [],
         engagementData: [],
+        overallEngagementRate: 0,
     }
   }
 
@@ -149,8 +153,9 @@ async function getDashboardData(from: string, to: string) {
       scheduled: data.scheduled
   }));
 
-  const overallEngagement = data.engagementData.reduce((acc, curr) => acc + curr.scheduled, 0) || 1;
-  const completedEngagement = data.engagementData.reduce((acc, curr) => acc + curr.completed, 0);
+  const scheduledTotal = engagementData.reduce((acc, curr) => acc + curr.scheduled, 0);
+  const completedTotal = engagementData.reduce((acc, curr) => acc + curr.completed, 0);
+  const overallEngagementRate = scheduledTotal > 0 ? (completedTotal / scheduledTotal) * 100 : 0;
 
 
   return {
@@ -160,7 +165,7 @@ async function getDashboardData(from: string, to: string) {
     studentsCountLastMonth: studentsCountLastMonth ?? 0,
     progressData,
     engagementData,
-    overallEngagementRate: (completedEngagement / overallEngagement) * 100
+    overallEngagementRate
   };
 }
 
