@@ -25,11 +25,11 @@ type StudentDetailClientProps = {
     initialWorkouts?: Workout[];
     initialMeasurements?: Measurement[];
     initialSessions?: EnrichedWorkoutSession[];
-    isPageContent?: boolean; // To render only the page content part
+    isPublicView?: boolean; // To render public student portal
 }
 
 
-export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [], isPageContent = false }: StudentDetailClientProps) {
+export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [], isPublicView = false }: StudentDetailClientProps) {
     
     // States for interactive data
     const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
@@ -81,19 +81,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         });
     }, [sessions, sessionsFilter]);
 
-    // This renders only the button for the header
-    if (!isPageContent) {
-        return (
-             <StudentForm student={student}>
-                <Button variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar Aluno
-                </Button>
-            </StudentForm>
-        );
-    }
-    
-    // This renders the rest of the page content
+    // Renders the page content
     return (
         <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -101,9 +89,11 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                            <MeasurementForm studentId={student.id}>
-                                <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova</Button>
-                            </MeasurementForm>
+                            {!isPublicView && (
+                                <MeasurementForm studentId={student.id}>
+                                    <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova</Button>
+                                </MeasurementForm>
+                            )}
                         </div>
                         <div className="flex flex-col md:flex-row gap-2 pt-2">
                             <Input 
@@ -117,17 +107,19 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                             />
                         </div>
                     </CardHeader>
-                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} /></CardContent>
+                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} isPublicView={isPublicView} /></CardContent>
                 </Card>
                 <Card>
                     <CardHeader>
                          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
-                            <Button size="sm" variant="outline" asChild>
-                               <Link href={`/workouts/new?student_id=${student.id}`}>
-                                <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
-                                </Link>
-                           </Button>
+                            {!isPublicView && (
+                                <Button size="sm" variant="outline" asChild>
+                                <Link href={`/workouts/new?student_id=${student.id}`}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
+                                    </Link>
+                                </Button>
+                            )}
                         </div>
                          <div className="flex flex-col md:flex-row gap-2 pt-2">
                              <Input 
@@ -150,7 +142,11 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                                            <p className="font-semibold">{workout.name}</p>
                                            <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
                                        </div>
-                                       <Button variant="outline" size="sm" asChild><Link href={`/workouts/${workout.id}`}>Ver Plano</Link></Button>
+                                       <Button variant="outline" size="sm" asChild>
+                                            <Link href={isPublicView ? `/public/workout/${workout.id}` : `/workouts/${workout.id}`} target={isPublicView ? "_blank" : "_self"}>
+                                                Ver Plano
+                                            </Link>
+                                       </Button>
                                    </li>
                                ))}
                            </div>

@@ -8,6 +8,8 @@ import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import StudentDetailClient from "./client-page";
+import StudentForm from "@/components/students/student-form";
+import { Button } from "@/components/ui/button";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -36,8 +38,9 @@ async function getStudentPageData(studentId: string) {
     
     const workoutsPromise = supabase
         .from("workouts")
-        .select("*")
+        .select("*, students (id, name)")
         .eq("student_id", studentId)
+        .eq("trainer_id", trainer.id)
         .order("created_at", { ascending: false });
 
     const measurementsPromise = supabase
@@ -100,7 +103,12 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </div>
                     )}
                 </div>
-                 <StudentDetailClient student={student} />
+                 <StudentForm student={student}>
+                    <Button variant="outline">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar Aluno
+                    </Button>
+                </StudentForm>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -121,7 +129,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                 initialWorkouts={workouts}
                 initialMeasurements={measurements}
                 initialSessions={sessions}
-                isPageContent={true}
+                isPublicView={false}
             />
         </div>
     );
