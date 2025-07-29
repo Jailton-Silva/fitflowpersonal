@@ -95,8 +95,22 @@ export default function ExerciseForm({ children, exercise }: ExerciseFormProps) 
     setIsSubmitting(true);
     const supabase = createClient();
     
+     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        toast({ title: "Erro de autenticação", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
+    const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
+    if (!trainer) {
+        toast({ title: "Treinador não encontrado", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
+
     const submissionData = { 
         ...values, 
+        trainer_id: trainer.id,
         description: values.description || null,
         muscle_groups: values.muscle_groups,
         equipment: values.equipment || null,
@@ -105,7 +119,7 @@ export default function ExerciseForm({ children, exercise }: ExerciseFormProps) 
     };
     
     const { error } = isEditMode 
-      ? await supabase.from("exercises").update(submissionData).eq("id", exercise.id)
+      ? await supabase.from("exercises").update(submissionData).eq("id", exercise.id).eq("trainer_id", trainer.id)
       : await supabase.from("exercises").insert([submissionData]);
 
     if (error) {
