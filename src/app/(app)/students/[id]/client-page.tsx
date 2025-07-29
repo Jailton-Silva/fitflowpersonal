@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Calendar as CalendarIcon, History, PlusCircle, Edit } from "lucide-react";
 import { parseISO } from 'date-fns';
@@ -183,4 +182,3 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         </>
     );
 }
-

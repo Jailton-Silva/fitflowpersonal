@@ -3,11 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Cake, Ruler, Weight, Dumbbell, Shield, Activity, Calendar as CalendarIcon, Phone, Edit, PlusCircle, History, Filter } from "lucide-react";
-import { format, differenceInYears, parseISO } from 'date-fns';
+import { User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Edit } from "lucide-react";
+import { format, differenceInYears } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import StudentDetailClient from "./client-page";
 
@@ -110,8 +108,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                     <CardHeader><CardTitle className="text-lg font-headline flex items-center"><User className="mr-2"/> Detalhes Pessoais</CardTitle></CardHeader>
                     <CardContent className="space-y-2 text-sm">
                         <div className="flex items-center"><Cake className="mr-2 h-4 w-4 text-muted-foreground"/><strong>Idade:</strong><span className="ml-2">{age} anos</span></div>
-                         <div className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground"/><strong>Nascimento:</strong><span className="ml-2">{student.birth_date ? format(new Date(student.birth_date), 'dd/MM/yyyy') : 'N/A'}</span></div>
-                        <div className="flex items-center"><Ruler className="mr-2 h-4 w-4 text-muted-foreground"/><strong>Altura:</strong><span className="ml-2">{student.height ? `${student.height} cm` : 'N/A'}</span></div>
+                         <div className="flex items-center"><Ruler className="mr-2 h-4 w-4 text-muted-foreground"/><strong>Altura:</strong><span className="ml-2">{student.height ? `${student.height} cm` : 'N/A'}</span></div>
                         <div className="flex items-center"><Weight className="mr-2 h-4 w-4 text-muted-foreground"/><strong>Peso Atual:</strong><span className="ml-2">{student.weight ? `${student.weight} kg` : 'N/A'}</span></div>
                     </CardContent>
                 </Card>

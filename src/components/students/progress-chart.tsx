@@ -9,18 +9,18 @@ export default function ProgressChart({measurements}: {measurements?: Measuremen
     const chartData = (measurements && measurements.length > 0 ? measurements : []).map(m => ({
         ...m,
         name: format(new Date(m.created_at), "dd/MM/yy"),
-    })).reverse();
+    }));
 
 
   return (
     <div className="h-[350px] w-full">
-        {chartData.length > 0 ? (
+        {chartData.length > 1 ? (
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis yAxisId="left" unit="kg" name="Peso" />
-                <YAxis yAxisId="right" orientation="right" unit="%" name="Gordura Corporal" />
+                <YAxis yAxisId="left" unit="kg" name="Peso" domain={['dataMin - 2', 'dataMax + 2']} />
+                <YAxis yAxisId="right" orientation="right" unit="%" name="Gordura Corporal" domain={['dataMin - 2', 'dataMax + 2']} />
                 <Tooltip
                     contentStyle={{
                     background: "hsl(var(--card))",
@@ -36,7 +36,7 @@ export default function ProgressChart({measurements}: {measurements?: Measuremen
             </ResponsiveContainer>
         ) : (
              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Não há dados suficientes para exibir o gráfico.</p>
+                <p className="text-muted-foreground">Não há dados suficientes para exibir o gráfico. Adicione pelo menos duas medições.</p>
             </div>
         )}
     </div>
