@@ -1,4 +1,3 @@
-
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -19,7 +18,7 @@ export async function GET(request: Request) {
           .upsert({ 
             user_id: data.user.id,
             email: data.user.email,
-            name: data.user.user_metadata.name
+            name: data.user.user_metadata.name || data.user.email, // Fallback to email if name is not available
           });
         
         if (trainerError) {

@@ -15,7 +15,7 @@ import { WorkoutFilters } from "@/components/workouts/workout-filters";
 
 async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; }) {
   const supabase = createClient();
-   const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
@@ -24,7 +24,9 @@ async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]
   let query = supabase
     .from("workouts")
     .select("*, students(id, name)")
-    .eq("trainer_id", trainer.id);
+    .eq("trainer_id", trainer.id)
+    .order("created_at", { descending: true });
+
 
   if (filters.studentId) {
     query = query.eq('student_id', filters.studentId);

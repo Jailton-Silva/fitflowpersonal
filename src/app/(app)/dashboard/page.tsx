@@ -86,6 +86,18 @@ async function getDashboardData(from: string, to: string) {
   const { data: studentIds } = await supabase.from('students').select('id').eq('trainer_id', trainerId);
   const studentIdList = studentIds?.map(s => s.id) || [];
 
+  if (studentIdList.length === 0) {
+    return {
+        totalStudents: totalStudents ?? 0,
+        activeWorkouts: activeWorkouts ?? 0,
+        weekAppointments: weekAppointments ?? 0,
+        studentsCountLastMonth: studentsCountLastMonth ?? 0,
+        progressData: [],
+        engagementData: [],
+    }
+  }
+
+
   const { data: measurements } = await supabase
     .from('measurements')
     .select('created_at, weight, body_fat')
@@ -137,13 +149,18 @@ async function getDashboardData(from: string, to: string) {
       scheduled: data.scheduled
   }));
 
+  const overallEngagement = data.engagementData.reduce((acc, curr) => acc + curr.scheduled, 0) || 1;
+  const completedEngagement = data.engagementData.reduce((acc, curr) => acc + curr.completed, 0);
+
+
   return {
     totalStudents: totalStudents ?? 0,
     activeWorkouts: activeWorkouts ?? 0,
     weekAppointments: weekAppointments ?? 0,
     studentsCountLastMonth: studentsCountLastMonth ?? 0,
     progressData,
-    engagementData
+    engagementData,
+    overallEngagementRate: (completedEngagement / overallEngagement) * 100
   };
 }
 
@@ -203,10 +220,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent>
              <div className="text-2xl font-bold">
-                {
-                    data.engagementData.reduce((acc, curr) => acc + curr.completed, 0) / 
-                    (data.engagementData.reduce((acc, curr) => acc + curr.scheduled, 0) || 1) * 100
-                }%
+                {data.overallEngagementRate?.toFixed(0) ?? 0}%
              </div>
             <p className="text-xs text-muted-foreground">Treinos concluídos vs. agendados</p>
           </CardContent>
