@@ -3,11 +3,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, Users, Calendar, Menu, Sprout } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -17,7 +15,7 @@ const navItems = [
   { href: "/exercises", label: "Exercícios", icon: Sprout },
 ];
 
-function NavContent() {
+export function NavContent() {
   const pathname = usePathname();
   return (
     <>
@@ -50,27 +48,10 @@ function NavContent() {
 
 export function Sidebar() {
   return (
-    <>
       <div className="hidden border-r bg-card md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
             <NavContent />
         </div>
       </div>
-       <Sheet>
-        <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Alternar menu de navegação</span>
-            </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col p-0">
-             <SheetHeader className="p-4 border-b">
-                <SheetTitle>Menu</SheetTitle>
-                <SheetDescription>Navegue pelas seções da plataforma.</SheetDescription>
-            </SheetHeader>
-            <NavContent />
-        </SheetContent>
-        </Sheet>
-    </>
   );
 }

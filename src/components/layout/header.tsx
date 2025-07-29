@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { CircleUser, Settings, LogOut, Dumbbell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +12,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "../theme-toggle";
-import { Sidebar } from "./sidebar";
-import { Sheet, SheetTrigger, SheetContent } from "../ui/sheet";
+import { Sidebar, NavContent } from "./sidebar";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 
 export async function Header() {
   const supabase = createClient();
@@ -29,9 +28,17 @@ export async function Header() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-       <div className="md:hidden">
-        <Sidebar />
-       </div>
+       <Sheet>
+        <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Alternar menu de navegação</span>
+            </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="flex flex-col p-0">
+            <NavContent />
+        </SheetContent>
+        </Sheet>
        <div className="w-full flex-1">
         {/* Adicione aqui qualquer elemento futuro para o header, como uma busca */}
        </div>

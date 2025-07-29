@@ -15,9 +15,16 @@ import { WorkoutFilters } from "@/components/workouts/workout-filters";
 
 async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; }) {
   const supabase = createClient();
+   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
+  if (!trainer) return [];
+  
   let query = supabase
     .from("workouts")
-    .select("*, students(id, name)");
+    .select("*, students(id, name)")
+    .eq("trainer_id", trainer.id);
 
   if (filters.studentId) {
     query = query.eq('student_id', filters.studentId);
@@ -28,14 +35,7 @@ async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]
   if (filters.to) {
     query = query.lte('created_at', filters.to);
   }
-  if (filters.exerciseIds && filters.exerciseIds.length > 0) {
-    // This is a simplified filter. It checks if any of the selected exercises are present.
-    // A more complex query would be needed for 'AND' logic (contains ALL selected exercises).
-    // The `exercises` column is JSONB. We can use `->>` to get exercise_id as text and check if it's in our list.
-    // Supabase RPC or more complex query might be better for performance on large datasets.
-    // For now, filtering post-query for simplicity.
-  }
-
+  
   const { data, error } = await query;
   
   if (error) {
@@ -57,7 +57,13 @@ async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]
 
 async function getFilterData() {
     const supabase = createClient();
-    const studentsPromise = supabase.from("students").select("id, name").order('name');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { students: [], exercises: [] };
+
+    const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
+    if (!trainer) return { students: [], exercises: [] };
+
+    const studentsPromise = supabase.from("students").select("id, name").eq("trainer_id", trainer.id).order('name');
     const exercisesPromise = supabase.from("exercises").select("id, name").order('name');
 
     const [studentsResult, exercisesResult] = await Promise.all([

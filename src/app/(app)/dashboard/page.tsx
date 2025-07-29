@@ -10,7 +10,7 @@ import { Users, Dumbbell, Calendar, Activity } from "lucide-react";
 import EngagementChart, { EngagementData } from "@/components/dashboard/engagement-chart";
 import ProgressChart, { ProgressData } from "@/components/dashboard/progress-chart";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { subDays, startOfWeek, endOfWeek, format, parse, eachMonthOfInterval, startOfMonth } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, format, parse } from 'date-fns';
 
 async function getDashboardData(from: string, to: string) {
   const supabase = createClient();
@@ -83,10 +83,13 @@ async function getDashboardData(from: string, to: string) {
 
   // CHART DATA
   // Progress Chart
+  const { data: studentIds } = await supabase.from('students').select('id').eq('trainer_id', trainerId);
+  const studentIdList = studentIds?.map(s => s.id) || [];
+
   const { data: measurements } = await supabase
     .from('measurements')
     .select('created_at, weight, body_fat')
-    .in('student_id', (await supabase.from('students').select('id').eq('trainer_id', trainerId)).data?.map(s => s.id) || [])
+    .in('student_id', studentIdList)
     .gte('created_at', fromDate.toISOString())
     .lte('created_at', toDate.toISOString())
     .order('created_at', { ascending: true });
@@ -160,7 +163,7 @@ export default async function DashboardPage({
         <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
         <DateRangeFilter defaultFrom={from} defaultTo={to} />
       </div>
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
@@ -191,6 +194,21 @@ export default async function DashboardPage({
           <CardContent>
             <div className="text-2xl font-bold">{data.weekAppointments}</div>
             <p className="text-xs text-muted-foreground">Agendadas para esta semana</p>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Engajamento Geral</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+             <div className="text-2xl font-bold">
+                {
+                    data.engagementData.reduce((acc, curr) => acc + curr.completed, 0) / 
+                    (data.engagementData.reduce((acc, curr) => acc + curr.scheduled, 0) || 1) * 100
+                }%
+             </div>
+            <p className="text-xs text-muted-foreground">Treinos concluídos vs. agendados</p>
           </CardContent>
         </Card>
       </div>
