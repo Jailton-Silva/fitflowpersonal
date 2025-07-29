@@ -1,5 +1,7 @@
+
 import WorkoutBuilder from "@/components/workouts/workout-builder";
 import { createClient } from "@/lib/supabase/server";
+import { Exercise, Student } from "@/lib/definitions";
 
 async function getWorkoutInitialData() {
     const supabase = createClient();
@@ -20,7 +22,7 @@ async function getWorkoutInitialData() {
     }
 
     const studentsPromise = supabase.from("students").select("id, name").eq('trainer_id', trainer.id).eq('status', 'active');
-    const exercisesPromise = supabase.from("exercises").select("*");
+    const exercisesPromise = supabase.from("exercises").select("*").eq('trainer_id', trainer.id);
 
     const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
 
@@ -32,8 +34,8 @@ async function getWorkoutInitialData() {
     }
 
     return {
-        students: studentsResult.data ?? [],
-        exercises: exercisesResult.data ?? [],
+        students: (studentsResult.data as Student[]) ?? [],
+        exercises: (exercisesResult.data as Exercise[]) ?? [],
     }
 }
 
