@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
 import MeasurementForm from "@/components/students/measurement-form";
+import MeasurementsHistory from "@/components/students/measurements-history";
 import SessionsHistory, { FormattedSession } from "@/components/students/sessions-history";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
