@@ -33,8 +33,8 @@ import { Loader2 } from "lucide-react";
 import { Measurement } from "@/lib/definitions";
 
 const formSchema = z.object({
-  weight: z.preprocess((val) => Number(val), z.number().positive("O peso deve ser um número positivo.")),
-  height: z.preprocess((val) => Number(val), z.number().positive("A altura deve ser um número positivo.")),
+  weight: z.preprocess((val) => val === '' ? undefined : Number(val), z.number({ required_error: "O peso é obrigatório."}).positive("O peso deve ser um número positivo.")),
+  height: z.preprocess((val) => val === '' ? undefined : Number(val), z.number({ required_error: "A altura é obrigatória."}).positive("A altura deve ser um número positivo.")),
   body_fat: z.preprocess((val) => (val === "" ? undefined : Number(val)), z.number().min(0, "O percentual de gordura não pode ser negativo.").optional()),
   notes: z.string().optional(),
 });
@@ -55,8 +55,8 @@ export default function MeasurementForm({ children, studentId, measurement }: Me
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        weight: 0,
-        height: 0,
+        weight: undefined,
+        height: undefined,
         body_fat: undefined,
         notes: "",
     },
@@ -65,15 +65,15 @@ export default function MeasurementForm({ children, studentId, measurement }: Me
   useEffect(() => {
     if (isOpen && measurement) {
       form.reset({
-        weight: measurement.weight,
-        height: measurement.height,
+        weight: measurement.weight ?? undefined,
+        height: measurement.height ?? undefined,
         body_fat: measurement.body_fat ?? undefined,
         notes: measurement.notes ?? "",
       });
     } else if (isOpen && !measurement) {
        form.reset({
-            weight: 0,
-            height: 0,
+            weight: undefined,
+            height: undefined,
             body_fat: undefined,
             notes: "",
         });
@@ -134,7 +134,7 @@ export default function MeasurementForm({ children, studentId, measurement }: Me
                     <FormItem>
                       <FormLabel>Peso (kg)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" placeholder="80.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="80.5" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -147,7 +147,7 @@ export default function MeasurementForm({ children, studentId, measurement }: Me
                     <FormItem>
                       <FormLabel>Altura (cm)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" placeholder="175" {...field} />
+                        <Input type="number" step="0.1" placeholder="175" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

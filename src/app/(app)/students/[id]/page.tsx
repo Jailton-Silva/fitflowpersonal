@@ -82,14 +82,14 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
-                <Avatar className="w-24 h-24 border-2 border-primary">
+                <Avatar className="w-24 h-24 border-2 border-primary shrink-0">
                     <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
                     <AvatarFallback className="text-3xl">
                         {student.name.charAt(0)}
                     </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-4">
+                <div className="flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <h1 className="text-3xl font-bold font-headline">{student.name}</h1>
                         <Badge variant={student.status === "active" ? "default" : "secondary"}>
                           {student.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -97,18 +97,20 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                     </div>
                     <p className="text-muted-foreground">{student.email}</p>
                      {student.phone && (
-                        <div className="flex items-center text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center text-sm text-muted-foreground pt-1">
                            <Phone className="mr-2 h-4 w-4" />
                             <span>{student.phone}</span>
                         </div>
                     )}
                 </div>
-                 <StudentForm student={student}>
-                    <Button variant="outline">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar Aluno
-                    </Button>
-                </StudentForm>
+                 <div className="shrink-0">
+                    <StudentForm student={student}>
+                        <Button variant="outline">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar Aluno
+                        </Button>
+                    </StudentForm>
+                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,7 +131,6 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                 initialWorkouts={workouts}
                 initialMeasurements={measurements}
                 initialSessions={sessions}
-                isPublicView={false}
             />
         </div>
     );

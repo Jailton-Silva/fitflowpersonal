@@ -3,14 +3,12 @@
 
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Calendar as CalendarIcon, History, PlusCircle, Edit } from "lucide-react";
+import { Activity, Calendar as CalendarIcon, History, PlusCircle } from "lucide-react";
 import { parseISO } from 'date-fns';
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
-import StudentForm from "@/components/students/student-form";
 import MeasurementForm from "@/components/students/measurement-form";
 import MeasurementsHistory from "@/components/students/measurements-history";
 import SessionsHistory from "@/components/students/sessions-history";
@@ -25,11 +23,10 @@ type StudentDetailClientProps = {
     initialWorkouts?: Workout[];
     initialMeasurements?: Measurement[];
     initialSessions?: EnrichedWorkoutSession[];
-    isPublicView?: boolean; // To render public student portal
 }
 
 
-export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [], isPublicView = false }: StudentDetailClientProps) {
+export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentDetailClientProps) {
     
     // States for interactive data
     const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
@@ -89,11 +86,9 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                            {!isPublicView && (
-                                <MeasurementForm studentId={student.id}>
-                                    <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova</Button>
-                                </MeasurementForm>
-                            )}
+                            <MeasurementForm studentId={student.id}>
+                                <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova Medição</Button>
+                            </MeasurementForm>
                         </div>
                         <div className="flex flex-col md:flex-row gap-2 pt-2">
                             <Input 
@@ -107,19 +102,17 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                             />
                         </div>
                     </CardHeader>
-                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} isPublicView={isPublicView} /></CardContent>
+                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} /></CardContent>
                 </Card>
                 <Card>
                     <CardHeader>
                          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
-                            {!isPublicView && (
-                                <Button size="sm" variant="outline" asChild>
-                                <Link href={`/workouts/new?student_id=${student.id}`}>
-                                    <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
-                                    </Link>
-                                </Button>
-                            )}
+                            <Button size="sm" variant="outline" asChild>
+                               <Link href={`/workouts/new?student_id=${student.id}`}>
+                                   <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
+                               </Link>
+                            </Button>
                         </div>
                          <div className="flex flex-col md:flex-row gap-2 pt-2">
                              <Input 
@@ -135,7 +128,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                     </CardHeader>
                     <CardContent>
                        {filteredWorkouts.length > 0 ? (
-                           <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
+                           <ul className="max-h-64 overflow-y-auto space-y-3 pr-2">
                                {filteredWorkouts.map((workout: Workout) => (
                                    <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                        <div>
@@ -143,13 +136,13 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                                            <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
                                        </div>
                                        <Button variant="outline" size="sm" asChild>
-                                            <Link href={isPublicView ? `/public/workout/${workout.id}` : `/workouts/${workout.id}`} target={isPublicView ? "_blank" : "_self"}>
+                                            <Link href={`/workouts/${workout.id}`}>
                                                 Ver Plano
                                             </Link>
                                        </Button>
                                    </li>
                                ))}
-                           </div>
+                           </ul>
                        ) : <p className="text-muted-foreground text-center py-4">Nenhum treino encontrado para os filtros selecionados.</p>}
                     </CardContent>
                 </Card>
