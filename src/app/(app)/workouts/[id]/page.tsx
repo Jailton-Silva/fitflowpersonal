@@ -1,9 +1,8 @@
 
-
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, User, Calendar, ArrowLeft, Edit, Utensils, Share2, Video } from "lucide-react";
+import { Dumbbell, User, Calendar, ArrowLeft, Utensils } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Workout } from "@/lib/definitions";
 import WorkoutDetailClient from "./client-page";
+import { WorkoutExerciseCard, WorkoutExerciseRow, WorkoutExerciseHeader } from "@/components/workouts/workout-exercise-list";
 
 async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
@@ -41,6 +41,7 @@ async function getWorkoutDetails(workoutId: string) {
 
 export default async function WorkoutDetailPage({ params }: { params: { id: string } }) {
     const workout = await getWorkoutDetails(params.id);
+    const exercises = (workout.exercises as any[]) || [];
 
     return (
         <div className="space-y-6" id="printable-area">
@@ -79,15 +80,15 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                         <Badge>Plano de Treino</Badge>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                     {workout.description && (
-                        <div className="prose prose-sm max-w-none text-muted-foreground mb-6 whitespace-pre-wrap">
+                        <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
                            <p>{workout.description}</p>
                         </div>
                     )}
 
                     {workout.diet_plan && (
-                        <div className="mb-6">
+                        <div>
                             <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Utensils className="h-5 w-5 text-primary" />Plano de Dieta</h3>
                              <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
                                <p>{workout.diet_plan}</p>
@@ -96,39 +97,36 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                     )}
                     
                     <div className="space-y-4">
-                        <h3 className="text-lg font-headline flex items-center gap-2 mb-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
-                        {(workout.exercises as any[]).map((exercise, index) => (
-                             <Card key={index} className="bg-muted/50">
-                                <CardHeader>
-                                    <div className="flex justify-between items-center">
-                                        <CardTitle className="text-lg font-headline flex items-center gap-2">
-                                            {exercise.name}
-                                        </CardTitle>
-                                        <WorkoutDetailClient workout={workout} exercise={exercise} />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                        <div>
-                                            <p className="font-semibold">Séries</p>
-                                            <p>{exercise.sets || '-'}</p>
-                                        </div>
-                                         <div>
-                                            <p className="font-semibold">Repetições</p>
-                                            <p>{exercise.reps || '-'}</p>
-                                        </div>
-                                         <div>
-                                            <p className="font-semibold">Carga</p>
-                                            <p>{exercise.load ? `${exercise.load} kg` : '-'}</p>
-                                        </div>
-                                         <div>
-                                            <p className="font-semibold">Descanso</p>
-                                            <p>{exercise.rest ? `${exercise.rest} s` : '-'}</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        <h3 className="text-lg font-headline flex items-center gap-2"><Dumbbell className="h-5 w-5 text-primary" />Exercícios</h3>
+                        
+                        {/* Mobile View */}
+                        <div className="md:hidden">
+                            <div className="space-y-3">
+                                {exercises.length > 0 ? (
+                                    exercises.map((exercise) => <WorkoutExerciseCard key={exercise.exercise_id} workout={workout} exercise={exercise} />)
+                                ) : (
+                                    <p className="p-4 text-center text-muted-foreground">Nenhum exercício neste plano.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Desktop View */}
+                        <div className="hidden md:block rounded-md border">
+                            <table className="w-full text-sm">
+                                <WorkoutExerciseHeader />
+                                <tbody className="divide-y divide-border">
+                                    {exercises.length > 0 ? (
+                                        exercises.map((exercise) => <WorkoutExerciseRow key={exercise.exercise_id} workout={workout} exercise={exercise} />)
+                                    ) : (
+                                    <tr>
+                                        <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                                            Nenhum exercício neste plano.
+                                        </td>
+                                    </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

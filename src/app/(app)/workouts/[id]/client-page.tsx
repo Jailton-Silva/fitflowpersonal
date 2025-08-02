@@ -3,36 +3,15 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, Video } from "lucide-react";
+import { Edit, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Workout, WorkoutExercise } from "@/lib/definitions";
-
-const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
-    if (!videoUrl.includes('youtube.com/watch?v=')) {
-        return <p>URL do vídeo inválida.</p>
-    }
-    const videoId = videoUrl.split('v=')[1].split('&')[0];
-    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    return (
-        <iframe
-            width="100%"
-            height="315"
-            src={embedUrl}
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-        ></iframe>
-    );
-};
+import { Workout } from "@/lib/definitions";
 
 type WorkoutDetailClientProps = {
     workout: Workout;
-    exercise?: WorkoutExercise;
 }
 
-export default function WorkoutDetailClient({ workout, exercise }: WorkoutDetailClientProps) {
+export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
     const { toast } = useToast();
 
     const handleShare = () => {
@@ -46,30 +25,7 @@ export default function WorkoutDetailClient({ workout, exercise }: WorkoutDetail
             });
         }
     }
-
-    // Render video button for each exercise
-    if (exercise) {
-        if (!exercise.video_url) return null;
-        
-        return (
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Video className="h-4 w-4" />
-                        Ver Vídeo
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>{exercise.name}</DialogTitle>
-                    </DialogHeader>
-                    <VideoPlayer videoUrl={exercise.video_url} />
-                </DialogContent>
-            </Dialog>
-        );
-    }
     
-    // Render header buttons
     return (
         <div className="flex gap-2">
             <Button variant="outline" onClick={handleShare}>
@@ -85,4 +41,3 @@ export default function WorkoutDetailClient({ workout, exercise }: WorkoutDetail
         </div>
     );
 }
-
