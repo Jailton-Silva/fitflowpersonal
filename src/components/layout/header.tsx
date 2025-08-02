@@ -12,7 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "../theme-toggle";
-import { Sidebar, NavContent } from "./sidebar";
+import { NavContent } from "./sidebar";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 
 export async function Header() {
@@ -36,6 +36,10 @@ export async function Header() {
             </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+              <SheetDescription className="sr-only">Navegue pelas seções da plataforma FitFlow.</SheetDescription>
+            </SheetHeader>
             <NavContent />
         </SheetContent>
         </Sheet>
