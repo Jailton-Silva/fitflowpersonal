@@ -1,3 +1,4 @@
+
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -33,24 +34,10 @@ import ExerciseForm from "./exercise-form";
 
 async function deleteExercise(exerciseId: string, onComplete: () => void, onError: (error: any) => void) {
   const supabase = createClient();
-  // First, check if user is the owner. This is an extra layer of security.
-  // RLS should be the primary security mechanism.
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-      onError(new Error("Usuário não autenticado."));
-      return;
-  }
-   const { data: trainer } = await supabase.from("trainers").select('id').eq('user_id', user.id).single();
-    if (!trainer) {
-        onError(new Error("Treinador não encontrado."));
-        return;
-    }
-
   const { error } = await supabase
     .from("exercises")
     .delete()
-    .eq("id", exerciseId)
-    .eq("trainer_id", trainer.id); // Security check
+    .eq("id", exerciseId);
 
   if (error) {
     onError(error);
@@ -71,12 +58,13 @@ function DeleteExerciseAction({ exerciseId }: { exerciseId: string }) {
           title: "Sucesso!",
           description: "Exercício excluído com sucesso.",
         });
-        router.refresh();
+        // This will cause the page to re-fetch data in its useEffect hook
+        router.refresh(); 
       },
       (error) => {
          toast({
           title: "Erro ao excluir exercício",
-          description: "Apenas o criador do exercício pode excluí-lo. " + error.message,
+          description: error.message,
           variant: "destructive",
         });
       }

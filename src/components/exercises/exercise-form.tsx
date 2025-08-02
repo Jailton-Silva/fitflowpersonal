@@ -35,7 +35,7 @@ import { Loader2 } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
   description: z.string().optional(),
-  muscle_groups: z.string().optional().transform(value => value ? value.split(',').map(s => s.trim()) : []),
+  muscle_groups: z.string().optional().transform(value => value ? value.split(',').map(s => s.trim()).filter(s => s.length > 0) : []),
   equipment: z.string().optional(),
   video_url: z.string().url("URL do vídeo inválida.").optional().or(z.literal('')),
   instructions: z.string().optional(),
