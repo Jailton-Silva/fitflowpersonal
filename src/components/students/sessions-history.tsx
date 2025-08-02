@@ -1,9 +1,6 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { format } from "date-fns";
-import { ptBR } from 'date-fns/locale';
 import {
   Table,
   TableBody,
@@ -14,44 +11,18 @@ import {
 } from "@/components/ui/table";
 import { WorkoutSession } from "@/lib/definitions";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from '../ui/skeleton';
 
 type EnrichedSession = WorkoutSession & {
     workouts: { name: string } | null;
 }
 
-type FormattedSession = EnrichedSession & {
+export type FormattedSession = EnrichedSession & {
     formattedDate: string;
 }
 
-export default function SessionsHistory({ sessions }: { sessions: EnrichedSession[] }) {
-  const [formattedSessions, setFormattedSessions] = useState<FormattedSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function SessionsHistory({ sessions }: { sessions: FormattedSession[] }) {
 
-  useEffect(() => {
-    // This logic now runs only on the client, avoiding hydration mismatch.
-    if (sessions) {
-      const newFormattedSessions = sessions.map(session => ({
-        ...session,
-        formattedDate: format(new Date(session.started_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-      }));
-      setFormattedSessions(newFormattedSessions);
-      setIsLoading(false);
-    }
-  }, [sessions]);
-
-
-  if (isLoading) {
-    return (
-      <div className="space-y-2 mt-4">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-      </div>
-    )
-  }
-
-  if (!formattedSessions || formattedSessions.length === 0) {
+  if (!sessions || sessions.length === 0) {
     return <p className="text-muted-foreground text-center py-4">Nenhuma sessão de treino encontrada para os filtros selecionados.</p>;
   }
 
@@ -67,7 +38,7 @@ export default function SessionsHistory({ sessions }: { sessions: EnrichedSessio
             </TableRow>
         </TableHeader>
         <TableBody>
-            {formattedSessions.map((session) => (
+            {sessions.map((session) => (
             <TableRow key={session.id}>
                 <TableCell className="font-medium max-w-[150px] truncate">{session.workouts?.name ?? 'Treino não encontrado'}</TableCell>
                 <TableCell className="hidden sm:table-cell">{session.formattedDate}</TableCell>

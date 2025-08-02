@@ -4,14 +4,14 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Calendar as CalendarIcon, History, PlusCircle } from "lucide-react";
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import ProgressChart from "@/components/students/progress-chart";
 import MeasurementForm from "@/components/students/measurement-form";
-import MeasurementsHistory from "@/components/students/measurements-history";
-import SessionsHistory from "@/components/students/sessions-history";
+import SessionsHistory, { FormattedSession } from "@/components/students/sessions-history";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
@@ -31,7 +31,6 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
     // States for interactive data
     const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
     const [measurements, setMeasurements] = useState<Measurement[]>(initialMeasurements);
-    const [sessions, setSessions] = useState<EnrichedWorkoutSession[]>(initialSessions);
 
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
@@ -70,13 +69,18 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         const toDate = sessionsFilter.range?.to ? new Date(sessionsFilter.range.to.setHours(23,59,59,999)) : null;
         const lowerCaseFilter = sessionsFilter.text.toLowerCase();
 
-        return sessions.filter(s => {
-            const itemDate = parseISO(s.started_at);
-            const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
-            const textMatch = !lowerCaseFilter || s.workouts?.name.toLowerCase().includes(lowerCaseFilter);
-            return dateMatch && textMatch;
-        });
-    }, [sessions, sessionsFilter]);
+        return initialSessions
+            .map(session => ({
+                ...session,
+                formattedDate: format(new Date(session.started_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+            }))
+            .filter(s => {
+                const itemDate = parseISO(s.started_at);
+                const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
+                const textMatch = !lowerCaseFilter || s.workouts?.name.toLowerCase().includes(lowerCaseFilter);
+                return dateMatch && textMatch;
+            });
+    }, [initialSessions, sessionsFilter]);
 
     // Renders the page content
     return (
