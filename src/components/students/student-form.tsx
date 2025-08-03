@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,7 +38,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, RefreshCw, Copy } from "lucide-react";
+import { Loader2, RefreshCw, Copy, Upload } from "lucide-react";
+import { uploadAvatar } from "@/app/(app)/students/actions";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
@@ -62,8 +64,11 @@ type StudentFormProps = {
 export default function StudentForm({ children, student }: StudentFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, startUploadTransition] = useTransition();
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const isEditMode = !!student;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,21 +87,6 @@ export default function StudentForm({ children, student }: StudentFormProps) {
     },
   });
 
-  const generatePassword = () => {
-    const newPassword = Math.random().toString(36).slice(-8);
-    form.setValue('access_password', newPassword);
-  }
-
-  const copyPassword = () => {
-    const password = form.getValues('access_password');
-    if (password) {
-        navigator.clipboard.writeText(password);
-        toast({ title: "Senha copiada!" });
-    } else {
-        toast({ title: "Nenhuma senha para copiar", variant: "destructive"});
-    }
-  }
-
   useEffect(() => {
     if (student) {
         form.reset({
@@ -112,6 +102,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             medical_conditions: student.medical_conditions ?? "",
             access_password: student.access_password ?? "",
         });
+        setAvatarPreview(student.avatar_url ?? null);
     } else {
         form.reset({
             name: "",
@@ -126,8 +117,51 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             medical_conditions: "",
             access_password: "",
         });
+        setAvatarPreview(null);
     }
   }, [student, isOpen, form]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload logic
+      if(isEditMode) {
+          const formData = new FormData();
+          formData.append('avatar', file);
+          startUploadTransition(async () => {
+             const { error, path } = await uploadAvatar(student.id, formData);
+              if (error) {
+                  toast({ title: "Erro no Upload", description: error, variant: "destructive" });
+              } else {
+                  toast({ title: "Sucesso!", description: "Avatar atualizado."});
+                  // No need to set preview here, revalidation will update the image everywhere
+              }
+          });
+      }
+    }
+  };
+
+
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-8);
+    form.setValue('access_password', newPassword);
+  }
+
+  const copyPassword = () => {
+    const password = form.getValues('access_password');
+    if (password) {
+        navigator.clipboard.writeText(password);
+        toast({ title: "Senha copiada!" });
+    } else {
+        toast({ title: "Nenhuma senha para copiar", variant: "destructive"});
+    }
+  }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -200,6 +234,25 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+             {isEditMode && (
+                <div className="flex flex-col items-center gap-4">
+                  <Avatar className="w-24 h-24 border-2 border-primary relative group">
+                        <AvatarImage src={avatarPreview || undefined} alt={student?.name} />
+                        <AvatarFallback className="text-3xl">{student?.name.charAt(0)}</AvatarFallback>
+                        {isUploading && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                                <Loader2 className="h-8 w-8 animate-spin text-white" />
+                            </div>
+                        )}
+                   </Avatar>
+                   <Button asChild variant="outline">
+                       <label htmlFor="avatar-upload" className="cursor-pointer">
+                           <Upload className="mr-2 h-4 w-4"/> Alterar Foto
+                           <Input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={handleAvatarChange} disabled={isUploading} />
+                       </label>
+                   </Button>
+                </div>
+            )}
             <FormField
               control={form.control}
               name="name"
@@ -373,8 +426,8 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                 <SheetClose asChild>
                     <Button type="button" variant="outline">Cancelar</Button>
                 </SheetClose>
-                <Button type="submit" disabled={isSubmitting} className="ripple">
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isSubmitting || isUploading} className="ripple">
+                  {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Salvar
                 </Button>
             </SheetFooter>
