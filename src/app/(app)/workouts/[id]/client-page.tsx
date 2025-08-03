@@ -26,8 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 type WorkoutDetailClientProps = {
     workout: Workout;
@@ -46,7 +44,7 @@ async function deleteWorkout(workoutId: string) {
 }
 
 
-function ToggleStatusAction({ workout, as = "button" }: { workout: Workout, as?: "button" | "menuitem" }) {
+function ToggleStatusAction({ workout }: { workout: Workout }) {
   const { toast } = useToast();
   const router = useRouter();
   const newStatus = workout.status === 'active' ? 'inactive' : 'active';
@@ -69,30 +67,20 @@ function ToggleStatusAction({ workout, as = "button" }: { workout: Workout, as?:
     }
   };
   
-  const content = (
-    <>
+  return (
+    <DropdownMenuItem onClick={handleToggle}>
       {newStatus === 'active' ? (
         <Eye className="mr-2 h-4 w-4" />
       ) : (
         <EyeOff className="mr-2 h-4 w-4" />
       )}
       <span>{newStatusText}</span>
-    </>
-  );
-
-  if (as === "menuitem") {
-    return <DropdownMenuItem onClick={handleToggle}>{content}</DropdownMenuItem>
-  }
-
-  return (
-    <Button variant="outline" onClick={handleToggle}>
-      {content}
-    </Button>
+    </DropdownMenuItem>
   );
 }
 
 
-function DeleteWorkoutAction({ workoutId, as = "button" }: { workoutId: string, as?: "button" | "menuitem" }) {
+function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -115,7 +103,7 @@ function DeleteWorkoutAction({ workoutId, as = "button" }: { workoutId: string, 
     }
   };
   
-  const trigger = as === 'menuitem' ? (
+  const trigger = (
     <DropdownMenuItem
         className="text-destructive focus:text-destructive focus:bg-destructive/10"
         onSelect={(e) => e.preventDefault()}
@@ -123,11 +111,6 @@ function DeleteWorkoutAction({ workoutId, as = "button" }: { workoutId: string, 
         <Trash2 className="mr-2 h-4 w-4" />
         Excluir Treino
     </DropdownMenuItem>
-   ) : (
-     <Button variant="destructive">
-        <Trash2 className="mr-2 h-4 w-4" />
-        Excluir
-     </Button>
    );
 
 
@@ -159,11 +142,10 @@ function DeleteWorkoutAction({ workoutId, as = "button" }: { workoutId: string, 
 }
 
 
-function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
+export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
     const { toast } = useToast();
 
     const handleShare = () => {
-        // Ensure this code runs only in the browser
         if (typeof window !== 'undefined') {
             const url = `${window.location.origin}/public/workout/${workout.id}`;
             navigator.clipboard.writeText(url);
@@ -193,17 +175,11 @@ function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <ToggleStatusAction workout={workout} as="menuitem" />
+                    <ToggleStatusAction workout={workout} />
                     <DropdownMenuSeparator />
-                    <DeleteWorkoutAction workoutId={workout.id} as="menuitem" />
+                    <DeleteWorkoutAction workoutId={workout.id} />
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
     );
 }
-
-
-WorkoutDetailClient.ToggleStatusAction = ToggleStatusAction;
-WorkoutDetailClient.DeleteWorkoutAction = DeleteWorkoutAction;
-
-export default WorkoutDetailClient;

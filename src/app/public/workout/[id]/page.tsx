@@ -1,52 +1,37 @@
-
-
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { PublicWorkoutView } from "@/components/workouts/public-workout-view";
-import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
+import { cookies } from 'next/headers';
 import { Workout } from "@/lib/definitions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EyeOff } from "lucide-react";
+import PublicWorkoutView from "@/components/workouts/public-workout-view";
+import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
 
-
-async function getWorkout(workoutId: string): Promise<Workout | null> {
+async function getWorkout(workoutId: string) {
     const supabase = createClient();
     const { data, error } = await supabase
-        .from("workouts")
-        .select("*, students(id, name)")
-        .eq("id", workoutId)
+        .from('workouts')
+        .select('*, students(id, name, avatar_url)')
+        .eq('id', workoutId)
         .single();
-    
-    if (error) {
-        console.error("Error fetching workout:", error);
-        return null;
+
+    if (error || !data) {
+        console.error("Workout not found:", error);
+        notFound();
     }
     return data as Workout;
 }
-
 
 export default async function PublicWorkoutPage({ params }: { params: { id: string } }) {
     const cookieStore = cookies();
     const workout = await getWorkout(params.id);
 
-    if (!workout) {
-        notFound();
-    }
-    
-    // Check if workout is active
+    // If workout is inactive, no one can see it
     if (workout.status === 'inactive') {
         return (
-             <div className="flex items-center justify-center min-h-screen bg-muted">
-                <Card className="mx-auto max-w-sm w-full text-center">
-                     <CardHeader>
-                        <EyeOff className="mx-auto h-8 w-8 text-muted-foreground" />
-                        <CardTitle className="text-2xl font-headline mt-4">Treino Indisponível</CardTitle>
-                        <CardDescription>
-                            Este plano de treino não está ativo no momento. Por favor, entre em contato com seu personal trainer.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
+             <div className="flex items-center justify-center min-h-screen bg-muted text-center p-4">
+                <div>
+                    <h1 className="text-2xl font-bold font-headline">Treino Indisponível</h1>
+                    <p className="text-muted-foreground mt-2">Este plano de treino não está ativo no momento. Fale com seu personal trainer.</p>
+                </div>
             </div>
         )
     }
@@ -56,12 +41,12 @@ export default async function PublicWorkoutPage({ params }: { params: { id: stri
         return <PublicWorkoutView workout={workout} />;
     }
 
-    // If it has a password, check for auth cookie
-    const isAuthorized = cookieStore.has(`workout_auth_${params.id}`);
+    // Workout has a password, check for auth cookie
+    const hasAuthCookie = cookieStore.has(`workout_auth_${workout.id}`);
 
-    if (isAuthorized) {
+    if (hasAuthCookie) {
         return <PublicWorkoutView workout={workout} />;
+    } else {
+        return <WorkoutPasswordForm workoutId={workout.id} />;
     }
-
-    return <WorkoutPasswordForm workoutId={params.id} />;
 }

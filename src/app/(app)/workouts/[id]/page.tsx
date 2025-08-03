@@ -35,6 +35,15 @@ async function getWorkoutDetails(workoutId: string) {
     if (error || !data) {
         notFound();
     }
+    
+    // Check workout status for public access
+    if (data.status === 'inactive') {
+        // Here you might want to redirect or show a specific "inactive" page
+        // For now, we'll just prevent access by showing not found
+        // A better implementation would be a proper "This workout is inactive" page
+        notFound();
+    }
+
     return data as Workout;
 }
 

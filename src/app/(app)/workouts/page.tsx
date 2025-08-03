@@ -20,7 +20,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import WorkoutDetailClient from "./[id]/client-page";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
 
 async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; status?: string }) {
   const supabase = createClient();
@@ -46,7 +59,7 @@ async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]
   if (filters.to) {
     query = query.lte('created_at', filters.to);
   }
-  if (filters.status) {
+  if (filters.status && filters.status !== 'all') {
     query = query.eq('status', filters.status);
   }
   
@@ -91,6 +104,115 @@ async function getFilterData() {
     }
 }
 
+async function updateWorkoutStatus(workoutId: string, status: 'active' | 'inactive') {
+    "use server"
+    const supabase = createClient();
+    const { error } = await supabase.from("workouts").update({ status }).eq("id", workoutId);
+    return { error };
+}
+
+async function deleteWorkout(workoutId: string) {
+    "use server"
+    const supabase = createClient();
+    const { error } = await supabase.from("workouts").delete().eq("id", workoutId);
+    return { error };
+}
+
+function ToggleStatusAction({ workout }: { workout: Workout }) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const newStatus = workout.status === 'active' ? 'inactive' : 'active';
+  const newStatusText = newStatus === 'active' ? 'Ativar' : 'Desativar';
+
+  const handleToggle = async () => {
+    const { error } = await updateWorkoutStatus(workout.id, newStatus);
+    if (error) {
+      toast({
+        title: `Erro ao ${newStatusText} treino`,
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso!",
+        description: `Plano de treino foi definido como ${newStatus === 'active' ? 'Ativo' : 'Inativo'}.`,
+      });
+      router.refresh();
+    }
+  };
+  
+  return (
+    <DropdownMenuItem onClick={handleToggle}>
+      {newStatus === 'active' ? (
+        <Eye className="mr-2 h-4 w-4" />
+      ) : (
+        <EyeOff className="mr-2 h-4 w-4" />
+      )}
+      <span>{newStatusText}</span>
+    </DropdownMenuItem>
+  );
+}
+
+function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    const { error } = await deleteWorkout(workoutId);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir treino",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso!",
+        description: "Plano de treino excluído.",
+      });
+      router.refresh();
+    }
+  };
+  
+  const trigger = (
+    <DropdownMenuItem
+        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+        onSelect={(e) => e.preventDefault()}
+    >
+        <Trash2 className="mr-2 h-4 w-4" />
+        Excluir
+    </DropdownMenuItem>
+   );
+
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        {trigger}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação não pode ser desfeita. Isso excluirá permanentemente o
+            plano de treino e todos os seus dados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            Sim, excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 
 function WorkoutCardActions({ workout }: { workout: Workout }) {
     return (
@@ -107,12 +229,81 @@ function WorkoutCardActions({ workout }: { workout: Workout }) {
                         Editar
                     </Link>
                 </DropdownMenuItem>
-                <WorkoutDetailClient.ToggleStatusAction workout={workout} as="menuitem" />
+                <ToggleStatusAction workout={workout} />
                 <DropdownMenuSeparator />
-                <WorkoutDetailClient.DeleteWorkoutAction workoutId={workout.id} as="menuitem" />
+                <DeleteWorkoutAction workoutId={workout.id} />
             </DropdownMenuContent>
         </DropdownMenu>
     );
+}
+
+function WorkoutsClientPage({ workouts, students, exercises, searchParams }: { workouts: any[], students: any[], exercises: any[], searchParams: any }) {
+    const router = useRouter();
+    const { toast } = useToast();
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-3xl font-bold font-headline">Planos de Treino</h1>
+                <Button asChild className="ripple">
+                <Link href="/workouts/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Criar Treino
+                </Link>
+                </Button>
+            </div>
+            
+            <WorkoutFilters students={students} exercises={exercises} />
+            
+            {workouts.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {(workouts as Workout[]).map((workout: Workout) => (
+                    <Card key={workout.id} className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <CardTitle>{workout.name}</CardTitle>
+                            <WorkoutCardActions workout={workout} />
+                        </div>
+                        <CardDescription>
+                        Para: {workout.students?.name ?? "N/A"}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-2">
+                        <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
+                            {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                        <Dumbbell className="mr-2 h-4 w-4" />
+                        <span>
+                            {(workout.exercises as any[]).length} exercício
+                            {(workout.exercises as any[]).length !== 1 ? "s" : ""}
+                        </span>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button variant="outline" className="w-full" asChild>
+                            <Link href={`/workouts/${workout.id}`}>Ver Plano</Link>
+                        </Button>
+                    </CardFooter>
+                    </Card>
+                ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                <h2 className="text-xl font-semibold">Nenhum Treino Encontrado</h2>
+                <p className="text-muted-foreground mt-2">
+                    Tente ajustar seus filtros ou crie um novo plano de treino.
+                </p>
+                <Button asChild className="mt-4 ripple">
+                    <Link href="/workouts/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Criar Treino
+                    </Link>
+                </Button>
+                </div>
+            )}
+        </div>
+    )
 }
 
 export default async function WorkoutsPage({
@@ -121,77 +312,18 @@ export default async function WorkoutsPage({
   searchParams: { student?: string; exercises?: string | string[]; from?: string; to?: string; status?: string };
 }) {
   const exerciseIds = Array.isArray(searchParams.exercises) ? searchParams.exercises : (searchParams.exercises ? [searchParams.exercises] : []);
-  const workouts = await getWorkouts({ 
+  
+  const workoutsPromise = getWorkouts({ 
       studentId: searchParams.student, 
       exerciseIds: exerciseIds,
       from: searchParams.from,
       to: searchParams.to,
       status: searchParams.status,
   });
-  const { students, exercises } = await getFilterData();
+  
+  const filterDataPromise = getFilterData();
 
+  const [workouts, { students, exercises }] = await Promise.all([workoutsPromise, filterDataPromise]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold font-headline">Planos de Treino</h1>
-        <Button asChild className="ripple">
-          <Link href="/workouts/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Criar Treino
-          </Link>
-        </Button>
-      </div>
-      
-      <WorkoutFilters students={students} exercises={exercises} />
-      
-      {workouts.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {(workouts as Workout[]).map((workout: Workout) => (
-            <Card key={workout.id} className="flex flex-col">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                    <CardTitle>{workout.name}</CardTitle>
-                    <WorkoutCardActions workout={workout} />
-                </div>
-                <CardDescription>
-                  Para: {workout.students?.name ?? "N/A"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-2">
-                 <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
-                    {workout.status === 'active' ? 'Ativo' : 'Inativo'}
-                </Badge>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Dumbbell className="mr-2 h-4 w-4" />
-                  <span>
-                    {workout.exercises.length} exercício
-                    {workout.exercises.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              </CardContent>
-              <CardFooter>
-                 <Button variant="outline" className="w-full" asChild>
-                    <Link href={`/workouts/${workout.id}`}>Ver Plano</Link>
-                 </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">Nenhum Treino Encontrado</h2>
-          <p className="text-muted-foreground mt-2">
-            Tente ajustar seus filtros ou crie um novo plano de treino.
-          </p>
-          <Button asChild className="mt-4 ripple">
-            <Link href="/workouts/new">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Criar Treino
-            </Link>
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+  return <WorkoutsClientPage workouts={workouts} students={students} exercises={exercises} searchParams={searchParams} />;
 }
