@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2, Loader2, Video, RefreshCw } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, Video, RefreshCw, Copy } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
@@ -79,8 +79,13 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
 
   const isEditMode = !!workout;
 
+  const { fields, append, remove, replace } = useFieldArray({
+    control: form.control,
+    name: "exercises",
+  });
+
   useEffect(() => {
-    if (workout) {
+    if (isEditMode && workout) {
       form.reset({
         name: workout.name,
         student_id: workout.student_id,
@@ -92,15 +97,18 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
         }))
       });
-    } else if (defaultStudentId) {
-      form.setValue("student_id", defaultStudentId);
+    } else {
+        form.reset({
+            name: "",
+            student_id: defaultStudentId || "",
+            description: "",
+            diet_plan: "",
+            access_password: "",
+            exercises: [],
+        });
     }
-  }, [workout, defaultStudentId, form, exercises]);
+  }, [workout, isEditMode, defaultStudentId, form, exercises]);
 
-  const { fields, append, remove, replace } = useFieldArray({
-    control: form.control,
-    name: "exercises",
-  });
 
   const onSubmit = async (values: WorkoutFormData) => {
     const supabase = createClient();
@@ -192,6 +200,16 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
     form.setValue('access_password', newPassword);
   }
 
+  const copyPassword = () => {
+    const password = form.getValues('access_password');
+    if (password) {
+        navigator.clipboard.writeText(password);
+        toast({ title: "Senha copiada!" });
+    } else {
+        toast({ title: "Nenhuma senha para copiar", variant: "destructive"});
+    }
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -265,6 +283,9 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                             <FormControl>
                                 <Input type="text" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} />
                             </FormControl>
+                             <Button type="button" variant="outline" size="icon" onClick={copyPassword}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
                             <Button type="button" variant="outline" size="icon" onClick={generatePassword}>
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
