@@ -10,6 +10,7 @@ import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions
 import MeasurementsHistory from "./measurements-history";
 import Link from "next/link";
 import { Button } from "../ui/button";
+import ProgressChart from "./progress-chart";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -22,6 +23,7 @@ async function getStudentPortalData(studentId: string) {
         .from("workouts")
         .select("*, students (id, name)")
         .eq("student_id", studentId)
+        .eq("status", "active") // Only show active workouts
         .order("created_at", { ascending: false });
 
     const measurementsPromise = supabase
@@ -108,15 +110,35 @@ export default async function StudentPublicPortal({ studentId }: { studentId: st
                             )}
                         </CardContent>
                     </Card>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Minhas Avaliações Físicas</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <MeasurementsHistory studentId={student.id} measurements={measurements} isPublicView={true} />
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg font-headline flex items-center"><Trophy className="mr-2"/> Meus Objetivos</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">{student.goals || "Nenhum objetivo definido."}</p>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                     <Card>
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Minhas Avaliações Físicas</CardTitle>
+                            <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <MeasurementsHistory studentId={student.id} measurements={measurements} isPublicView={true} />
+                           <ProgressChart measurements={measurements} />
                         </CardContent>
                     </Card>
+
                 </div>
             </main>
              <footer className="text-center py-4 text-muted-foreground text-xs no-print">
@@ -125,4 +147,3 @@ export default async function StudentPublicPortal({ studentId }: { studentId: st
         </div>
     );
 }
-
