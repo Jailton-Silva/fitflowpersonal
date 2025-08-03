@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Workout, Student, Exercise } from "@/lib/definitions";
@@ -172,7 +172,7 @@ function WorkoutCardActions({ workout }: { workout: Workout }) {
     );
 }
 
-export default function WorkoutsPage() {
+function WorkoutsPage() {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [students, setStudents] = useState<Pick<Student, 'id' | 'name'>[]>([]);
     const [exercises, setExercises] = useState<Pick<Exercise, 'id' | 'name'>[]>([]);
@@ -311,5 +311,13 @@ export default function WorkoutsPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function WorkoutsPageWrapper() {
+    return (
+        <Suspense fallback={<div>Carregando...</div>}>
+            <WorkoutsPage />
+        </Suspense>
     )
 }
