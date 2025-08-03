@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { type CookieOptions } from "@supabase/ssr";
@@ -54,14 +55,29 @@ export async function middleware(request: NextRequest) {
     const authCookie = request.cookies.get(`workout_auth_${workoutId}`);
 
     if (authCookie?.value === 'true') {
-      // If user is authorized and not on the portal page, redirect them to it
       if (!isPortalPage) {
         return NextResponse.redirect(new URL(`/public/workout/${workoutId}/portal`, request.url));
       }
     } else {
-      // If user is not authorized and trying to access the portal, redirect them away
       if (isPortalPage) {
         return NextResponse.redirect(new URL(`/public/workout/${workoutId}`, request.url));
+      }
+    }
+  }
+
+  // Handle public student portal authorization
+  if (pathname.startsWith('/public/student/')) {
+    const studentId = pathname.split('/')[3];
+    const isPortalPage = pathname.endsWith('/portal');
+    const authCookie = request.cookies.get(`student_auth_${studentId}`);
+
+    if (authCookie?.value === 'true') {
+      if (!isPortalPage) {
+        return NextResponse.redirect(new URL(`/public/student/${studentId}/portal`, request.url));
+      }
+    } else {
+      if (isPortalPage) {
+        return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
       }
     }
   }
@@ -80,6 +96,7 @@ export const config = {
     "/login", 
     "/signup", 
     "/auth/callback",
-    "/public/workout/:path*"
+    "/public/workout/:path*",
+    "/public/student/:path*"
 ],
 };

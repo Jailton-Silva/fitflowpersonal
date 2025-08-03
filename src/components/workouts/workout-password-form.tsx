@@ -54,6 +54,14 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {/* Hidden username field for accessibility */}
+                        <Input 
+                            type="text"
+                            name="username"
+                            autoComplete="username"
+                            className="hidden"
+                            defaultValue={`workout-${workoutId}`}
+                        />
                         <Input
                             id="password"
                             name="password"

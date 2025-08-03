@@ -53,12 +53,21 @@ export function StudentPasswordForm({ studentId }: { studentId: string }) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {/* Hidden username field for accessibility */}
+                        <Input 
+                            type="text"
+                            name="username"
+                            autoComplete="username"
+                            className="hidden"
+                            defaultValue={`student-${studentId}`}
+                        />
                         <Input
                             id="password"
                             name="password"
                             type="password"
                             placeholder="••••••••"
                             required
+                            autoComplete="current-password"
                         />
                         <input type="hidden" name="studentId" value={studentId} />
                         <SubmitButton />
