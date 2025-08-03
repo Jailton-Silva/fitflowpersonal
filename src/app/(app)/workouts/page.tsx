@@ -66,7 +66,7 @@ async function getFilterData() {
     if (!trainer) return { students: [], exercises: [] };
 
     const studentsPromise = supabase.from("students").select("id, name").eq("trainer_id", trainer.id).order('name');
-    const exercisesPromise = supabase.from("exercises").select("id, name").order('name');
+    const exercisesPromise = supabase.from("exercises").select("id, name").eq("trainer_id", trainer.id).order('name');
 
     const [studentsResult, exercisesResult] = await Promise.all([
         studentsPromise,
