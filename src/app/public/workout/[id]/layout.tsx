@@ -1,7 +1,8 @@
-export default function WorkoutPortalLayout({
-  children,
+
+export default function PublicWorkoutLayout({
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return <>{children}</>;
+    return <>{children}</>;
 }

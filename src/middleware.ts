@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   // Handle public workout authorization
   if (pathname.startsWith('/public/workout/')) {
     const workoutId = pathname.split('/')[3];
-    const isPortalPage = pathname.includes('/portal');
+    const isPortalPage = pathname.endsWith('/portal');
     const authCookie = request.cookies.get(`workout_auth_${workoutId}`);
 
     if (authCookie?.value === 'true') {

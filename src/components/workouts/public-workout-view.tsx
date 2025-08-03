@@ -1,42 +1,35 @@
 
+
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState, useTransition } from "react";
-import { Dumbbell, User, Trophy, Share2, Video, Printer, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Dumbbell, User, Trophy, Printer, Video } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Workout, WorkoutSession } from "@/lib/definitions";
-import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
 import { ExerciseCheck } from "@/components/workouts/exercise-check";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { updateCompletedExercises } from "@/app/public/workout/[id]/actions";
 import { cn } from "@/lib/utils";
-
+import Link from "next/link";
 
 async function getWorkoutSession(workoutId: string) {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser(); // This is a client component, but let's assume it's for a logged in user if applicable
-    
-    // In a public page, we might not have a user. Let's adjust logic.
-    // For a public page, we need a way to track a session. We can use localStorage or create a session and store its ID.
-    // For simplicity, let's try to find an *active* session for this workout.
     const { data, error } = await supabase
         .from('workout_sessions')
         .select('*')
         .eq('workout_id', workoutId)
-        .is('completed_at', null) // Find an incomplete session
+        .is('completed_at', null)
         .order('started_at', { ascending: false })
         .limit(1)
         .single();
     
-    if (error && error.code !== 'PGRST116') { // Ignore 'exact one row' error
+    if (error && error.code !== 'PGRST116') {
         console.error("Error fetching session:", error);
     }
     return data as WorkoutSession | null;
@@ -60,9 +53,8 @@ async function startWorkoutSession(workoutId: string, studentId: string) {
     return data as WorkoutSession | null;
 }
 
-
 const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
-    if (!videoUrl.includes('youtube.com/watch?v=')) {
+    if (!videoUrl || !videoUrl.includes('youtube.com/watch?v=')) {
         return <p>URL do vídeo inválida.</p>
     }
     const videoId = videoUrl.split('v=')[1].split('&')[0];
@@ -80,27 +72,29 @@ const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
     );
 };
 
-
-export default function PublicWorkoutView({ workout, initialIsAuthorized }: { workout: Workout, initialIsAuthorized: boolean }) {
-    const [isAuthorized, setIsAuthorized] = useState(initialIsAuthorized);
+export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     const [session, setSession] = useState<WorkoutSession | null>(null);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => {
-        if (isAuthorized) {
-            setLoading(true);
-            getWorkoutSession(workout.id).then(sessionData => {
-                setSession(sessionData);
-                setLoading(false);
-            });
-        } else {
-             setLoading(false);
-        }
-    }, [isAuthorized, workout.id]);
+        setLoading(true);
+        getWorkoutSession(workout.id).then(sessionData => {
+            setSession(sessionData);
+            setLoading(false);
+        });
+    }, [workout.id]);
 
 
     const handleStartWorkout = async () => {
+        if (!workout.student_id) {
+             toast({
+                title: "Erro",
+                description: "Este treino não está associado a nenhum aluno.",
+                variant: "destructive",
+            });
+            return;
+        }
         const newSession = await startWorkoutSession(workout.id, workout.student_id);
         if (newSession) {
             setSession(newSession);
@@ -120,11 +114,7 @@ export default function PublicWorkoutView({ workout, initialIsAuthorized }: { wo
              </div>
         )
     }
-
-    if (!isAuthorized) {
-        return <WorkoutPasswordForm workoutId={workout.id} />;
-    }
-
+    
     const allExercisesCompleted = session && session.completed_at;
 
     return (

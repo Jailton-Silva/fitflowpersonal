@@ -1,41 +1,36 @@
 
-"use server"
+"use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation'
+import { cookies } from "next/headers";
 
 export async function verifyStudentPassword(prevState: any, formData: FormData) {
+    const studentId = formData.get('studentId') as string;
+    const password = formData.get('password') as string;
     const supabase = createClient();
-    const password = formData.get("password") as string;
-    const studentId = formData.get("studentId") as string;
+    const cookieStore = cookies();
 
-    if (!password || !studentId) {
-        return { error: "ID do aluno ou senha não fornecidos." };
-    }
-
-    const { data: student, error } = await supabase
-        .from("students")
-        .select("access_password")
-        .eq("id", studentId)
+    const { data, error } = await supabase
+        .from('students')
+        .select('access_password')
+        .eq('id', studentId)
         .single();
-
-    if (error || !student) {
-        return { error: "Aluno não encontrado." };
-    }
-
-    const isCorrectPassword = student.access_password === password;
-
-    if (!isCorrectPassword) {
-        return { error: "Senha incorreta. Tente novamente." };
+    
+    if (error || !data) {
+        return { error: 'Aluno não encontrado ou erro no servidor.', success: false };
     }
     
-    cookies().set(`student-auth-${studentId}`, "true", {
-        path: `/public/student/${studentId}`,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24, // 24 hours
-    });
-
-    return { success: true };
+    // For simplicity, we'll store a plain text password.
+    // In a real app, you MUST hash the password.
+    if (data.access_password && data.access_password === password) {
+        cookieStore.set(`student_auth_${studentId}`, 'true', {
+            path: '/',
+            maxAge: 60 * 60 * 24, // 24 hours
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+        return { error: null, success: true };
+    } else {
+        return { error: 'Senha incorreta. Por favor, tente novamente.', success: false };
+    }
 }

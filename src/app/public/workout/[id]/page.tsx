@@ -1,5 +1,6 @@
+
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
 
@@ -7,12 +8,10 @@ async function getWorkout(workoutId: string) {
     const supabase = createClient();
     const { data, error } = await supabase
         .from('workouts')
-        .select(
-            '*, students(id, name)'
-        )
+        .select('id')
         .eq('id', workoutId)
         .single();
-    
+
     if (error || !data) {
         notFound();
     }
@@ -20,17 +19,14 @@ async function getWorkout(workoutId: string) {
 }
 
 export default async function PublicWorkoutPasswordPage({ params }: { params: { id: string } }) {
-    const workout = await getWorkout(params.id);
-    const cookieStore = cookies();
-    const isAuthorized = cookieStore.get(`workout_auth_${workout.id}`)?.value === 'true';
+    await getWorkout(params.id); // Ensure workout exists
 
-    // Se o treino não tiver senha ou se o usuário já estiver autorizado pelo cookie,
-    // a middleware já o terá redirecionado para /portal.
-    // Esta página só é renderizada se a senha for necessária.
-    if (!workout.access_password) {
-        // Se não há senha, idealmente o middleware deveria redirecionar, mas como fallback:
-        notFound();
+    const cookieStore = cookies();
+    const authCookie = cookieStore.get(`workout_auth_${params.id}`);
+
+    if (authCookie?.value === 'true') {
+        redirect(`/public/workout/${params.id}/portal`);
     }
-    
-    return <WorkoutPasswordForm workoutId={workout.id} />;
+
+    return <WorkoutPasswordForm workoutId={params.id} />;
 }

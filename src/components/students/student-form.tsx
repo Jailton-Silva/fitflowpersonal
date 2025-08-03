@@ -38,7 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Copy } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
@@ -51,6 +51,7 @@ const formSchema = z.object({
   weight: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().positive("O peso deve ser um número positivo.").optional()),
   goals: z.string().optional(),
   medical_conditions: z.string().optional(),
+  access_password: z.string().optional(),
 });
 
 type StudentFormProps = {
@@ -77,8 +78,24 @@ export default function StudentForm({ children, student }: StudentFormProps) {
       weight: undefined,
       goals: "",
       medical_conditions: "",
+      access_password: "",
     },
   });
+
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-8);
+    form.setValue('access_password', newPassword);
+  }
+
+  const copyPassword = () => {
+    const password = form.getValues('access_password');
+    if (password) {
+        navigator.clipboard.writeText(password);
+        toast({ title: "Senha copiada!" });
+    } else {
+        toast({ title: "Nenhuma senha para copiar", variant: "destructive"});
+    }
+  }
 
   useEffect(() => {
     if (student) {
@@ -93,6 +110,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             weight: student.weight ?? undefined,
             goals: student.goals ?? "",
             medical_conditions: student.medical_conditions ?? "",
+            access_password: student.access_password ?? "",
         });
     } else {
         form.reset({
@@ -106,6 +124,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
             weight: undefined,
             goals: "",
             medical_conditions: "",
+            access_password: "",
         });
     }
   }, [student, isOpen, form]);
@@ -143,6 +162,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         gender: values.gender || null,
         height: values.height || null,
         weight: values.weight || null,
+        access_password: values.access_password || null,
     };
 
     const { error } = student
@@ -330,6 +350,24 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <FormField
+                control={form.control}
+                name="access_password"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Senha de Acesso ao Portal</FormLabel>
+                    <div className="flex items-center gap-2">
+                        <FormControl>
+                            <Input type="text" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <Button type="button" variant="outline" size="icon" onClick={copyPassword}><Copy className="h-4 w-4" /></Button>
+                        <Button type="button" variant="outline" size="icon" onClick={generatePassword}><RefreshCw className="h-4 w-4" /></Button>
+                    </div>
+                    <FormDescription>Se preenchida, o aluno precisará desta senha para ver seus dados e treinos no portal público.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
             />
             <SheetFooter>
                 <SheetClose asChild>
