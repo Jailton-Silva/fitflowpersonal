@@ -87,74 +87,72 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
     // Renders the page content
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                            <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                            <MeasurementForm studentId={student.id}>
-                                <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova Medição</Button>
-                            </MeasurementForm>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-2 pt-2">
-                            <Input 
-                                placeholder="Buscar por notas..."
-                                value={measurementsFilter.text}
-                                onChange={(e) => setMeasurementsFilter(prev => ({...prev, text: e.target.value}))}
-                                className="h-9"
-                            />
-                            <DateRangeFilter
-                                onDateChange={(range) => setMeasurementsFilter(prev => ({...prev, range}))}
-                            />
-                        </div>
-                    </CardHeader>
-                    <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} /></CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                            <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
-                            <Button size="sm" variant="outline" asChild>
-                               <Link href={`/workouts/new?student_id=${student.id}`}>
-                                   <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
-                               </Link>
-                            </Button>
-                        </div>
-                         <div className="flex flex-col md:flex-row gap-2 pt-2">
-                             <Input 
-                                placeholder="Buscar por nome do plano..."
-                                value={workoutsFilter.text}
-                                onChange={(e) => setWorkoutsFilter(prev => ({...prev, text: e.target.value}))}
-                                className="h-9"
-                            />
-                            <DateRangeFilter
-                                onDateChange={(range) => setWorkoutsFilter(prev => ({...prev, range}))}
-                            />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                       {filteredWorkouts.length > 0 ? (
-                           <ul className="max-h-64 overflow-y-auto space-y-3 pr-2">
-                               {filteredWorkouts.map((workout: Workout) => (
-                                   <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                       <div>
-                                           <p className="font-semibold">{workout.name}</p>
-                                           <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
-                                       </div>
-                                       <Button variant="outline" size="sm" asChild>
-                                            <Link href={`/workouts/${workout.id}`}>
-                                                Ver Plano
-                                            </Link>
-                                       </Button>
-                                   </li>
-                               ))}
-                           </ul>
-                       ) : <p className="text-muted-foreground text-center py-4">Nenhum treino encontrado para os filtros selecionados.</p>}
-                    </CardContent>
-                </Card>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
+                <CardHeader>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
+                        <MeasurementForm studentId={student.id}>
+                            <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova Medição</Button>
+                        </MeasurementForm>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-2 pt-2">
+                        <Input 
+                            placeholder="Buscar por notas..."
+                            value={measurementsFilter.text}
+                            onChange={(e) => setMeasurementsFilter(prev => ({...prev, text: e.target.value}))}
+                            className="h-9"
+                        />
+                        <DateRangeFilter
+                            onDateChange={(range) => setMeasurementsFilter(prev => ({...prev, range}))}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent><MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} /></CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Planos de Treino</CardTitle>
+                        <Button size="sm" variant="outline" asChild>
+                           <Link href={`/workouts/new?student_id=${student.id}`}>
+                               <PlusCircle className="mr-2 h-4 w-4" />Adicionar Plano
+                           </Link>
+                        </Button>
+                    </div>
+                     <div className="flex flex-col md:flex-row gap-2 pt-2">
+                         <Input 
+                            placeholder="Buscar por nome do plano..."
+                            value={workoutsFilter.text}
+                            onChange={(e) => setWorkoutsFilter(prev => ({...prev, text: e.target.value}))}
+                            className="h-9"
+                        />
+                        <DateRangeFilter
+                            onDateChange={(range) => setWorkoutsFilter(prev => ({...prev, range}))}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                   {filteredWorkouts.length > 0 ? (
+                       <ul className="max-h-64 overflow-y-auto space-y-3 pr-2">
+                           {filteredWorkouts.map((workout: Workout) => (
+                               <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                   <div>
+                                       <p className="font-semibold">{workout.name}</p>
+                                       <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
+                                   </div>
+                                   <Button variant="outline" size="sm" asChild>
+                                        <Link href={`/workouts/${workout.id}`}>
+                                            Ver Plano
+                                        </Link>
+                                   </Button>
+                               </li>
+                           ))}
+                       </ul>
+                   ) : <p className="text-muted-foreground text-center py-4">Nenhum treino encontrado para os filtros selecionados.</p>}
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle className="text-lg font-headline flex items-center"><History className="mr-2"/> Histórico de Sessões de Treino</CardTitle>
                     <div className="flex flex-col md:flex-row gap-2 pt-2">
@@ -171,7 +169,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                 </CardHeader>
                 <CardContent><SessionsHistory sessions={filteredSessions} /></CardContent>
             </Card>
-             <Card>
+             <Card className="lg:col-span-2">
                 <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle></CardHeader>
                 <CardContent><ProgressChart measurements={filteredMeasurements} /></CardContent>
             </Card>
