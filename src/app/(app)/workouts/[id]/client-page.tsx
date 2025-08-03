@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, MoreVertical, Trash2, ToggleLeft, ToggleRight, EyeOff, Eye } from "lucide-react";
+import { Edit, Share2, MoreVertical, Trash2, EyeOff, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Workout } from "@/lib/definitions";
 import {
@@ -27,6 +27,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 type WorkoutDetailClientProps = {
     workout: Workout;
@@ -45,7 +46,7 @@ async function deleteWorkout(workoutId: string) {
 }
 
 
-function ToggleStatusAction({ workout }: { workout: Workout }) {
+function ToggleStatusAction({ workout, as = "button" }: { workout: Workout, as?: "button" | "menuitem" }) {
   const { toast } = useToast();
   const router = useRouter();
   const newStatus = workout.status === 'active' ? 'inactive' : 'active';
@@ -67,21 +68,31 @@ function ToggleStatusAction({ workout }: { workout: Workout }) {
       router.refresh();
     }
   };
-
-  return (
-    <DropdownMenuItem onClick={handleToggle}>
+  
+  const content = (
+    <>
       {newStatus === 'active' ? (
         <Eye className="mr-2 h-4 w-4" />
       ) : (
         <EyeOff className="mr-2 h-4 w-4" />
       )}
       <span>{newStatusText}</span>
-    </DropdownMenuItem>
+    </>
+  );
+
+  if (as === "menuitem") {
+    return <DropdownMenuItem onClick={handleToggle}>{content}</DropdownMenuItem>
+  }
+
+  return (
+    <Button variant="outline" onClick={handleToggle}>
+      {content}
+    </Button>
   );
 }
 
 
-function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
+function DeleteWorkoutAction({ workoutId, as = "button" }: { workoutId: string, as?: "button" | "menuitem" }) {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -103,17 +114,27 @@ function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
       router.refresh();
     }
   };
+  
+  const trigger = as === 'menuitem' ? (
+    <DropdownMenuItem
+        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+        onSelect={(e) => e.preventDefault()}
+    >
+        <Trash2 className="mr-2 h-4 w-4" />
+        Excluir Treino
+    </DropdownMenuItem>
+   ) : (
+     <Button variant="destructive">
+        <Trash2 className="mr-2 h-4 w-4" />
+        Excluir
+     </Button>
+   );
+
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive focus:bg-destructive/10"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Excluir Treino
-        </DropdownMenuItem>
+        {trigger}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -138,7 +159,7 @@ function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
 }
 
 
-export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
+function WorkoutDetailClient({ workout }: WorkoutDetailClientProps) {
     const { toast } = useToast();
 
     const handleShare = () => {
@@ -172,11 +193,17 @@ export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProp
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <ToggleStatusAction workout={workout} />
+                    <ToggleStatusAction workout={workout} as="menuitem" />
                     <DropdownMenuSeparator />
-                    <DeleteWorkoutAction workoutId={workout.id} />
+                    <DeleteWorkoutAction workoutId={workout.id} as="menuitem" />
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
     );
 }
+
+
+WorkoutDetailClient.ToggleStatusAction = ToggleStatusAction;
+WorkoutDetailClient.DeleteWorkoutAction = DeleteWorkoutAction;
+
+export default WorkoutDetailClient;

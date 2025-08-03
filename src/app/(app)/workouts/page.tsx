@@ -10,11 +10,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PlusCircle, Dumbbell } from "lucide-react";
+import { PlusCircle, Dumbbell, MoreVertical, Edit, Eye, EyeOff, Trash2 } from "lucide-react";
 import { WorkoutFilters } from "@/components/workouts/workout-filters";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import WorkoutDetailClient from "./[id]/client-page";
 
-async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; }) {
+async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; status?: string }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
@@ -37,6 +45,9 @@ async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]
   }
   if (filters.to) {
     query = query.lte('created_at', filters.to);
+  }
+  if (filters.status) {
+    query = query.eq('status', filters.status);
   }
   
   const { data, error } = await query;
@@ -81,10 +92,33 @@ async function getFilterData() {
 }
 
 
+function WorkoutCardActions({ workout }: { workout: Workout }) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                    <Link href={`/workouts/${workout.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                    </Link>
+                </DropdownMenuItem>
+                <WorkoutDetailClient.ToggleStatusAction workout={workout} as="menuitem" />
+                <DropdownMenuSeparator />
+                <WorkoutDetailClient.DeleteWorkoutAction workoutId={workout.id} as="menuitem" />
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 export default async function WorkoutsPage({
   searchParams,
 }: {
-  searchParams: { student?: string; exercises?: string | string[]; from?: string; to?: string; };
+  searchParams: { student?: string; exercises?: string | string[]; from?: string; to?: string; status?: string };
 }) {
   const exerciseIds = Array.isArray(searchParams.exercises) ? searchParams.exercises : (searchParams.exercises ? [searchParams.exercises] : []);
   const workouts = await getWorkouts({ 
@@ -92,6 +126,7 @@ export default async function WorkoutsPage({
       exerciseIds: exerciseIds,
       from: searchParams.from,
       to: searchParams.to,
+      status: searchParams.status,
   });
   const { students, exercises } = await getFilterData();
 
@@ -117,15 +152,16 @@ export default async function WorkoutsPage({
               <CardHeader>
                 <div className="flex justify-between items-start">
                     <CardTitle>{workout.name}</CardTitle>
-                    <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
-                        {workout.status === 'active' ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    <WorkoutCardActions workout={workout} />
                 </div>
                 <CardDescription>
                   Para: {workout.students?.name ?? "N/A"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1">
+              <CardContent className="flex-1 space-y-2">
+                 <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
+                    {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                </Badge>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Dumbbell className="mr-2 h-4 w-4" />
                   <span>

@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { format, parse, subDays } from "date-fns"
+import { format, parse } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
 
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon, Check, X } from "lucide-react"
+import { CalendarIcon, Check } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "../ui/command"
 import { cn } from "@/lib/utils"
@@ -59,21 +59,15 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
         newParams.delete('exercises');
         selectedExercises.forEach(ex => newParams.append('exercises', ex.id));
         
-        // Keep existing student filter if present
-        const student = newParams.get('student');
-        if (student) {
-             newParams.set('student', student);
-        }
-
         router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
-    }, [date, selectedExercises, pathname, router]);
+    }, [date, selectedExercises, pathname, router, searchParams]);
 
-    const handleStudentChange = (studentId: string) => {
+    const handleFilterChange = (key: 'student' | 'status', value: string) => {
         const newParams = new URLSearchParams(searchParams.toString());
-        if (studentId && studentId !== 'all') {
-            newParams.set('student', studentId);
+        if (value && value !== 'all') {
+            newParams.set(key, value);
         } else {
-            newParams.delete('student');
+            newParams.delete(key);
         }
         router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
@@ -84,15 +78,15 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
          router.push(pathname, { scroll: false });
     }
 
-    const hasActiveFilters = searchParams.has('student') || searchParams.has('from') || searchParams.has('to') || searchParams.getAll('exercises').length > 0;
+    const hasActiveFilters = searchParams.has('student') || searchParams.has('from') || searchParams.has('to') || searchParams.getAll('exercises').length > 0 || searchParams.has('status');
 
     return (
         <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-card">
             <Select
-                onValueChange={handleStudentChange}
+                onValueChange={(value) => handleFilterChange('student', value)}
                 value={searchParams.get('student') ?? 'all'}
             >
-                <SelectTrigger className="w-full sm:w-auto sm:min-w-[200px] flex-1">
+                <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px] flex-1">
                     <SelectValue placeholder="Filtrar por aluno..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -100,6 +94,20 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
                     {students.map(student => (
                         <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
                     ))}
+                </SelectContent>
+            </Select>
+
+            <Select
+                onValueChange={(value) => handleFilterChange('status', value)}
+                value={searchParams.get('status') ?? 'all'}
+            >
+                <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px] flex-1">
+                    <SelectValue placeholder="Filtrar por status..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
                 </SelectContent>
             </Select>
 
