@@ -3,9 +3,9 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Dumbbell, User, Trophy, Printer, Video } from "lucide-react";
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,23 +17,29 @@ import { ExerciseCheck } from "@/components/workouts/exercise-check";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-async function getWorkoutSession(workoutId: string) {
+// Combined function to get relevant session data
+async function getSessionData(workoutId: string) {
     const supabase = createClient();
+    
     const { data, error } = await supabase
         .from('workout_sessions')
         .select('*')
         .eq('workout_id', workoutId)
-        .is('completed_at', null)
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .single();
-    
-    if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching session:", error);
+        .order('started_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching sessions:", error);
+        return { activeSession: null, completedTodaySession: null };
     }
-    return data as WorkoutSession | null;
+
+    const activeSession = data.find(s => s.completed_at === null) || null;
+    const completedTodaySession = data.find(s => s.completed_at && isToday(new Date(s.completed_at))) || null;
+
+    return { activeSession, completedTodaySession };
 }
+
 
 async function startWorkoutSession(workoutId: string, studentId: string) {
     const supabase = createClient();
@@ -74,13 +80,18 @@ const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
 
 export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     const [session, setSession] = useState<WorkoutSession | null>(null);
+    const [completedToday, setCompletedToday] = useState<WorkoutSession | null>(null);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const router = useRouter();
+    
+    const finalSessionToDisplay = useMemo(() => completedToday || session, [completedToday, session]);
 
     useEffect(() => {
         setLoading(true);
-        getWorkoutSession(workout.id).then(sessionData => {
-            setSession(sessionData);
+        getSessionData(workout.id).then(({ activeSession, completedTodaySession }) => {
+            setSession(activeSession);
+            setCompletedToday(completedTodaySession);
             setLoading(false);
         });
     }, [workout.id]);
@@ -95,6 +106,14 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
             });
             return;
         }
+        if (completedToday) {
+             toast({
+                title: "Treino já finalizado hoje",
+                description: "Você já concluiu este treino hoje. Volte amanhã!",
+            });
+            return;
+        }
+        setLoading(true);
         const newSession = await startWorkoutSession(workout.id, workout.student_id);
         if (newSession) {
             setSession(newSession);
@@ -105,6 +124,8 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                 variant: "destructive",
             });
         }
+        setLoading(false);
+        router.refresh();
     }
 
     if (loading) {
@@ -115,13 +136,13 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
         )
     }
     
-    const allExercisesCompleted = session && session.completed_at;
+    const isWorkoutFinished = finalSessionToDisplay && finalSessionToDisplay.completed_at;
 
     return (
         <div className="flex flex-col min-h-screen bg-muted" id="printable-area">
             <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-10 no-print">
                 <div className="max-w-4xl mx-auto flex items-center justify-between p-4">
-                    <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                         <Dumbbell className="h-6 w-6 text-primary" />
                         <h1 className="text-xl font-bold font-headline hidden sm:block">FitFlow</h1>
                     </div>
@@ -134,20 +155,20 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
 
             <main className="flex-1 py-8 px-4">
                 <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">
-                    {allExercisesCompleted ? (
+                    {isWorkoutFinished ? (
                         <div className="text-center py-12">
                             <Trophy className="h-16 w-16 mx-auto text-yellow-500" />
                             <h2 className="text-3xl font-bold font-headline mt-4">Parabéns!</h2>
                             <p className="text-muted-foreground mt-2">Você concluiu todos os exercícios deste treino. Ótimo trabalho!</p>
-                             <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(session.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                            <Button asChild className="mt-6">
-                                <Link href="/dashboard">Voltar ao Início</Link>
+                             <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                            <Button asChild className="mt-6" variant="outline">
+                                <Link href={`/public/student/${workout.student_id}`}>Voltar ao Portal</Link>
                             </Button>
                         </div>
                     ) : (
                     <>
                         <header className="mb-8">
-                             <div className="flex justify-between items-start">
+                             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                                 <div>
                                     <Badge>Plano de Treino</Badge>
                                     <h1 className="text-3xl sm:text-4xl font-bold font-headline mt-2">{workout.name}</h1>
@@ -159,8 +180,8 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                          <span className="text-sm">Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                                     </div>
                                 </div>
-                                {!session && (
-                                     <Button onClick={handleStartWorkout} className="ripple">Iniciar Treino</Button>
+                                {!finalSessionToDisplay && (
+                                     <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
                                 )}
                             </div>
                         </header>
@@ -184,45 +205,49 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                              <div>
                                 <h2 className="text-2xl font-bold font-headline mb-4">Exercícios</h2>
                                 <div className="space-y-4">
-                                {(workout.exercises as any[]).map((exercise, index) => {
-                                    const isCompleted = session?.completed_exercises?.includes(exercise.exercise_id) ?? false;
-                                    return (
-                                        <div key={index} className={cn("flex gap-4 items-start p-4 border rounded-lg transition-colors", isCompleted ? "bg-green-500/10 border-green-500/20" : "")}>
-                                            {session && (
+                                {!finalSessionToDisplay ? (
+                                    <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">Clique em "Iniciar Treino" para começar a registrar seu progresso.</p>
+                                    </div>
+                                ) : (
+                                    (workout.exercises as any[]).map((exercise, index) => {
+                                        const isCompleted = finalSessionToDisplay?.completed_exercises?.includes(exercise.exercise_id) ?? false;
+                                        return (
+                                            <div key={index} className={cn("flex gap-4 items-start p-4 border rounded-lg transition-colors", isCompleted ? "bg-green-500/10 border-green-500/20" : "")}>
                                                 <div className="mt-1">
-                                                    <ExerciseCheck sessionId={session.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} />
+                                                    <ExerciseCheck sessionId={finalSessionToDisplay.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} />
                                                 </div>
-                                            )}
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <h3 className="font-bold text-lg font-headline">{exercise.name}</h3>
-                                                     {exercise.video_url && (
-                                                        <Dialog>
-                                                            <DialogTrigger asChild>
-                                                                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                                                    <Video className="h-4 w-4" />
-                                                                    Ver Vídeo
-                                                                </Button>
-                                                            </DialogTrigger>
-                                                            <DialogContent className="max-w-3xl">
-                                                                <DialogHeader>
-                                                                    <DialogTitle>{exercise.name}</DialogTitle>
-                                                                </DialogHeader>
-                                                                <VideoPlayer videoUrl={exercise.video_url} />
-                                                            </DialogContent>
-                                                        </Dialog>
-                                                    )}
-                                                </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                                                     <div><strong className="block text-muted-foreground">Séries</strong> {exercise.sets || '-'}</div>
-                                                     <div><strong className="block text-muted-foreground">Reps</strong> {exercise.reps || '-'}</div>
-                                                     <div><strong className="block text-muted-foreground">Carga</strong> {exercise.load ? `${exercise.load} kg` : '-'}</div>
-                                                     <div><strong className="block text-muted-foreground">Descanso</strong> {exercise.rest ? `${exercise.rest} s` : '-'}</div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h3 className="font-bold text-lg font-headline">{exercise.name}</h3>
+                                                        {exercise.video_url && (
+                                                            <Dialog>
+                                                                <DialogTrigger asChild>
+                                                                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                                                        <Video className="h-4 w-4" />
+                                                                        Ver Vídeo
+                                                                    </Button>
+                                                                </DialogTrigger>
+                                                                <DialogContent className="max-w-3xl">
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>{exercise.name}</DialogTitle>
+                                                                    </DialogHeader>
+                                                                    <VideoPlayer videoUrl={exercise.video_url} />
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                        )}
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                                                        <div><strong className="block text-muted-foreground">Séries</strong> {exercise.sets || '-'}</div>
+                                                        <div><strong className="block text-muted-foreground">Reps</strong> {exercise.reps || '-'}</div>
+                                                        <div><strong className="block text-muted-foreground">Carga</strong> {exercise.load ? `${exercise.load} kg` : '-'}</div>
+                                                        <div><strong className="block text-muted-foreground">Descanso</strong> {exercise.rest ? `${exercise.rest} s` : '-'}</div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })
+                                )}
                                 </div>
                             </div>
                         </section>
