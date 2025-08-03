@@ -25,7 +25,7 @@ function SubmitButton() {
 export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
     const { toast } = useToast();
     const router = useRouter();
-    const [state, formAction, isPending] = useActionState(verifyPassword, { error: null, success: false });
+    const [state, formAction] = useActionState(verifyPassword, { error: null, success: false });
 
     useEffect(() => {
         if (state?.error) {
@@ -36,10 +36,9 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
             });
         }
         if (state?.success) {
-            // Redirect on success
-            router.push(`/public/workout/${workoutId}`);
+            router.refresh();
         }
-    }, [state, toast, router, workoutId]);
+    }, [state, toast, router]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted">
