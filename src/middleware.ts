@@ -48,41 +48,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Handle public workout authorization
-  if (pathname.startsWith('/public/workout/')) {
-    const workoutId = pathname.split('/')[3];
-    const isPortalPage = pathname.endsWith('/portal');
-    const authCookie = request.cookies.get(`workout_auth_${workoutId}`);
-
-    if (authCookie?.value === 'true') {
-      if (!isPortalPage) {
-        return NextResponse.redirect(new URL(`/public/workout/${workoutId}/portal`, request.url));
-      }
-    } else {
-      if (isPortalPage) {
-        return NextResponse.redirect(new URL(`/public/workout/${workoutId}`, request.url));
-      }
-    }
-  }
-
-  // Handle public student portal authorization
-  if (pathname.startsWith('/public/student/')) {
-    const studentId = pathname.split('/')[3];
-    const isPortalPage = pathname.endsWith('/portal');
-    const authCookie = request.cookies.get(`student_auth_${studentId}`);
-
-    if (authCookie?.value === 'true') {
-      if (!isPortalPage) {
-        return NextResponse.redirect(new URL(`/public/student/${studentId}/portal`, request.url));
-      }
-    } else {
-      if (isPortalPage) {
-        return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
-      }
-    }
-  }
-
-
   return response;
 }
 
@@ -100,3 +65,4 @@ export const config = {
     "/public/student/:path*"
 ],
 };
+

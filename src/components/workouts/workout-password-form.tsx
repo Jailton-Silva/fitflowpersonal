@@ -10,7 +10,6 @@ import { Lock, Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { useEffect } from "react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -24,8 +23,7 @@ function SubmitButton() {
 
 export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
     const { toast } = useToast();
-    const router = useRouter();
-    const [state, formAction] = useActionState(verifyPassword, { error: null, success: false });
+    const [state, formAction] = useActionState(verifyPassword, { error: null });
 
     useEffect(() => {
         if (state?.error) {
@@ -35,12 +33,7 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                 variant: "destructive",
             });
         }
-        if (state?.success) {
-            // A middleware irá interceptar a nova requisição e redirecionar
-            // para a página do portal se o cookie estiver correto.
-            router.refresh();
-        }
-    }, [state, toast, router]);
+    }, [state, toast]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted">
@@ -54,7 +47,6 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Hidden username field for accessibility */}
                         <Input 
                             type="text"
                             name="username"
@@ -78,3 +70,4 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
         </div>
     );
 }
+

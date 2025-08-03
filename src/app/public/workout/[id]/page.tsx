@@ -1,36 +1,45 @@
 
-import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { notFound } from 'next/navigation';
-import { WorkoutPasswordForm } from '@/components/workouts/workout-password-form';
+import { createClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
+import PublicWorkoutView from "@/components/workouts/public-workout-view";
+import { Workout } from "@/lib/definitions";
 
-export default async function PublicWorkoutPasswordPage({ params }: { params: { id: string } }) {
-    const cookieStore = cookies();
-    const workoutId = params.id;
-    const authCookie = cookieStore.get(`workout_auth_${workoutId}`);
-
-    if (authCookie?.value === 'true') {
-        return redirect(`/public/workout/${workoutId}/portal`);
-    }
-    
-    // We can verify if the workout exists and requires a password before showing the form
+async function getWorkoutDetails(workoutId: string) {
     const supabase = createClient();
-    const { data: workout, error } = await supabase
+
+    const { data, error } = await supabase
         .from('workouts')
-        .select('id, access_password')
+        .select(
+            '*, students(id, name)'
+        )
         .eq('id', workoutId)
         .single();
-    
-    if (error || !workout) {
+
+    if (error || !data) {
         notFound();
     }
-    
-    // If workout exists but does not require a password, grant access
-    if (workout && !workout.access_password) {
-        cookies().set(`workout_auth_${workoutId}`, 'true', { path: '/', httpOnly: true, maxAge: 60 * 60 * 24 });
-        return redirect(`/public/workout/${workoutId}/portal`);
+    return data as Workout;
+}
+
+
+export default async function PublicWorkoutPage({ params }: { params: { id: string } }) {
+    const workout = await getWorkoutDetails(params.id);
+
+    // If workout has no password, show it directly
+    if (!workout.access_password) {
+        return <PublicWorkoutView workout={workout} />;
     }
 
-    return <WorkoutPasswordForm workoutId={workoutId} />;
+    // Check for auth cookie
+    const cookieStore = cookies();
+    const authCookie = cookieStore.get(`workout_auth_${params.id}`);
+
+    if (authCookie?.value === 'true') {
+        return <PublicWorkoutView workout={workout} />;
+    }
+
+    // If it has a password and user is not authenticated, show password form
+    return <WorkoutPasswordForm workoutId={params.id} />;
 }

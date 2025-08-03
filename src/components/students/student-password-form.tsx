@@ -4,14 +4,13 @@
 import { useEffect } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
 import { verifyStudentPassword } from "@/app/public/student/[id]/actions";
 
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Lock, Loader2, User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -25,8 +24,7 @@ function SubmitButton() {
 
 export function StudentPasswordForm({ studentId }: { studentId: string }) {
     const { toast } = useToast();
-    const router = useRouter();
-    const [state, formAction] = useActionState(verifyStudentPassword, { error: null, success: false });
+    const [state, formAction] = useActionState(verifyStudentPassword, { error: null });
 
     useEffect(() => {
         if (state?.error) {
@@ -36,10 +34,7 @@ export function StudentPasswordForm({ studentId }: { studentId: string }) {
                 variant: "destructive",
             });
         }
-        if (state?.success) {
-            router.refresh();
-        }
-    }, [state, toast, router]);
+    }, [state, toast]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted">
@@ -53,7 +48,6 @@ export function StudentPasswordForm({ studentId }: { studentId: string }) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Hidden username field for accessibility */}
                         <Input 
                             type="text"
                             name="username"
@@ -77,3 +71,4 @@ export function StudentPasswordForm({ studentId }: { studentId: string }) {
         </div>
     );
 }
+

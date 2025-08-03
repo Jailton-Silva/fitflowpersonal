@@ -1,36 +1,41 @@
 
-import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { notFound } from 'next/navigation';
-import { StudentPasswordForm } from '@/components/students/student-password-form';
+import { createClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { Student } from "@/lib/definitions";
+import { StudentPasswordForm } from "@/components/students/student-password-form";
+import StudentPublicPortal from "@/components/students/student-public-portal";
 
-export default async function PublicStudentPasswordPage({ params }: { params: { id: string } }) {
-    const cookieStore = cookies();
-    const studentId = params.id;
-    const authCookie = cookieStore.get(`student_auth_${studentId}`);
-
-    if (authCookie?.value === 'true') {
-        return redirect(`/public/student/${studentId}/portal`);
-    }
-    
-    // We can verify if the student exists and requires a password before showing the form
+async function getStudentDetails(studentId: string) {
     const supabase = createClient();
     const { data: student, error } = await supabase
         .from('students')
-        .select('id, access_password')
+        .select('*')
         .eq('id', studentId)
         .single();
     
     if (error || !student) {
         notFound();
     }
-    
-    // If student exists but does not require a password, grant access
-    if (student && !student.access_password) {
-        cookies().set(`student_auth_${studentId}`, 'true', { path: '/', httpOnly: true, maxAge: 60 * 60 * 24 });
-        return redirect(`/public/student/${studentId}/portal`);
+    return student as Student;
+}
+
+export default async function PublicStudentPage({ params }: { params: { id: string } }) {
+    const student = await getStudentDetails(params.id);
+
+    // If student has no password, show the portal directly
+    if (!student.access_password) {
+        return <StudentPublicPortal studentId={params.id} />
     }
 
-    return <StudentPasswordForm studentId={studentId} />;
+    // Check for auth cookie
+    const cookieStore = cookies();
+    const authCookie = cookieStore.get(`student_auth_${params.id}`);
+
+    if (authCookie?.value === 'true') {
+        return <StudentPublicPortal studentId={params.id} />
+    }
+
+    // If it has a password and user is not authenticated, show password form
+    return <StudentPasswordForm studentId={params.id} />;
 }
