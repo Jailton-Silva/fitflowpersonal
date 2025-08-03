@@ -1,47 +1,36 @@
-
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { Workout } from "@/lib/definitions";
-import PublicWorkoutView from "@/components/workouts/public-workout-view";
+import { cookies } from "next/headers";
+import { WorkoutPasswordForm } from "@/components/workouts/workout-password-form";
 
-async function getWorkoutDetails(workoutId: string) {
+async function getWorkout(workoutId: string) {
     const supabase = createClient();
     const { data, error } = await supabase
         .from('workouts')
-        .select('*, students(id, name)')
+        .select(
+            '*, students(id, name)'
+        )
         .eq('id', workoutId)
         .single();
     
-    if (error) {
-        console.error("Error fetching workout:", error);
-        return null;
-    }
-    return data as Workout;
-}
-
-export default async function PublicWorkoutPage({ params }: { params: { id: string } }) {
-    const cookieStore = cookies();
-    const workoutId = params.id;
-    
-    const workout = await getWorkoutDetails(workoutId);
-
-    if (!workout) {
+    if (error || !data) {
         notFound();
     }
+    return data;
+}
 
-    // Se não há senha, o acesso é livre
+export default async function PublicWorkoutPasswordPage({ params }: { params: { id: string } }) {
+    const workout = await getWorkout(params.id);
+    const cookieStore = cookies();
+    const isAuthorized = cookieStore.get(`workout_auth_${workout.id}`)?.value === 'true';
+
+    // Se o treino não tiver senha ou se o usuário já estiver autorizado pelo cookie,
+    // a middleware já o terá redirecionado para /portal.
+    // Esta página só é renderizada se a senha for necessária.
     if (!workout.access_password) {
-        return <PublicWorkoutView workout={workout} initialIsAuthorized={true} />;
-    }
-
-    // Se há senha, verifica o cookie de autorização
-    const authToken = cookieStore.get(`workout_auth_${workoutId}`)?.value;
-    const isAuthorized = authToken === workout.access_password;
-
-    if (!isAuthorized) {
-        return <PublicWorkoutView workout={workout} initialIsAuthorized={false} />;
+        // Se não há senha, idealmente o middleware deveria redirecionar, mas como fallback:
+        notFound();
     }
     
-    return <PublicWorkoutView workout={workout} initialIsAuthorized={true} />;
+    return <WorkoutPasswordForm workoutId={workout.id} />;
 }

@@ -36,6 +36,8 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
             });
         }
         if (state?.success) {
+            // A middleware irá interceptar a nova requisição e redirecionar
+            // para a página do portal se o cookie estiver correto.
             router.refresh();
         }
     }, [state, toast, router]);
@@ -58,6 +60,7 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                             type="password"
                             placeholder="••••••••"
                             required
+                            autoComplete="current-password"
                         />
                         <input type="hidden" name="workoutId" value={workoutId} />
                         <SubmitButton />
