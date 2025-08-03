@@ -29,9 +29,6 @@ type StudentDetailClientProps = {
 
 export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentDetailClientProps) {
     
-    // States for interactive data
-    const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
-    const [measurements, setMeasurements] = useState<Measurement[]>(initialMeasurements);
     const [sessions, setSessions] = useState<FormattedSession[]>([]);
 
     // Filter states
@@ -53,26 +50,26 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         const toDate = measurementsFilter.range?.to ? new Date(measurementsFilter.range.to.setHours(23,59,59,999)) : null;
         const lowerCaseFilter = measurementsFilter.text.toLowerCase();
 
-        return measurements.filter(m => {
+        return initialMeasurements.filter(m => {
             const itemDate = parseISO(m.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
             const textMatch = !lowerCaseFilter || (m.notes?.toLowerCase().includes(lowerCaseFilter));
             return dateMatch && textMatch;
         });
-    }, [measurements, measurementsFilter]);
+    }, [initialMeasurements, measurementsFilter]);
     
     const filteredWorkouts = useMemo(() => {
         const fromDate = workoutsFilter.range?.from ? new Date(workoutsFilter.range.from.setHours(0,0,0,0)) : null;
         const toDate = workoutsFilter.range?.to ? new Date(workoutsFilter.range.to.setHours(23,59,59,999)) : null;
         const lowerCaseFilter = workoutsFilter.text.toLowerCase();
 
-        return workouts.filter(w => {
+        return initialWorkouts.filter(w => {
             const itemDate = parseISO(w.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
             const textMatch = !lowerCaseFilter || w.name.toLowerCase().includes(lowerCaseFilter) || w.description?.toLowerCase().includes(lowerCaseFilter);
             return dateMatch && textMatch;
         });
-    }, [workouts, workoutsFilter]);
+    }, [initialWorkouts, workoutsFilter]);
 
     const filteredSessions = useMemo(() => {
         const fromDate = sessionsFilter.range?.from ? new Date(sessionsFilter.range.from.setHours(0,0,0,0)) : null;
@@ -90,7 +87,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
     // Renders the page content
     return (
-        <>
+        <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
@@ -178,6 +175,6 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                 <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle></CardHeader>
                 <CardContent><ProgressChart measurements={filteredMeasurements} /></CardContent>
             </Card>
-        </>
+        </div>
     );
 }
