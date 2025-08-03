@@ -1,25 +1,56 @@
 
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import StudentPublicPortal from "@/components/students/student-public-portal";
+import { notFound } from "next/navigation";
+import { Workout, Measurement } from "@/lib/definitions";
+import StudentPublicPortalClient from "./client-page";
 
 
-export default async function StudentPortalPage({ params }: { params: { id: string } }) {
+async function getStudentPortalData(studentId: string) {
     const supabase = createClient();
-
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
     
-    // This is a simple check. For production, you'd want a more robust JWT-based verification.
-    const studentAuthCookie = `student_auth_${params.id}`;
-    const { data: cookie } = await supabase.auth.getSession()
+    const studentPromise = supabase.from('students').select('*').eq('id', studentId).single();
+    
+    const workoutsPromise = supabase
+        .from("workouts")
+        .select("*, students (id, name)")
+        .eq("student_id", studentId)
+        .eq("status", "active") // Only show active workouts
+        .order("created_at", { ascending: false });
 
-    // This check is flawed because we are not using cookies anymore, but let's keep it for now.
-    // We should implement a better check in the future.
-    if (!session) {
-        redirect(`/public/student/${params.id}`);
+    const measurementsPromise = supabase
+        .from('measurements')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: true });
+    
+    const [studentResult, workoutsResult, measurementsResult] = await Promise.all([
+        studentPromise,
+        workoutsPromise,
+        measurementsPromise
+    ]);
+
+     if (studentResult.error || !studentResult.data) {
+        notFound();
+     }
+     if (workoutsResult.error) console.error("Erro ao buscar treinos:", workoutsResult.error);
+     if (measurementsResult.error) console.error("Erro ao buscar medições:", measurementsResult.error);
+
+    return {
+        student: studentResult.data,
+        workouts: (workoutsResult.data as Workout[]) || [],
+        measurements: (measurementsResult.data as Measurement[]) || [],
     }
+}
 
-    return <StudentPublicPortal studentId={params.id} />;
+
+export default async function StudentPublicPortalPage({ params }: { params: { id: string } }) {
+    const { student, workouts, measurements } = await getStudentPortalData(params.id);
+    
+    return (
+       <StudentPublicPortalClient 
+        student={student} 
+        initialWorkouts={workouts} 
+        initialMeasurements={measurements} 
+       />
+    );
 }
