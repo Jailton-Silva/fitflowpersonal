@@ -37,6 +37,7 @@ import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendatio
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
   student_id: z.string().min(1, "Por favor, selecione um aluno"),
+  status: z.enum(['active', 'inactive']),
   description: z.string().optional(),
   diet_plan: z.string().optional(),
   access_password: z.string().optional(),
@@ -74,6 +75,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       diet_plan: "",
       access_password: "",
       exercises: [],
+      status: 'active',
     },
   });
 
@@ -92,6 +94,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
         description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
+        status: workout.status ?? 'active',
         exercises: (workout.exercises || []).map(e => ({
           ...e, 
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
@@ -104,6 +107,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             description: "",
             diet_plan: "",
             access_password: "",
+            status: 'active',
             exercises: [],
         });
     }
@@ -231,26 +235,45 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="student_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Atribuir ao Aluno</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {students.map((student) => (
-                            <SelectItem key={student.id} value={student.id}>
-                              {student.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="student_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Atribuir ao Aluno</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {students.map((student) => (
+                              <SelectItem key={student.id} value={student.id}>
+                                {student.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Ativo</SelectItem>
+                            <SelectItem value="inactive">Inativo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                 </div>
                  <FormField
                   control={form.control}
                   name="description"

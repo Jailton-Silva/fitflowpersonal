@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { PlusCircle, Dumbbell } from "lucide-react";
 import { WorkoutFilters } from "@/components/workouts/workout-filters";
+import { Badge } from "@/components/ui/badge";
 
 async function getWorkouts(filters: { studentId?: string; exerciseIds?: string[]; from?: string; to?: string; }) {
   const supabase = createClient();
@@ -114,7 +115,12 @@ export default async function WorkoutsPage({
           {(workouts as Workout[]).map((workout: Workout) => (
             <Card key={workout.id} className="flex flex-col">
               <CardHeader>
-                <CardTitle>{workout.name}</CardTitle>
+                <div className="flex justify-between items-start">
+                    <CardTitle>{workout.name}</CardTitle>
+                    <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
+                        {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                </div>
                 <CardDescription>
                   Para: {workout.students?.name ?? "N/A"}
                 </CardDescription>

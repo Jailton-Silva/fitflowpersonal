@@ -77,7 +77,12 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                                 </span>
                             </CardDescription>
                         </div>
-                        <Badge>Plano de Treino</Badge>
+                        <div className="flex flex-col items-end gap-2">
+                            <Badge variant="outline">Plano de Treino</Badge>
+                             <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
+                                {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -103,7 +108,7 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                         <div className="md:hidden">
                             <div className="space-y-3">
                                 {exercises.length > 0 ? (
-                                    exercises.map((exercise) => <WorkoutExerciseCard key={exercise.exercise_id} workout={workout} exercise={exercise} />)
+                                    exercises.map((exercise, index) => <WorkoutExerciseCard key={index} workout={workout} exercise={exercise} />)
                                 ) : (
                                     <p className="p-4 text-center text-muted-foreground">Nenhum exercício neste plano.</p>
                                 )}
@@ -116,7 +121,7 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                                 <WorkoutExerciseHeader />
                                 <tbody className="divide-y divide-border">
                                     {exercises.length > 0 ? (
-                                        exercises.map((exercise) => <WorkoutExerciseRow key={exercise.exercise_id} workout={workout} exercise={exercise} />)
+                                        exercises.map((exercise, index) => <WorkoutExerciseRow key={index} workout={workout} exercise={exercise} />)
                                     ) : (
                                     <tr>
                                         <td colSpan={6} className="p-4 text-center text-muted-foreground">

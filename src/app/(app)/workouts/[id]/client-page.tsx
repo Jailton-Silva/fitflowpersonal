@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, MoreVertical, Trash2 } from "lucide-react";
+import { Edit, Share2, MoreVertical, Trash2, ToggleLeft, ToggleRight, EyeOff, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Workout } from "@/lib/definitions";
 import {
@@ -32,10 +32,52 @@ type WorkoutDetailClientProps = {
     workout: Workout;
 }
 
+async function updateWorkoutStatus(workoutId: string, status: 'active' | 'inactive') {
+    const supabase = createClient();
+    const { error } = await supabase.from("workouts").update({ status }).eq("id", workoutId);
+    return { error };
+}
+
 async function deleteWorkout(workoutId: string) {
     const supabase = createClient();
     const { error } = await supabase.from("workouts").delete().eq("id", workoutId);
     return { error };
+}
+
+
+function ToggleStatusAction({ workout }: { workout: Workout }) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const newStatus = workout.status === 'active' ? 'inactive' : 'active';
+  const newStatusText = newStatus === 'active' ? 'Ativar' : 'Desativar';
+
+  const handleToggle = async () => {
+    const { error } = await updateWorkoutStatus(workout.id, newStatus);
+    if (error) {
+      toast({
+        title: `Erro ao ${newStatusText} treino`,
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso!",
+        description: `Plano de treino foi definido como ${newStatus === 'active' ? 'Ativo' : 'Inativo'}.`,
+      });
+      router.refresh();
+    }
+  };
+
+  return (
+    <DropdownMenuItem onClick={handleToggle}>
+      {newStatus === 'active' ? (
+        <Eye className="mr-2 h-4 w-4" />
+      ) : (
+        <EyeOff className="mr-2 h-4 w-4" />
+      )}
+      <span>{newStatusText}</span>
+    </DropdownMenuItem>
+  );
 }
 
 
@@ -130,6 +172,8 @@ export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProp
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <ToggleStatusAction workout={workout} />
+                    <DropdownMenuSeparator />
                     <DeleteWorkoutAction workoutId={workout.id} />
                 </DropdownMenuContent>
             </DropdownMenu>
