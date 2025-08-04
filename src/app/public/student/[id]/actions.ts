@@ -1,11 +1,11 @@
 
-"use server";
+'use server';
 
-import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
-import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export async function uploadStudentAvatar(studentId: string, formData: FormData) {
     const file = formData.get('avatar') as File;
@@ -13,7 +13,7 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         return { error: 'Nenhum arquivo enviado.' };
     }
     
-    // Use the standard client for storage upload, respecting storage policies
+    // Use the standard client for storage upload
     const supabase = createClient();
     const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
 
@@ -21,7 +21,7 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
-            upsert: true, // Overwrite if file exists
+            upsert: true,
         });
 
     if (uploadError) {
@@ -34,7 +34,7 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         .from('avatars')
         .getPublicUrl(filePath);
 
-    // Use the admin client to bypass RLS for updating the student's avatar URL
+    // Use the ADMIN client to bypass RLS for updating the student's avatar URL
     const { error: updateError } = await supabaseAdmin
         .from('students')
         .update({ avatar_url: publicUrl })
@@ -51,39 +51,44 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
     return { error: null, path: publicUrl };
 }
 
+
 export async function logoutStudent(studentId: string) {
     const cookieStore = cookies();
     cookieStore.delete(`student-${studentId}-auth`);
-    revalidatePath(`/public/student/${studentId}`);
+    redirect(`/public/student/${studentId}`);
 }
 
-
-export async function verifyStudentPassword(prevState: any, formData: FormData) {
+export async function verifyStudentPassword(previousState: any, formData: FormData) {
+    const supabase = createClient();
     const password = formData.get('password') as string;
     const studentId = formData.get('studentId') as string;
-    
-    const supabase = createClient();
-    
+
     const { data: student, error } = await supabase
         .from('students')
         .select('access_password')
         .eq('id', studentId)
         .single();
-        
+
     if (error || !student) {
-        return { error: 'Aluno não encontrado ou erro ao buscar dados.' };
+        return { error: 'Aluno não encontrado ou erro no servidor.' };
     }
 
-    // If password is null or empty, access is granted
     if (!student.access_password) {
-        cookies().set(`student-${studentId}-auth`, 'true', { httpOnly: true, path: '/' });
-        redirect(`/public/student/${studentId}/portal`);
+         return { error: 'Este aluno não tem uma senha de acesso configurada.' };
     }
 
-    if (student.access_password === password) {
-        cookies().set(`student-${studentId}-auth`, 'true', { httpOnly: true, path: '/' });
-        redirect(`/public/student/${studentId}/portal`);
-    } else {
-        return { error: 'Senha incorreta. Por favor, tente novamente.' };
+    if (student.access_password !== password) {
+        return { error: 'Senha incorreta.' };
     }
+    
+    // Set cookie and redirect
+    const cookieStore = cookies();
+    cookieStore.set(`student-${studentId}-auth`, 'true', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+    });
+
+    redirect(`/public/student/${studentId}/portal`);
 }
