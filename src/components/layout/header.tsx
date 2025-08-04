@@ -14,10 +14,14 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../theme-toggle";
 import { NavContent } from "./sidebar";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export async function Header() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: trainer } = user ? await supabase.from('trainers').select('avatar_url').eq('user_id', user.id).single() : { data: null };
+
 
   const signOut = async () => {
     "use server";
@@ -51,7 +55,10 @@ export async function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
+               <Avatar className="h-8 w-8">
+                  <AvatarImage src={trainer?.avatar_url || undefined} alt="Avatar do Treinador" />
+                  <AvatarFallback><CircleUser className="h-5 w-5" /></AvatarFallback>
+                </Avatar>
               <span className="sr-only">Menu do usuário</span>
             </Button>
           </DropdownMenuTrigger>
