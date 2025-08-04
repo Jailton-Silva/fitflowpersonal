@@ -214,6 +214,7 @@ function WorkoutsPage() {
                 .from("workouts")
                 .select("*, students(id, name)")
                 .eq("trainer_id", trainer.id)
+                .not("student_id", "is", null)
                 .order("created_at", { descending: true });
 
             if (studentId) query = query.eq('student_id', studentId);
