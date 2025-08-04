@@ -2,6 +2,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function uploadAvatar(studentId: string, formData: FormData) {
@@ -10,8 +11,9 @@ export async function uploadAvatar(studentId: string, formData: FormData) {
         return { error: 'Nenhum arquivo enviado.' };
     }
     
+    // Use the standard client for storage upload, respecting storage policies
     const supabase = createClient();
-    const filePath = `avatars/${studentId}-${file.name}`;
+    const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
@@ -30,17 +32,20 @@ export async function uploadAvatar(studentId: string, formData: FormData) {
         .from('avatars')
         .getPublicUrl(filePath);
 
-    // Update students table
-    const { error: updateError } = await supabase
+    // Use the admin client to bypass RLS for updating the student's avatar URL
+    const { error: updateError } = await supabaseAdmin
         .from('students')
         .update({ avatar_url: publicUrl })
         .eq('id', studentId);
         
     if (updateError) {
         console.error('Update Error:', updateError);
+        // Attempt to remove the uploaded file if the DB update fails
+        await supabase.storage.from('avatars').remove([filePath]);
         return { error: `Erro ao atualizar perfil: ${updateError.message}` };
     }
     
     revalidatePath(`/students/${studentId}`);
+    revalidatePath(`/public/student/${studentId}/portal`);
     return { error: null, path: publicUrl };
 }
