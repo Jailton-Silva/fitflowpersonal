@@ -2,24 +2,24 @@
 "use client";
 
 import { useState, useMemo, useEffect, useTransition } from "react";
-import { format, differenceInYears, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Student, Workout, Measurement, WorkoutSession } from "@/lib/definitions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Activity, Calendar as CalendarIcon, History, PlusCircle, User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Upload, Loader2, Edit } from "lucide-react";
+import { parseISO, format, differenceInYears } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
+import ProgressChart from "@/components/students/progress-chart";
+import MeasurementsHistory from "@/components/students/measurements-history";
+import SessionsHistory from "@/components/students/sessions-history";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Link from "next/link";
-import ProgressChart from "@/components/students/progress-chart";
-import MeasurementsHistory from "@/components/students/measurements-history";
-import SessionsHistory from "@/components/students/sessions-history";
-import { User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Edit, Activity, Calendar as CalendarIcon, History, Upload, Loader2 } from "lucide-react";
-import { uploadAvatar } from "@/app/(app)/students/actions";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { uploadAvatar } from "@/app/(app)/students/actions";
 import { cn } from "@/lib/utils";
 
 
@@ -35,41 +35,47 @@ type StudentPortalClientProps = {
 export default function StudentPortalClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentPortalClientProps) {
     const { toast } = useToast();
     const [workoutsFilter, setWorkoutsFilter] = useState<{ status?: string }>({});
-    const [measurementsFilter, setMeasurementsFilter] = useState<{ range?: DateRange } | undefined>();
+    const [measurementsFilter, setMeasurementsFilter] = useState<{ range?: DateRange }>({});
     const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+
+    const [lastActivity, setLastActivity] = useState<string | null>(null);
+    const [age, setAge] = useState<string | number>('N/A');
     const [isUploading, startUploadTransition] = useTransition();
     const [avatarPreview, setAvatarPreview] = useState<string | null>(student.avatar_url || null);
 
+    useEffect(() => {
+        if (student.birth_date) {
+            setAge(differenceInYears(new Date(), new Date(student.birth_date)));
+        }
+         if (initialSessions.length > 0) {
+            const latestSession = initialSessions[0]; 
+            const lastDate = latestSession.completed_at || latestSession.started_at;
+            setLastActivity(format(new Date(lastDate), "'Última atividade:' dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+        } else {
+            setLastActivity("Nenhuma atividade registrada ainda.");
+        }
+    }, [student.birth_date, initialSessions]);
 
-    const age = student.birth_date ? differenceInYears(new Date(), new Date(student.birth_date)) : 'N/A';
-    const statusText = student.status === 'active' ? 'Ativo' : 'Inativo';
-    const statusVariant = student.status === 'active' ? 'success' : 'secondary';
-
-    const lastActivityDate = useMemo(() => {
-        if (!initialSessions || initialSessions.length === 0) return null;
-        const lastSession = initialSessions.sort((a,b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())[0];
-        return new Date(lastSession.started_at);
-    }, [initialSessions]);
-
-     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setAvatarPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
 
-        const formData = new FormData();
-        formData.append('avatar', file);
-        startUploadTransition(async () => {
-            const { error } = await uploadAvatar(student.id, formData);
-            if (error) {
-                toast({ title: "Erro no Upload", description: error, variant: "destructive" });
-            } else {
-                toast({ title: "Sucesso!", description: "Sua foto de perfil foi atualizada."});
-            }
-        });
+            const formData = new FormData();
+            formData.append('avatar', file);
+            startUploadTransition(async () => {
+                const { error } = await uploadAvatar(student.id, formData);
+                if (error) {
+                    toast({ title: "Erro no Upload", description: error, variant: "destructive" });
+                    setAvatarPreview(student.avatar_url); // Revert on error
+                } else {
+                    toast({ title: "Sucesso!", description: "Sua foto de perfil foi atualizada." });
+                }
+            });
         }
     };
 
@@ -82,9 +88,8 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
     }, [initialWorkouts, workoutsFilter]);
 
     const filteredMeasurements = useMemo(() => {
-        const fromDate = measurementsFilter?.range?.from ? new Date(measurementsFilter.range.from.setHours(0,0,0,0)) : null;
-        const toDate = measurementsFilter?.range?.to ? new Date(measurementsFilter.range.to.setHours(23,59,59,999)) : null;
-        
+        const fromDate = measurementsFilter.range?.from ? new Date(measurementsFilter.range.from.setHours(0, 0, 0, 0)) : null;
+        const toDate = measurementsFilter.range?.to ? new Date(measurementsFilter.range.to.setHours(23, 59, 59, 999)) : null;
         return initialMeasurements.filter(m => {
             const itemDate = parseISO(m.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
@@ -93,10 +98,9 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
     }, [initialMeasurements, measurementsFilter]);
 
     const filteredSessions = useMemo(() => {
-        const fromDate = sessionsFilter.range?.from ? new Date(sessionsFilter.range.from.setHours(0,0,0,0)) : null;
-        const toDate = sessionsFilter.range?.to ? new Date(sessionsFilter.range.to.setHours(23,59,59,999)) : null;
+        const fromDate = sessionsFilter.range?.from ? new Date(sessionsFilter.range.from.setHours(0, 0, 0, 0)) : null;
+        const toDate = sessionsFilter.range?.to ? new Date(sessionsFilter.range.to.setHours(23, 59, 59, 999)) : null;
         const lowerCaseFilter = sessionsFilter.text.toLowerCase();
-
         return initialSessions.filter(s => {
             const itemDate = parseISO(s.started_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
@@ -105,45 +109,49 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
         });
     }, [initialSessions, sessionsFilter]);
 
-    const statusMap: {[key: string]: {text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success"}} = {
-        'active': {text: 'Ativo', variant: 'success'},
-        'not-started': {text: 'Não Iniciado', variant: 'secondary'},
-        'completed': {text: 'Concluído', variant: 'default'},
-        'inactive': {text: 'Inativo', variant: 'outline'},
-    }
-
+    const statusMap: { [key: string]: { text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success" } } = {
+        'active': { text: 'Ativo', variant: 'success' },
+        'not-started': { text: 'Não Iniciado', variant: 'secondary' },
+        'completed': { text: 'Concluído', variant: 'default' },
+        'inactive': { text: 'Inativo', variant: 'outline' },
+    };
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto px-10">
-            <header className="flex flex-col sm:flex-row gap-6 items-start py-6">
-                 <div className="relative group">
-                    <Avatar className="w-24 h-24 border-2 border-primary shrink-0">
-                        <AvatarImage src={avatarPreview || student.avatar_url || undefined} alt={student.name} />
-                        <AvatarFallback className="text-3xl">
-                            {student.name.charAt(0)}
-                        </AvatarFallback>
+        <div className="space-y-6 max-w-4xl mx-auto px-2.5">
+            <header className="flex flex-col sm:flex-row gap-6 items-start">
+                 <div className="shrink-0">
+                    <Avatar className="w-24 h-24 border-2 border-primary relative group">
+                        <AvatarImage src={avatarPreview || undefined} alt={student.name} />
+                        <AvatarFallback className="text-3xl">{student.name.charAt(0)}</AvatarFallback>
+                        {isUploading && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                                <Loader2 className="h-8 w-8 animate-spin text-white" />
+                            </div>
+                        )}
                     </Avatar>
-                     <label htmlFor="avatar-upload" className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        {isUploading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : <Upload className="h-6 w-6 text-white"/>}
-                        <Input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={handleAvatarChange} disabled={isUploading} />
-                    </label>
-                 </div>
+                     <Button asChild variant="outline" className="w-full mt-2">
+                       <label htmlFor="avatar-upload" className="cursor-pointer">
+                           <Upload className="mr-2 h-4 w-4"/> Alterar Foto
+                           <Input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={handleAvatarChange} disabled={isUploading} />
+                       </label>
+                   </Button>
+                </div>
 
                 <div className="flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <h1 className="text-3xl font-bold font-headline">{student.name}</h1>
-                        <Badge variant={statusVariant}>{statusText}</Badge>
+                        <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                            {student.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </Badge>
                     </div>
                     <p className="text-muted-foreground">{student.email}</p>
                     {student.phone && (
                         <div className="flex items-center text-sm text-muted-foreground pt-1">
-                           <Phone className="mr-2 h-4 w-4" />
-                           <span>{student.phone}</span>
+                            <Phone className="mr-2 h-4 w-4" />
+                            <span>{student.phone}</span>
                         </div>
                     )}
-                    {lastActivityDate && (
-                         <p className="text-sm text-muted-foreground">Última atividade: {format(lastActivityDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                    )}
+                     <p className="text-sm text-muted-foreground pt-1">{lastActivity}</p>
                 </div>
             </header>
 
@@ -162,20 +170,14 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
             
              <Card>
                 <CardHeader>
-                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                        <CardTitle className="text-lg font-headline flex items-center"><CalendarIcon className="mr-2"/> Meus Planos de Treino</CardTitle>
-                    </div>
-                     <div className="flex flex-col md:flex-row gap-2 pt-2">
-                        <Select
-                            onValueChange={(value) => setWorkoutsFilter(prev => ({...prev, status: value}))}
-                            defaultValue="all"
-                        >
-                            <SelectTrigger className="h-9">
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="font-headline">Meus Treinos</CardTitle>
+                        <Select onValueChange={(value) => setWorkoutsFilter({ status: value })}>
+                            <SelectTrigger className="w-[180px] h-9">
                                 <SelectValue placeholder="Filtrar por status..." />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todos os Status</SelectItem>
-                                <SelectItem value="not-started">Não Iniciado</SelectItem>
                                 <SelectItem value="active">Ativo</SelectItem>
                                 <SelectItem value="completed">Concluído</SelectItem>
                             </SelectContent>
@@ -183,37 +185,35 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
                     </div>
                 </CardHeader>
                 <CardContent>
-                   {filteredWorkouts.length > 0 ? (
-                       <ul className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
-                           {filteredWorkouts.map((workout: Workout) => (
-                               <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                   <div>
-                                       <Link href={`/public/workout/${workout.id}`} className="font-semibold hover:underline">{workout.name}</Link>
-                                       <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
-                                   </div>
+                    {filteredWorkouts.length > 0 ? (
+                        <ul className="max-h-64 overflow-y-auto space-y-3 pr-2">
+                            {filteredWorkouts.map((workout: Workout) => (
+                                <li key={workout.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                    <div>
+                                        <p className="font-semibold">{workout.name}</p>
+                                        <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <Badge variant={statusMap[workout.status]?.variant || 'secondary'}>
-                                          {statusMap[workout.status]?.text || 'Desconhecido'}
+                                            {statusMap[workout.status]?.text || 'Desconhecido'}
                                         </Badge>
-                                       <Button variant="outline" size="sm" asChild>
+                                        <Button variant="outline" size="sm" asChild>
                                             <Link href={`/public/workout/${workout.id}`}>
-                                                Ver Treino
+                                                Acessar
                                             </Link>
-                                       </Button>
-                                   </div>
-                               </li>
-                           ))}
-                       </ul>
-                   ) : <p className="text-muted-foreground text-center py-4">Nenhum treino encontrado para os filtros selecionados.</p>}
+                                        </Button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-muted-foreground text-center py-4">Nenhum treino encontrado.</p>}
                 </CardContent>
             </Card>
 
-             <Card>
+            <Card>
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                        <CardTitle className="text-lg font-headline flex items-center"><History className="mr-2"/> Histórico de Sessões</CardTitle>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-2 pt-2">
+                    <CardTitle className="font-headline">Histórico de Sessões</CardTitle>
+                     <div className="flex gap-2 pt-2">
                         <Input 
                             placeholder="Buscar por nome do treino..."
                             value={sessionsFilter.text}
@@ -225,34 +225,34 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
                         />
                     </div>
                 </CardHeader>
-                <CardContent><SessionsHistory sessions={filteredSessions} /></CardContent>
+                <CardContent>
+                    <SessionsHistory sessions={filteredSessions} />
+                </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                        <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-2 pt-2">
-                        <DateRangeFilter
-                            onDateChange={(range) => setMeasurementsFilter({ range })}
+                    <CardTitle className="font-headline">Histórico de Medições</CardTitle>
+                     <div className="pt-2">
+                         <DateRangeFilter
+                            onDateChange={(range) => setMeasurementsFilter({range})}
                         />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} isPublicView={true}/>
+                    <MeasurementsHistory studentId={student.id} measurements={filteredMeasurements} isPublicView />
                 </CardContent>
             </Card>
-            
-             <Card>
+
+            <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Gráfico de Evolução Física</CardTitle>
+                    <CardTitle className="font-headline">Gráfico de Evolução Física</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ProgressChart measurements={initialMeasurements} />
+                    <ProgressChart measurements={filteredMeasurements} />
                 </CardContent>
             </Card>
+
         </div>
     );
 }
-
