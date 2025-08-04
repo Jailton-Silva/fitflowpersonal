@@ -16,6 +16,7 @@ import SessionsHistory, { FormattedSession } from "@/components/students/session
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -34,7 +35,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
     const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange }>({});
-    const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+    const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange, status?: 'all' | 'completed' | 'in-progress' }>({ text: "", status: 'all' });
 
     useEffect(() => {
         const formattedSessions = initialSessions.map(session => ({
@@ -79,7 +80,12 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                 const itemDate = parseISO(s.started_at);
                 const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
                 const textMatch = !lowerCaseFilter || s.workouts?.name.toLowerCase().includes(lowerCaseFilter);
-                return dateMatch && textMatch;
+                
+                const statusMatch = sessionsFilter.status === 'all' || 
+                                    (sessionsFilter.status === 'completed' && s.completed_at) ||
+                                    (sessionsFilter.status === 'in-progress' && !s.completed_at);
+
+                return dateMatch && textMatch && statusMatch;
             });
     }, [sessions, sessionsFilter]);
 
@@ -154,6 +160,19 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                             onChange={(e) => setSessionsFilter(prev => ({...prev, text: e.target.value}))}
                             className="h-9"
                         />
+                         <Select
+                            onValueChange={(value: 'all' | 'completed' | 'in-progress') => setSessionsFilter(prev => ({ ...prev, status: value }))}
+                            value={sessionsFilter.status}
+                        >
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Filtrar por status..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Status</SelectItem>
+                                <SelectItem value="completed">Finalizado</SelectItem>
+                                <SelectItem value="in-progress">Em Andamento</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <DateRangeFilter
                             onDateChange={(range) => setSessionsFilter(prev => ({...prev, range}))}
                         />
