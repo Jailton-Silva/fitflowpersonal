@@ -1,18 +1,31 @@
 
-import PublicHeader from "@/components/layout/public-header";
-import StudentPublicPortal from "@/components/students/student-public-portal";
+import { createClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { StudentPublicPortal } from "@/components/students/student-public-portal";
 
-// This page must be async to correctly handle server-side operations and dynamic APIs like params
-export default async function StudentPortalPage({ params }: { params: { id: string } }) {
-  
-  // Awaiting a promise here (even a simple one) can help Next.js correctly
-  // sequence the rendering and avoid race conditions with dynamic APIs.
-  await new Promise(resolve => setTimeout(resolve, 0));
+// This is a server component that verifies access again, then renders the portal
+export default async function StudentPortalPage({ params }: { params: { id: string }}) {
+    const cookieStore = cookies();
+    const supabase = createClient();
 
-  return (
-    <>
-      <PublicHeader studentId={params.id} />
-      <StudentPublicPortal studentId={params.id} />
-    </>
-  );
+    const { data: student } = await supabase
+        .from('students')
+        .select('id, access_password')
+        .eq('id', params.id)
+        .single();
+    
+    if (!student) {
+        notFound();
+    }
+    
+    // Double check access logic
+    const isAuthenticated = cookieStore.get(`student-${student.id}-auth`)?.value === 'true';
+    if(student.access_password && !isAuthenticated) {
+        redirect(`/public/student/${student.id}`);
+    }
+
+    return (
+        <StudentPublicPortal studentId={params.id} />
+    );
 }

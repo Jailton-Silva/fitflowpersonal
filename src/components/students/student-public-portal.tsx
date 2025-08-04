@@ -1,7 +1,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Workout, Measurement, WorkoutSession } from "@/lib/definitions";
+import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
 import StudentPortalClient from "@/app/public/student/[id]/portal/client-page";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
@@ -52,7 +52,7 @@ async function getStudentPortalData(studentId: string) {
 }
 
 
-export default async function StudentPublicPortal({ studentId }: { studentId: string }) {
+export async function StudentPublicPortal({ studentId }: { studentId: string }) {
     const { student, workouts, measurements, sessions } = await getStudentPortalData(studentId);
     
     return (

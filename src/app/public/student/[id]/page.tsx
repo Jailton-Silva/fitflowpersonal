@@ -1,47 +1,39 @@
 
-import { StudentPasswordForm } from "@/components/students/student-password-form"
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { StudentPasswordForm } from "@/components/students/student-password-form";
 
-async function checkStudentAccess(studentId: string) {
+async function getStudent(studentId: string) {
     const supabase = createClient();
     const { data: student, error } = await supabase
         .from('students')
-        .select('access_password')
+        .select('id, name, access_password')
         .eq('id', studentId)
         .single();
-    
-    // If there is no student or an error, we can't proceed.
-    // In a real app, you might want a more user-friendly error page.
+
     if (error || !student) {
-        return { needsPassword: true }; // Fallback to asking for password
+        notFound();
     }
-
-    // If the student does not have a password set, grant access immediately.
-    if (!student.access_password) {
-        // To avoid re-checking, we can set the cookie here as well
-        cookies().set(`student-${studentId}-auth`, 'true', {
-            path: `/`,
-            httpOnly: true,
-            maxAge: 60 * 60 * 24 * 7, // 1 week
-        });
-        return { needsPassword: false };
-    }
-
-    // If there is a password, the form needs to be shown.
-    return { needsPassword: true };
+    return student;
 }
 
+export default async function StudentAccessPage({ params }: { params: { id: string }}) {
+    const student = await getStudent(params.id);
 
-export default async function PublicStudentPage({ params }: { params: { id: string } }) {
-    const { needsPassword } = await checkStudentAccess(params.id);
+    // If student is already authenticated via cookie, redirect to portal
+    const cookieStore = cookies();
+    const authCookie = cookieStore.get(`student-${student.id}-auth`);
+    if (authCookie?.value === 'true') {
+        redirect(`/public/student/${student.id}/portal`);
+    }
 
-    if (!needsPassword) {
-        redirect(`/public/student/${params.id}/portal`);
+    // If student has no password, they have free access. Set cookie and redirect.
+    if (!student.access_password) {
+        cookieStore.set(`student-${student.id}-auth`, 'true', { path: '/', maxAge: 60 * 60 * 24 * 7 }); // 7 days
+        redirect(`/public/student/${student.id}/portal`);
     }
     
-    return (
-        <StudentPasswordForm studentId={params.id} />
-    )
+    // If password is set and user is not authenticated, show password form
+    return <StudentPasswordForm studentId={student.id} />;
 }

@@ -71,4 +71,3 @@ export function StudentPasswordForm({ studentId }: { studentId: string }) {
         </div>
     );
 }
-

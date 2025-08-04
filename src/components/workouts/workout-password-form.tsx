@@ -70,4 +70,3 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
         </div>
     );
 }
-

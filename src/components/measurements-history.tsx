@@ -14,7 +14,7 @@ import {
 import { Measurement } from "@/lib/definitions";
 import { Edit } from "lucide-react";
 import { Button } from "../ui/button";
-import MeasurementForm from "./measurement-form";
+import MeasurementForm from "../students/measurement-form";
 
 export default function MeasurementsHistory({ studentId, measurements, isPublicView = false }: { studentId: string, measurements: Measurement[], isPublicView?: boolean }) {
   if (!measurements || measurements.length === 0) {

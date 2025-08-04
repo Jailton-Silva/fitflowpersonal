@@ -14,6 +14,7 @@ export default function PublicHeader({ studentId }: { studentId: string }) {
   const handleLogout = async () => {
     await logoutStudent(studentId);
     router.push(`/public/student/${studentId}`);
+    router.refresh();
   };
 
   return (
