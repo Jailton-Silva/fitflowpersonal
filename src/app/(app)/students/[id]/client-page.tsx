@@ -33,7 +33,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
-    const [workoutsFilter, setWorkoutsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
+    const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange }>({});
     const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
 
     useEffect(() => {
@@ -61,13 +61,11 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
     const filteredWorkouts = useMemo(() => {
         const fromDate = workoutsFilter.range?.from ? new Date(workoutsFilter.range.from.setHours(0,0,0,0)) : null;
         const toDate = workoutsFilter.range?.to ? new Date(workoutsFilter.range.to.setHours(23,59,59,999)) : null;
-        const lowerCaseFilter = workoutsFilter.text.toLowerCase();
 
         return initialWorkouts.filter(w => {
             const itemDate = parseISO(w.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
-            const textMatch = !lowerCaseFilter || w.name.toLowerCase().includes(lowerCaseFilter) || w.description?.toLowerCase().includes(lowerCaseFilter);
-            return dateMatch && textMatch;
+            return dateMatch;
         });
     }, [initialWorkouts, workoutsFilter]);
 
@@ -121,12 +119,6 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                         </Button>
                     </div>
                      <div className="flex flex-col md:flex-row gap-2 pt-2">
-                         <Input 
-                            placeholder="Buscar por nome do plano..."
-                            value={workoutsFilter.text}
-                            onChange={(e) => setWorkoutsFilter(prev => ({...prev, text: e.target.value}))}
-                            className="h-9"
-                        />
                         <DateRangeFilter
                             onDateChange={(range) => setWorkoutsFilter(prev => ({...prev, range}))}
                         />
