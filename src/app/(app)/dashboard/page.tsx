@@ -11,7 +11,7 @@ import { Users, Dumbbell, Calendar, Activity, Star, AlertTriangle } from "lucide
 import EngagementChart, { EngagementData } from "@/components/dashboard/engagement-chart";
 import ProgressChart, { ProgressData } from "@/components/dashboard/progress-chart";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { subDays, startOfWeek, endOfWeek, format, parse, sub } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, format, parse, sub, differenceInDays } from 'date-fns';
 import { Student } from "@/lib/definitions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
@@ -213,11 +213,6 @@ async function getDashboardData(from: string, to: string) {
   };
 }
 
-function differenceInDays(date1: Date, date2: Date) {
-    const diffTime = Math.abs(date2.getTime() - date1.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-}
-
 
 export default async function DashboardPage({
   searchParams,
@@ -348,9 +343,14 @@ export default async function DashboardPage({
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
                             </div>
-                            <Button asChild size="sm" variant="outline">
-                               <Link href={`/students/${student.id}`}>Ver Perfil</Link>
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button asChild size="sm" variant="outline">
+                                   <Link href={`/students/${student.id}`}>Ver Perfil</Link>
+                                </Button>
+                                <Button asChild size="sm">
+                                   <Link href={`/workouts/new?student_id=${student.id}`}>Criar Treino</Link>
+                                </Button>
+                            </div>
                         </li>
                     ))}
                  </ul>
@@ -363,3 +363,5 @@ export default async function DashboardPage({
     </div>
   );
 }
+
+    
