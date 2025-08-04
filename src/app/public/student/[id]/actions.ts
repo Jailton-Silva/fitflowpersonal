@@ -4,48 +4,41 @@
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
-export async function uploadStudentAvatar(studentId: string, formData: FormData) {
-    const file = formData.get('avatar') as File;
-    if (!file || file.size === 0) {
-        return { error: 'Nenhum arquivo enviado.' };
-    }
-    
-    // Use the standard client for storage upload, respecting storage policies
-    const supabase = createClient();
-    // Use studentId for the folder path to organize avatars
-    const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
+export async function verifyStudentPassword(previousState: any, formData: FormData) {
+  const studentId = formData.get("studentId") as string;
+  const password = formData.get("password") as string;
+  const cookieStore = cookies();
 
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-            upsert: true, // Overwrite if file exists
-        });
+  if (!studentId || !password) {
+    return { error: "ID do aluno e senha são obrigatórios." };
+  }
 
-    if (uploadError) {
-        console.error('Upload Error:', uploadError);
-        return { error: `Erro no upload: ${uploadError.message}` };
-    }
+  // Use admin client to bypass RLS for password check
+  const { data: student, error } = await supabaseAdmin
+    .from("students")
+    .select("access_password")
+    .eq("id", studentId)
+    .single();
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+  if (error || !student) {
+    return { error: "Aluno não encontrado." };
+  }
 
-    // Use the admin client to bypass RLS for updating the student's avatar URL
-    const { error: updateError } = await supabaseAdmin
-        .from('students')
-        .update({ avatar_url: publicUrl })
-        .eq('id', studentId);
-        
-    if (updateError) {
-        console.error('Update Error:', updateError);
-        // Attempt to remove the uploaded file if the DB update fails
-        await supabase.storage.from('avatars').remove([filePath]);
-        return { error: `Erro ao atualizar perfil: ${updateError.message}` };
-    }
-    
+  if (student.access_password === password) {
+    // Password is correct, set a cookie
+    cookieStore.set(`student-${studentId}-auth`, "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
     revalidatePath(`/public/student/${studentId}/portal`);
-    return { error: null, path: publicUrl };
+    redirect(`/public/student/${studentId}/portal`);
+  } else {
+    // Password is incorrect
+    return { error: "Senha inválida." };
+  }
 }
