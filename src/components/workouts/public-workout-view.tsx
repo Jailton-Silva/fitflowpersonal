@@ -3,8 +3,8 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState, useMemo } from "react";
-import { Dumbbell, User, Trophy, Printer, Video } from "lucide-react";
+import { useEffect, useState, useMemo, useTransition } from "react";
+import { Dumbbell, User, Trophy, Printer, Video, Loader2 } from "lucide-react";
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     const [session, setSession] = useState<WorkoutSession | null>(null);
     const [completedToday, setCompletedToday] = useState<WorkoutSession | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isFinishing, startFinishTransition] = useTransition();
     const { toast } = useToast();
     const router = useRouter();
     
@@ -132,6 +133,26 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
         }
         setLoading(false);
         router.refresh();
+    }
+    
+    const handleFinishWorkout = async () => {
+        if (!session) return;
+        startFinishTransition(async () => {
+            const { error } = await finishWorkoutSession(session.id);
+            if(error) {
+                 toast({
+                    title: "Erro ao finalizar treino",
+                    description: error,
+                    variant: "destructive",
+                });
+            } else {
+                 toast({
+                    title: "Parabéns!",
+                    description: "Treino finalizado com sucesso.",
+                });
+                router.refresh();
+            }
+        });
     }
 
     if (loading) {
@@ -248,6 +269,15 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                             )}
                             </div>
                         </div>
+
+                        {finalSessionToDisplay && !isWorkoutFinished && (
+                            <div className="flex justify-center mt-8 no-print">
+                                <Button size="lg" className="ripple" onClick={handleFinishWorkout} disabled={isFinishing}>
+                                    {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Finalizar Treino
+                                </Button>
+                            </div>
+                        )}
                     </section>
                 </div>
             </main>
