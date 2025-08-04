@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, ArrowUpDown } from "lucide-react";
 import StudentForm from "./student-form";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 // Action for Deleting a Student
 async function deleteStudent(studentId: string, onComplete: () => void, onError: (error: any) => void) {
@@ -117,19 +118,24 @@ function StudentActions({ student }: { student: Student }) {
 export function StudentCard({ student }: { student: Student }) {
     const statusText = student.status === 'active' ? 'Ativo' : 'Inativo';
     return (
-        <div className="p-4 flex flex-col gap-2">
-            <div className="flex justify-between items-start">
-                <Link href={`/students/${student.id}`} className="font-medium text-primary hover:underline pr-4">
-                    {student.name}
-                </Link>
-                <StudentActions student={student} />
-            </div>
-            <div className="text-sm text-muted-foreground space-y-1">
-                <p>{student.email}</p>
-                 <Badge variant={student.status === "active" ? "default" : "secondary"}>
-                    {statusText}
-                </Badge>
-                <p className="pt-1"><strong className="font-medium text-foreground">Objetivos:</strong> {student.goals || 'N/A'}</p>
+        <div className="p-4 flex items-center gap-4">
+             <Avatar className="h-12 w-12">
+                <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
+                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+                 <div className="flex justify-between items-start">
+                    <Link href={`/students/${student.id}`} className="font-medium text-primary hover:underline pr-4">
+                        {student.name}
+                    </Link>
+                    <StudentActions student={student} />
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1">
+                    <p>{student.email}</p>
+                    <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                        {statusText}
+                    </Badge>
+                </div>
             </div>
         </div>
     )
@@ -140,6 +146,12 @@ export function StudentTableRow({ student }: { student: Student }) {
   const statusText = student.status === 'active' ? 'Ativo' : 'Inativo';
   return (
     <tr className="hover:bg-muted/50">
+      <td className="p-4">
+        <Avatar>
+            <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
+            <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+      </td>
       <td className="p-4 font-medium">
          <Link href={`/students/${student.id}`} className="text-primary hover:underline">
             {student.name}
@@ -161,11 +173,10 @@ export function StudentTableRow({ student }: { student: Student }) {
 
 // Component for Desktop Table Header
 export function StudentTableHeader() {
-  // At the moment, sorting is disabled for this custom view.
-  // We can add it back if needed with local state management.
   return (
     <thead className="border-b">
       <tr className="text-left text-muted-foreground">
+        <th className="p-4 font-medium w-16">Foto</th>
         <th className="p-4 font-medium">Nome</th>
         <th className="p-4 font-medium">Email</th>
         <th className="p-4 font-medium">Status</th>

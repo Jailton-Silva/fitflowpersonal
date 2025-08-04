@@ -91,9 +91,9 @@ export default function StudentsPage() {
 
         {isLoading ? (
             <div className="p-4 space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
             </div>
         ) : (
           <>
@@ -116,7 +116,7 @@ export default function StudentsPage() {
                       filteredStudents.map((student) => <StudentTableRow key={student.id} student={student} />)
                     ) : (
                       <tr>
-                        <td colSpan={5} className="p-4 text-center text-muted-foreground">
+                        <td colSpan={6} className="p-4 text-center text-muted-foreground">
                           Nenhum aluno encontrado.
                         </td>
                       </tr>
