@@ -41,10 +41,17 @@ async function getWorkoutDetails(workoutId: string) {
         // Here you might want to redirect or show a specific "inactive" page
         // For now, we'll just prevent access by showing not found
         // A better implementation would be a proper "This workout is inactive" page
-        notFound();
+        // notFound();
     }
 
     return data as Workout;
+}
+
+const statusMap: {[key: string]: {text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success"}} = {
+    'active': {text: 'Ativo', variant: 'success'},
+    'not-started': {text: 'Não Iniciado', variant: 'secondary'},
+    'completed': {text: 'Concluído', variant: 'default'},
+    'inactive': {text: 'Inativo', variant: 'outline'},
 }
 
 
@@ -88,8 +95,8 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
                         </div>
                         <div className="flex flex-col items-end gap-2">
                             <Badge variant="outline">Plano de Treino</Badge>
-                             <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
-                                {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                             <Badge variant={statusMap[workout.status]?.variant || 'secondary'}>
+                                {statusMap[workout.status]?.text || 'Desconhecido'}
                             </Badge>
                         </div>
                     </div>

@@ -106,7 +106,9 @@ export function WorkoutFilters({ students, exercises }: WorkoutFiltersProps) {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="not-started">Não Iniciado</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="completed">Concluído</SelectItem>
                     <SelectItem value="inactive">Inativo</SelectItem>
                 </SelectContent>
             </Select>

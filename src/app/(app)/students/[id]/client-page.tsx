@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -34,7 +35,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
-    const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange }>({});
+    const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange; status?: string }>({});
     const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange, status?: 'all' | 'completed' | 'in-progress' }>({ text: "", status: 'all' });
 
     useEffect(() => {
@@ -66,7 +67,8 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         return initialWorkouts.filter(w => {
             const itemDate = parseISO(w.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
-            return dateMatch;
+            const statusMatch = !workoutsFilter.status || workoutsFilter.status === 'all' || w.status === workoutsFilter.status;
+            return dateMatch && statusMatch;
         });
     }, [initialWorkouts, workoutsFilter]);
 
@@ -88,6 +90,13 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                 return dateMatch && textMatch && statusMatch;
             });
     }, [sessions, sessionsFilter]);
+    
+    const statusMap: {[key: string]: {text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success"}} = {
+        'active': {text: 'Ativo', variant: 'success'},
+        'not-started': {text: 'Não Iniciado', variant: 'secondary'},
+        'completed': {text: 'Concluído', variant: 'default'},
+        'inactive': {text: 'Inativo', variant: 'outline'},
+    }
 
     // Renders the page content
     return (
@@ -128,6 +137,20 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                         <DateRangeFilter
                             onDateChange={(range) => setWorkoutsFilter(prev => ({...prev, range}))}
                         />
+                        <Select
+                            onValueChange={(value) => setWorkoutsFilter(prev => ({...prev, status: value}))}
+                        >
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Filtrar por status..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Status</SelectItem>
+                                <SelectItem value="not-started">Não Iniciado</SelectItem>
+                                <SelectItem value="active">Ativo</SelectItem>
+                                <SelectItem value="completed">Concluído</SelectItem>
+                                <SelectItem value="inactive">Inativo</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -139,11 +162,16 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                                        <p className="font-semibold">{workout.name}</p>
                                        <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
                                    </div>
-                                   <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/workouts/${workout.id}`}>
-                                            Ver Plano
-                                        </Link>
-                                   </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant={statusMap[workout.status]?.variant || 'secondary'}>
+                                          {statusMap[workout.status]?.text || 'Desconhecido'}
+                                        </Badge>
+                                       <Button variant="outline" size="sm" asChild>
+                                            <Link href={`/workouts/${workout.id}`}>
+                                                Ver Plano
+                                            </Link>
+                                       </Button>
+                                   </div>
                                </li>
                            ))}
                        </ul>

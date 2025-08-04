@@ -105,10 +105,10 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     };
 
     const handleStartWorkout = async () => {
-        if (workout.status === 'inactive') {
+        if (workout.status === 'inactive' || workout.status === 'completed') {
             toast({
-                title: "Treino Concluído",
-                description: "Este plano de treino foi marcado como concluído e não pode ser iniciado.",
+                title: "Treino Indisponível",
+                description: "Este plano de treino está marcado como Inativo ou Concluído e não pode ser iniciado.",
                 variant: "destructive"
             });
             return;
@@ -172,7 +172,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     }
     
     const isWorkoutFinished = finalSessionToDisplay && finalSessionToDisplay.completed_at;
-    const canStartWorkout = !finalSessionToDisplay && workout.status === 'active';
+    const canStartWorkout = !finalSessionToDisplay && (workout.status === 'active' || workout.status === 'not-started');
 
     return (
         <div className="flex flex-col min-h-screen bg-muted">
@@ -219,10 +219,10 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                         </div>
                     )}
 
-                    {workout.status === 'inactive' && !finalSessionToDisplay && (
+                    {(workout.status === 'inactive' || workout.status === 'completed') && !finalSessionToDisplay && (
                         <div className="text-center py-6 px-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                             <h2 className="text-xl font-bold font-headline mt-2">Treino Concluído</h2>
-                            <p className="text-muted-foreground mt-1">Este plano de treino foi marcado como concluído pelo seu treinador e não pode ser mais executado.</p>
+                             <h2 className="text-xl font-bold font-headline mt-2">Treino Indisponível</h2>
+                            <p className="text-muted-foreground mt-1">Este plano de treino foi marcado como {workout.status === 'completed' ? 'Concluído' : 'Inativo'} pelo seu treinador e não pode ser mais executado.</p>
                         </div>
                     )}
                     
@@ -245,7 +245,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                          <div>
                             <h2 className="text-2xl font-bold font-headline mb-4">Exercícios</h2>
                             <div className="space-y-4">
-                            {!finalSessionToDisplay && workout.status === 'active' ? (
+                            {!finalSessionToDisplay && (workout.status === 'active' || workout.status === 'not-started') ? (
                                 <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
                                     <p className="text-muted-foreground">Clique em "Iniciar Treino" para começar a registrar seu progresso.</p>
                                 </div>
@@ -289,7 +289,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                 })
                             ) : (
                                  <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
-                                    <p className="text-muted-foreground">Este treino foi concluído e arquivado.</p>
+                                    <p className="text-muted-foreground">Este treino foi marcado como Inativo ou Concluído e não pode ser executado.</p>
                                 </div>
                             )}
                             </div>

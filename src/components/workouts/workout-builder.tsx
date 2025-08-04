@@ -43,7 +43,7 @@ import {
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
   student_id: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
+  status: z.enum(['active', 'inactive', 'not-started', 'completed']),
   description: z.string().optional(),
   diet_plan: z.string().optional(),
   access_password: z.string().optional(),
@@ -83,7 +83,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       diet_plan: "",
       access_password: "",
       exercises: [],
-      status: 'active',
+      status: 'not-started',
     },
   });
 
@@ -110,7 +110,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
         description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
-        status: workout.status ?? 'active',
+        status: workout.status ?? 'not-started',
         exercises: (workout.exercises || []).map(e => ({
           ...e, 
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
@@ -123,7 +123,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             description: "",
             diet_plan: "",
             access_password: "",
-            status: 'active',
+            status: 'not-started',
             exercises: [],
         });
     }
@@ -312,7 +312,9 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                         <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
                           <SelectContent>
+                            <SelectItem value="not-started">Não Iniciado</SelectItem>
                             <SelectItem value="active">Ativo</SelectItem>
+                            <SelectItem value="completed">Concluído</SelectItem>
                             <SelectItem value="inactive">Inativo</SelectItem>
                           </SelectContent>
                         </Select>

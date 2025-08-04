@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, MoreVertical, Trash2, EyeOff, Eye } from "lucide-react";
+import { Edit, Share2, MoreVertical, Trash2, Eye, EyeOff, CheckCircle, XCircle, PlayCircle, StopCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Workout } from "@/lib/definitions";
 import {
@@ -12,6 +12,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -31,7 +35,7 @@ type WorkoutDetailClientProps = {
     workout: Workout;
 }
 
-async function updateWorkoutStatus(workoutId: string, status: 'active' | 'inactive') {
+async function updateWorkoutStatus(workoutId: string, status: 'active' | 'inactive' | 'not-started' | 'completed') {
     const supabase = createClient();
     const { error } = await supabase.from("workouts").update({ status }).eq("id", workoutId);
     return { error };
@@ -44,38 +48,50 @@ async function deleteWorkout(workoutId: string) {
 }
 
 
-function ToggleStatusAction({ workout }: { workout: Workout }) {
+function StatusSelectorAction({ workout }: { workout: Workout }) {
   const { toast } = useToast();
   const router = useRouter();
-  const newStatus = workout.status === 'active' ? 'inactive' : 'active';
-  const newStatusText = newStatus === 'active' ? 'Ativar' : 'Desativar';
 
-  const handleToggle = async () => {
+  const handleStatusChange = async (newStatus: Workout['status']) => {
     const { error } = await updateWorkoutStatus(workout.id, newStatus);
     if (error) {
       toast({
-        title: `Erro ao ${newStatusText} treino`,
+        title: `Erro ao alterar status`,
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
         title: "Sucesso!",
-        description: `Plano de treino foi definido como ${newStatus === 'active' ? 'Ativo' : 'Inativo'}.`,
+        description: `Status do plano de treino foi alterado.`,
       });
       router.refresh();
     }
   };
   
+  const statusOptions: {value: Workout['status'], label: string, icon: React.ReactNode}[] = [
+      { value: 'not-started', label: 'Não Iniciado', icon: <PlayCircle className="mr-2 h-4 w-4" /> },
+      { value: 'active', label: 'Ativo', icon: <Eye className="mr-2 h-4 w-4" /> },
+      { value: 'completed', label: 'Concluído', icon: <CheckCircle className="mr-2 h-4 w-4" /> },
+      { value: 'inactive', label: 'Inativo', icon: <XCircle className="mr-2 h-4 w-4" /> },
+  ]
+
   return (
-    <DropdownMenuItem onClick={handleToggle}>
-      {newStatus === 'active' ? (
-        <Eye className="mr-2 h-4 w-4" />
-      ) : (
-        <EyeOff className="mr-2 h-4 w-4" />
-      )}
-      <span>{newStatusText}</span>
-    </DropdownMenuItem>
+    <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
+            Alterar Status
+        </DropdownMenuSubTrigger>
+        <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+                {statusOptions.map(opt => (
+                    <DropdownMenuItem key={opt.value} onClick={() => handleStatusChange(opt.value)}>
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuSubContent>
+        </DropdownMenuPortal>
+    </DropdownMenuSub>
   );
 }
 
@@ -175,7 +191,7 @@ export default function WorkoutDetailClient({ workout }: WorkoutDetailClientProp
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <ToggleStatusAction workout={workout} />
+                    <StatusSelectorAction workout={workout} />
                     <DropdownMenuSeparator />
                     <DeleteWorkoutAction workoutId={workout.id} />
                 </DropdownMenuContent>

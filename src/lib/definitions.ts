@@ -60,7 +60,7 @@ export type Workout = {
   diet_plan?: string;
   exercises: WorkoutExercise[];
   access_password?: string | null;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'not-started' | 'completed';
   created_at: string;
   updated_at: string;
   students: {

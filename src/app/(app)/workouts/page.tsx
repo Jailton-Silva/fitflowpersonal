@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Workout, Student, Exercise } from "@/lib/definitions";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Dumbbell, MoreVertical, Edit, Eye, EyeOff, Trash2 } from "lucide-react";
+import { PlusCircle, Dumbbell, MoreVertical, Edit, Eye, EyeOff, Trash2, CheckCircle, XCircle, PlayCircle, StopCircle } from "lucide-react";
 import { WorkoutFilters } from "@/components/workouts/workout-filters";
 import {
   Card,
@@ -23,6 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -40,7 +44,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Server actions need to be defined separately or imported
-async function updateWorkoutStatus(workoutId: string, status: 'active' | 'inactive') {
+async function updateWorkoutStatus(workoutId: string, status: Workout['status']) {
     const supabase = createClient();
     const { error } = await supabase.from("workouts").update({ status }).eq("id", workoutId);
     return { error };
@@ -53,60 +57,62 @@ async function deleteWorkout(workoutId: string) {
 }
 
 
-function ToggleStatusAction({ workout }: { workout: Workout }) {
+function StatusSelectorAction({ workout, onStatusChange }: { workout: Workout, onStatusChange: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
-  const newStatus = workout.status === 'active' ? 'inactive' : 'active';
-  const newStatusText = newStatus === 'active' ? 'Ativar' : 'Desativar';
 
-  const handleToggle = async () => {
+  const handleStatusChange = async (newStatus: Workout['status']) => {
     const { error } = await updateWorkoutStatus(workout.id, newStatus);
     if (error) {
       toast({
-        title: `Erro ao ${newStatusText} treino`,
+        title: `Erro ao alterar status`,
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
         title: "Sucesso!",
-        description: `Plano de treino foi definido como ${newStatus === 'active' ? 'Ativo' : 'Inativo'}.`,
+        description: `Status do plano de treino foi alterado.`,
       });
-      router.refresh();
+      onStatusChange();
     }
   };
   
+  const statusOptions: {value: Workout['status'], label: string, icon: React.ReactNode}[] = [
+      { value: 'not-started', label: 'Não Iniciado', icon: <PlayCircle className="mr-2 h-4 w-4" /> },
+      { value: 'active', label: 'Ativo', icon: <Eye className="mr-2 h-4 w-4" /> },
+      { value: 'completed', label: 'Concluído', icon: <CheckCircle className="mr-2 h-4 w-4" /> },
+      { value: 'inactive', label: 'Inativo', icon: <XCircle className="mr-2 h-4 w-4" /> },
+  ]
+
   return (
-    <DropdownMenuItem onClick={handleToggle}>
-      {newStatus === 'active' ? (
-        <Eye className="mr-2 h-4 w-4" />
-      ) : (
-        <EyeOff className="mr-2 h-4 w-4" />
-      )}
-      <span>{newStatusText}</span>
-    </DropdownMenuItem>
+    <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
+            Alterar Status
+        </DropdownMenuSubTrigger>
+        <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+                {statusOptions.map(opt => (
+                    <DropdownMenuItem key={opt.value} onClick={() => handleStatusChange(opt.value)}>
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuSubContent>
+        </DropdownMenuPortal>
+    </DropdownMenuSub>
   );
 }
 
-function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
+function DeleteWorkoutAction({ workoutId, onDeleted }: { workoutId: string, onDeleted: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleDelete = async () => {
     const { error } = await deleteWorkout(workoutId);
-
     if (error) {
-      toast({
-        title: "Erro ao excluir treino",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao excluir treino", description: error.message, variant: "destructive" });
     } else {
-      toast({
-        title: "Sucesso!",
-        description: "Plano de treino excluído.",
-      });
-      router.refresh();
+      toast({ title: "Sucesso!", description: "Plano de treino excluído." });
+      onDeleted();
     }
   };
   
@@ -120,26 +126,19 @@ function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
     </DropdownMenuItem>
    );
 
-
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        {trigger}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
-            Essa ação não pode ser desfeita. Isso excluirá permanentemente o
-            plano de treino e todos os seus dados.
+            Essa ação não pode ser desfeita. Isso excluirá permanentemente o plano de treino e todos os seus dados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            className="bg-destructive hover:bg-destructive/90"
-          >
+          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
             Sim, excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -149,7 +148,7 @@ function DeleteWorkoutAction({ workoutId }: { workoutId: string }) {
 }
 
 
-function WorkoutCardActions({ workout }: { workout: Workout }) {
+function WorkoutCardActions({ workout, onActionComplete }: { workout: Workout, onActionComplete: () => void }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -164,12 +163,19 @@ function WorkoutCardActions({ workout }: { workout: Workout }) {
                         Editar
                     </Link>
                 </DropdownMenuItem>
-                <ToggleStatusAction workout={workout} />
+                <StatusSelectorAction workout={workout} onStatusChange={onActionComplete} />
                 <DropdownMenuSeparator />
-                <DeleteWorkoutAction workoutId={workout.id} />
+                <DeleteWorkoutAction workoutId={workout.id} onDeleted={onActionComplete} />
             </DropdownMenuContent>
         </DropdownMenu>
     );
+}
+
+const statusMap: {[key: string]: {text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success"}} = {
+    'active': {text: 'Ativo', variant: 'success'},
+    'not-started': {text: 'Não Iniciado', variant: 'secondary'},
+    'completed': {text: 'Concluído', variant: 'default'},
+    'inactive': {text: 'Inativo', variant: 'outline'},
 }
 
 function WorkoutsPage() {
@@ -178,69 +184,70 @@ function WorkoutsPage() {
     const [exercises, setExercises] = useState<Pick<Exercise, 'id' | 'name'>[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const searchParams = useSearchParams();
+    const router = useRouter();
 
-    useEffect(() => {
-        const fetchPageData = async () => {
-            setIsLoading(true);
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setIsLoading(false);
-                return;
-            };
-
-            const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
-            if (!trainer) {
-                setIsLoading(false);
-                return;
-            };
-
-            // Fetch filters data
-            const studentsPromise = supabase.from("students").select("id, name").eq("trainer_id", trainer.id).order('name');
-            const exercisesPromise = supabase.from("exercises").select("id, name").eq("trainer_id", trainer.id).order('name');
-            
-            const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
-            setStudents(studentsResult.data ?? []);
-            setExercises(exercisesResult.data ?? []);
-
-            // Fetch workouts based on filters
-            const studentId = searchParams.get('student');
-            const exerciseIds = searchParams.getAll('exercises');
-            const from = searchParams.get('from');
-            const to = searchParams.get('to');
-            const status = searchParams.get('status');
-
-            let query = supabase
-                .from("workouts")
-                .select("*, students(id, name)")
-                .eq("trainer_id", trainer.id)
-                .not("student_id", "is", null)
-                .order("created_at", { descending: true });
-
-            if (studentId) query = query.eq('student_id', studentId);
-            if (from) query = query.gte('created_at', from);
-            if (to) query = query.lte('created_at', to);
-            if (status && status !== 'all') query = query.eq('status', status);
-            
-            let { data, error } = await query;
-            if (error) {
-                console.error("Erro ao buscar treinos:", error);
-                data = [];
-            }
-            
-            let filteredWorkouts = data as Workout[];
-            if (exerciseIds && exerciseIds.length > 0) {
-                filteredWorkouts = filteredWorkouts.filter(workout => 
-                    exerciseIds.every(filterId => 
-                        (workout.exercises as any[]).some(ex => ex.exercise_id === filterId)
-                    )
-                );
-            }
-
-            setWorkouts(filteredWorkouts);
+    const fetchPageData = async () => {
+        setIsLoading(true);
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
             setIsLoading(false);
+            return;
+        };
+
+        const { data: trainer } = await supabase.from("trainers").select("id").eq("user_id", user.id).single();
+        if (!trainer) {
+            setIsLoading(false);
+            return;
+        };
+
+        // Fetch filters data
+        const studentsPromise = supabase.from("students").select("id, name").eq("trainer_id", trainer.id).order('name');
+        const exercisesPromise = supabase.from("exercises").select("id, name").eq("trainer_id", trainer.id).order('name');
+        
+        const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
+        setStudents(studentsResult.data ?? []);
+        setExercises(exercisesResult.data ?? []);
+
+        // Fetch workouts based on filters
+        const studentId = searchParams.get('student');
+        const exerciseIds = searchParams.getAll('exercises');
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
+        const status = searchParams.get('status');
+
+        let query = supabase
+            .from("workouts")
+            .select("*, students(id, name)")
+            .eq("trainer_id", trainer.id)
+            .not("student_id", "is", null)
+            .order("created_at", { descending: true });
+
+        if (studentId) query = query.eq('student_id', studentId);
+        if (from) query = query.gte('created_at', from);
+        if (to) query = query.lte('created_at', to);
+        if (status && status !== 'all') query = query.eq('status', status);
+        
+        let { data, error } = await query;
+        if (error) {
+            console.error("Erro ao buscar treinos:", error);
+            data = [];
+        }
+        
+        let filteredWorkouts = data as Workout[];
+        if (exerciseIds && exerciseIds.length > 0) {
+            filteredWorkouts = filteredWorkouts.filter(workout => 
+                exerciseIds.every(filterId => 
+                    (workout.exercises as any[]).some(ex => ex.exercise_id === filterId)
+                )
+            );
         }
 
+        setWorkouts(filteredWorkouts);
+        setIsLoading(false);
+    }
+
+    useEffect(() => {
         fetchPageData();
     }, [searchParams])
 
@@ -271,15 +278,15 @@ function WorkoutsPage() {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <CardTitle>{workout.name}</CardTitle>
-                            <WorkoutCardActions workout={workout} />
+                            <WorkoutCardActions workout={workout} onActionComplete={fetchPageData} />
                         </div>
                         <CardDescription>
                         Para: {workout.students?.name ?? "N/A"}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 space-y-2">
-                        <Badge variant={workout.status === 'active' ? 'default' : 'secondary'}>
-                            {workout.status === 'active' ? 'Ativo' : 'Inativo'}
+                        <Badge variant={statusMap[workout.status]?.variant || 'secondary'}>
+                            {statusMap[workout.status]?.text || 'Desconhecido'}
                         </Badge>
                         <div className="flex items-center text-sm text-muted-foreground">
                         <Dumbbell className="mr-2 h-4 w-4" />
