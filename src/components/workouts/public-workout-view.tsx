@@ -4,7 +4,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useMemo, useTransition } from "react";
-import { Dumbbell, User, Trophy, Printer, Video, Loader2 } from "lucide-react";
+import { Dumbbell, User, Trophy, Printer, Video, Loader2, ArrowLeft } from "lucide-react";
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -142,7 +142,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
             if(error) {
                  toast({
                     title: "Erro ao finalizar treino",
-                    description: error,
+                    description: error.error,
                     variant: "destructive",
                 });
             } else {
@@ -174,7 +174,12 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                      <header>
                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                             <div>
-                                <Badge>Plano de Treino</Badge>
+                                <Button variant="link" asChild className="p-0 h-auto mb-2 no-print">
+                                    <Link href={`/public/student/${workout.student_id}/portal`}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" />
+                                        Voltar ao Portal
+                                    </Link>
+                                </Button>
                                 <h1 className="text-3xl sm:text-4xl font-bold font-headline mt-2">{workout.name}</h1>
                                 <div className="flex items-center gap-4 mt-2 text-muted-foreground">
                                     <div className="flex items-center gap-2">
@@ -184,7 +189,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                      <span className="text-sm">Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                                 </div>
                             </div>
-                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto no-print">
+                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto self-start no-print">
                                 {!finalSessionToDisplay && (
                                     <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
                                 )}

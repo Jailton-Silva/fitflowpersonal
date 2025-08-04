@@ -1,103 +1,124 @@
 
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from 'next/headers';
-import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { Workout } from "@/lib/definitions";
 
-// This file was implicitly expected by other components but never created.
-// It centralizes all server actions related to the public workout pages.
+export async function verifyPassword(
+  prevState: { error: string | null } | null,
+  formData: FormData
+) {
+  const password = formData.get("password") as string;
+  const workoutId = formData.get("workoutId") as string;
 
-export async function verifyPassword(prevState: any, formData: FormData) {
-  const password = formData.get('password') as string;
-  const workoutId = formData.get('workoutId') as string;
   const supabase = createClient();
-  
   const { data: workout, error } = await supabase
-    .from('workouts')
-    .select('access_password')
-    .eq('id', workoutId)
+    .from("workouts")
+    .select("access_password")
+    .eq("id", workoutId)
     .single();
 
   if (error || !workout) {
-    return { error: 'Treino não encontrado.' };
+    return { error: "Treino não encontrado." };
   }
 
   if (workout.access_password === password) {
-    cookies().set(`workout-${workoutId}-auth`, 'true', { path: '/', maxAge: 60 * 60 * 24 }); // 24-hour auth
+    cookies().set(`workout-${workoutId}-auth`, "true", {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
     revalidatePath(`/public/workout/${workoutId}`);
     return { error: null };
   } else {
-    return { error: 'Senha incorreta.' };
+    return { error: "Senha incorreta." };
   }
 }
 
+export async function updateCompletedExercises(
+  sessionId: string,
+  exerciseId: string,
+  isCompleted: boolean
+) {
+  const supabase = createClient();
 
-export async function updateCompletedExercises(sessionId: string, exerciseId: string, isCompleted: boolean) {
-    const supabase = createClient();
-    
-    // First, get the current session
-    const { data: session, error: sessionError } = await supabase
-        .from('workout_sessions')
-        .select('completed_exercises, workout_id')
-        .eq('id', sessionId)
-        .single();
-    
-    if (sessionError || !session) {
-        return { error: "Sessão não encontrada." };
+  const { data: session, error: fetchError } = await supabase
+    .from("workout_sessions")
+    .select("completed_exercises")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError || !session) {
+    return { error: "Sessão não encontrada." };
+  }
+
+  let currentExercises = session.completed_exercises || [];
+
+  if (isCompleted) {
+    if (!currentExercises.includes(exerciseId)) {
+      currentExercises.push(exerciseId);
     }
-    
-    let currentCompleted = (session.completed_exercises as string[]) || [];
+  } else {
+    currentExercises = currentExercises.filter((id) => id !== exerciseId);
+  }
 
-    if (isCompleted) {
-        // Add exerciseId if it's not already there
-        if (!currentCompleted.includes(exerciseId)) {
-            currentCompleted.push(exerciseId);
-        }
-    } else {
-        // Remove exerciseId
-        currentCompleted = currentCompleted.filter(id => id !== exerciseId);
-    }
-    
-    // Update the session with the new array
-    const { error: updateError } = await supabase
-        .from('workout_sessions')
-        .update({ completed_exercises: currentCompleted })
-        .eq('id', sessionId);
-        
-    if (updateError) {
-        return { error: updateError.message };
-    }
+  const { error: updateError } = await supabase
+    .from("workout_sessions")
+    .update({ completed_exercises: currentExercises })
+    .eq("id", sessionId);
 
-    // Now, check if all exercises for the workout are completed
-    const { data: workout } = await supabase.from('workouts').select('exercises').eq('id', session.workout_id).single();
-    const totalExercises = (workout?.exercises as any[])?.length ?? 0;
+  if (updateError) {
+    return { error: `Erro ao atualizar: ${updateError.message}` };
+  }
 
-    if (totalExercises > 0 && currentCompleted.length === totalExercises) {
-        const { error: finalUpdateError } = await supabase.from('workout_sessions').update({ completed_at: new Date().toISOString() }).eq('id', sessionId);
-         if (finalUpdateError) {
-            return { error: finalUpdateError.message };
-        }
-    }
-
-    revalidatePath(`/public/workout/[id]`);
-    return { error: null };
+  return { error: null };
 }
 
 export async function finishWorkoutSession(sessionId: string) {
     const supabase = createClient();
-    
-    const { error } = await supabase
-        .from('workout_sessions')
-        .update({ completed_at: new Date().toISOString() })
-        .eq('id', sessionId);
-        
-    if (error) {
-        return { error: "Não foi possível finalizar a sessão." };
+  
+    // First, get the session to find out the workout_id
+    const { data: session, error: sessionError } = await supabase
+      .from('workout_sessions')
+      .select('workout_id')
+      .eq('id', sessionId)
+      .single();
+  
+    if (sessionError || !session) {
+      return { error: 'Sessão de treino não encontrada.' };
     }
-
-    revalidatePath(`/public/workout/[id]`);
+  
+    // Then, get the workout to get all its exercise IDs
+    const { data: workout, error: workoutError } = await supabase
+      .from('workouts')
+      .select('exercises')
+      .eq('id', session.workout_id)
+      .single();
+  
+    if (workoutError || !workout) {
+      return { error: 'Plano de treino não encontrado.' };
+    }
+  
+    // Create an array of all exercise_ids from the workout
+    const allExerciseIds = (workout.exercises as any[]).map(ex => ex.exercise_id);
+  
+    // Now, update the session with the completed_at timestamp and all exercise IDs
+    const { error: updateError } = await supabase
+      .from('workout_sessions')
+      .update({
+        completed_at: new Date().toISOString(),
+        completed_exercises: allExerciseIds,
+      })
+      .eq('id', sessionId);
+  
+    if (updateError) {
+      return { error: `Erro ao finalizar treino: ${updateError.message}` };
+    }
+  
+    revalidatePath(`/public/workout/${session.workout_id}`);
+    revalidatePath(`/public/student/${(workout as any).student_id}/portal`);
     return { error: null };
-}
-
+  }
