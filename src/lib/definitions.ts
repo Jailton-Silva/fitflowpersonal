@@ -102,6 +102,6 @@ export type WorkoutSession = {
     workout_id: string;
     student_id: string;
     started_at: string;
-    completed_at?: string;
+    completed_at?: string | null;
     completed_exercises: string[]; // Array of exercise_id
 }

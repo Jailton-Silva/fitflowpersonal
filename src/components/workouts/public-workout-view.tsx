@@ -151,7 +151,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                             <p className="text-muted-foreground mt-2">Você concluiu todos os exercícios deste treino. Ótimo trabalho!</p>
                              <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                             <Button asChild className="mt-6" variant="outline">
-                                <Link href={`/public/student/${workout.student_id}`}>Voltar ao Portal</Link>
+                                <Link href={`/public/student/${workout.student_id}/portal`}>Voltar ao Portal</Link>
                             </Button>
                         </div>
                     ) : (
