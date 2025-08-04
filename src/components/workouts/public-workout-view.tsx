@@ -14,10 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Workout, WorkoutSession } from "@/lib/definitions";
 import { ExerciseCheck } from "@/components/workouts/exercise-check";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PublicHeader from "../layout/public-header";
 
 // Combined function to get relevant session data
 async function getSessionData(workoutId: string) {
@@ -140,18 +140,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
 
     return (
         <div className="flex flex-col min-h-screen bg-muted" id="printable-area">
-            <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-10 no-print">
-                <div className="max-w-4xl mx-auto flex items-center justify-between p-4">
-                     <div className="flex items-center gap-2">
-                        <Dumbbell className="h-6 w-6 text-primary" />
-                        <h1 className="text-xl font-bold font-headline hidden sm:block">FitFlow</h1>
-                    </div>
-                     <div className="flex items-center gap-2">
-                         <ThemeToggle />
-                        <Button variant="outline" size="icon" onClick={() => window.print()}><Printer className="h-4 w-4" /></Button>
-                    </div>
-                </div>
-            </header>
+            <PublicHeader studentId={workout.student_id} />
 
             <main className="flex-1 py-8 px-4">
                 <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">

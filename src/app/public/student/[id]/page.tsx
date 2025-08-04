@@ -1,12 +1,10 @@
 
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
-import { StudentPasswordForm } from "@/components/students/student-password-form";
-import { cookies } from "next/headers";
+import { StudentPasswordForm } from "@/components/students/student-password-form"
+import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation";
-import StudentPublicPortal from "@/components/students/student-public-portal";
+import { cookies } from "next/headers";
 
-async function getStudent(studentId: string) {
+async function checkStudentAccess(studentId: string) {
     const supabase = createClient();
     const { data: student, error } = await supabase
         .from('students')
@@ -14,24 +12,36 @@ async function getStudent(studentId: string) {
         .eq('id', studentId)
         .single();
     
+    // If there is no student or an error, we can't proceed.
+    // In a real app, you might want a more user-friendly error page.
     if (error || !student) {
-        notFound();
+        return { needsPassword: true }; // Fallback to asking for password
     }
 
-    return student;
+    // If the student does not have a password set, grant access immediately.
+    if (!student.access_password) {
+        // To avoid re-checking, we can set the cookie here as well
+        cookies().set(`student-${studentId}-auth`, 'true', {
+            path: `/`,
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+        });
+        return { needsPassword: false };
+    }
+
+    // If there is a password, the form needs to be shown.
+    return { needsPassword: true };
 }
 
 
-export default async function StudentPublicAccessPage({ params }: { params: { id: string } }) {
-    const student = await getStudent(params.id);
-    const cookieStore = cookies();
-    const isAuthenticated = cookieStore.get(`student-${params.id}-auth`)?.value === "true";
+export default async function PublicStudentPage({ params }: { params: { id: string } }) {
+    const { needsPassword } = await checkStudentAccess(params.id);
 
-    // If student has no password, or is already authenticated, show the portal
-    if (!student.access_password || isAuthenticated) {
-        return <StudentPublicPortal studentId={params.id} />
+    if (!needsPassword) {
+        redirect(`/public/student/${params.id}/portal`);
     }
-
-    // Otherwise, show the password form
-    return <StudentPasswordForm studentId={params.id} />;
+    
+    return (
+        <StudentPasswordForm studentId={params.id} />
+    )
 }
