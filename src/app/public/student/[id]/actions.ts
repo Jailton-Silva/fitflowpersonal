@@ -1,11 +1,9 @@
 
-'use server';
+"use server";
 
-import { createClient } from '@/lib/supabase/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
 
 export async function uploadStudentAvatar(studentId: string, formData: FormData) {
     const file = formData.get('avatar') as File;
@@ -13,15 +11,16 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         return { error: 'Nenhum arquivo enviado.' };
     }
     
-    // Use the standard client for storage upload
+    // Use the standard client for storage upload, respecting storage policies
     const supabase = createClient();
+    // Use studentId for the folder path to organize avatars
     const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
-            upsert: true,
+            upsert: true, // Overwrite if file exists
         });
 
     if (uploadError) {
@@ -34,7 +33,7 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         .from('avatars')
         .getPublicUrl(filePath);
 
-    // Use the ADMIN client to bypass RLS for updating the student's avatar URL
+    // Use the admin client to bypass RLS for updating the student's avatar URL
     const { error: updateError } = await supabaseAdmin
         .from('students')
         .update({ avatar_url: publicUrl })
@@ -49,46 +48,4 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
     
     revalidatePath(`/public/student/${studentId}/portal`);
     return { error: null, path: publicUrl };
-}
-
-
-export async function logoutStudent(studentId: string) {
-    const cookieStore = cookies();
-    cookieStore.delete(`student-${studentId}-auth`);
-    redirect(`/public/student/${studentId}`);
-}
-
-export async function verifyStudentPassword(previousState: any, formData: FormData) {
-    const supabase = createClient();
-    const password = formData.get('password') as string;
-    const studentId = formData.get('studentId') as string;
-
-    const { data: student, error } = await supabase
-        .from('students')
-        .select('access_password')
-        .eq('id', studentId)
-        .single();
-
-    if (error || !student) {
-        return { error: 'Aluno não encontrado ou erro no servidor.' };
-    }
-
-    if (!student.access_password) {
-         return { error: 'Este aluno não tem uma senha de acesso configurada.' };
-    }
-
-    if (student.access_password !== password) {
-        return { error: 'Senha incorreta.' };
-    }
-    
-    // Set cookie and redirect
-    const cookieStore = cookies();
-    cookieStore.set(`student-${studentId}-auth`, 'true', {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
-
-    redirect(`/public/student/${studentId}/portal`);
 }
