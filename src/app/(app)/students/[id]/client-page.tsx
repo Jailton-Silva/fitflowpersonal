@@ -12,7 +12,7 @@ import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions
 import ProgressChart from "@/components/students/progress-chart";
 import MeasurementForm from "@/components/students/measurement-form";
 import MeasurementsHistory from "@/components/students/measurements-history";
-import SessionsHistory, { FormattedSession } from "@/components/students/sessions-history";
+import SessionsHistory from "@/components/students/sessions-history";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
@@ -31,20 +31,10 @@ type StudentDetailClientProps = {
 
 export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentDetailClientProps) {
     
-    const [sessions, setSessions] = useState<FormattedSession[]>([]);
-
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
     const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange; status?: string }>({});
     const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange, status?: 'all' | 'completed' | 'in-progress' }>({ text: "", status: 'all' });
-
-    useEffect(() => {
-        const formattedSessions = initialSessions.map(session => ({
-            ...session,
-            formattedDate: format(new Date(session.started_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-        }));
-        setSessions(formattedSessions);
-    }, [initialSessions]);
 
 
     const filteredMeasurements = useMemo(() => {
@@ -77,7 +67,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         const toDate = sessionsFilter.range?.to ? new Date(sessionsFilter.range.to.setHours(23,59,59,999)) : null;
         const lowerCaseFilter = sessionsFilter.text.toLowerCase();
 
-        return sessions
+        return initialSessions
             .filter(s => {
                 const itemDate = parseISO(s.started_at);
                 const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
@@ -89,7 +79,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
                 return dateMatch && textMatch && statusMatch;
             });
-    }, [sessions, sessionsFilter]);
+    }, [initialSessions, sessionsFilter]);
     
     const statusMap: {[key: string]: {text: string, variant: "default" | "secondary" | "destructive" | "outline" | "success"}} = {
         'active': {text: 'Ativo', variant: 'success'},
