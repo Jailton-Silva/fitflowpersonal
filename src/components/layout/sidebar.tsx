@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout, Shapes } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout, Shapes, Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/templates", label: "Templates", icon: Shapes },
   { href: "/schedule", label: "Agenda", icon: Calendar },
   { href: "/exercises", label: "Exercícios", icon: Sprout },
+  { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
 export function NavContent() {
