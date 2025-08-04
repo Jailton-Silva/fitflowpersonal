@@ -1,66 +1,83 @@
 
 "use server";
 
-import { createClient } from "@/lib/supabase/server"; // Corrected import
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-// Fetches the current session and toggles the completed status of an exercise
-export async function updateCompletedExercises(sessionId: string, exerciseId: string, isCompleted: boolean) {
+export async function verifyPassword(previousState: any, formData: FormData) {
+    const workoutId = formData.get('workoutId') as string;
+    const password = formData.get('password') as string;
+    
+    if (!workoutId || !password) {
+        return { error: 'ID do treino e senha são obrigatórios.' };
+    }
+
     const supabase = createClient();
-
-    // First, get the current list of completed exercises
-    const { data: session, error: fetchError } = await supabase
-        .from('workout_sessions')
-        .select('completed_exercises, workout_id')
-        .eq('id', sessionId)
-        .single();
-
-    if (fetchError || !session) {
-        console.error("Error fetching session:", fetchError);
-        return { error: fetchError?.message || "Session not found" };
-    }
-
-    let completedExercises = session.completed_exercises || [];
-
-    if (isCompleted) {
-        // Add the exerciseId if it's not already there
-        if (!completedExercises.includes(exerciseId)) {
-            completedExercises.push(exerciseId);
-        }
-    } else {
-        // Remove the exerciseId
-        completedExercises = completedExercises.filter(id => id !== exerciseId);
-    }
-    
-    // Now, update the session with the new list
-    const { error: updateError } = await supabase
-        .from('workout_sessions')
-        .update({ completed_exercises: completedExercises })
-        .eq('id', sessionId);
-    
-    if (updateError) {
-        console.error("Error updating session:", updateError);
-        return { error: updateError.message };
-    }
-    
-    // Check if all exercises are completed to finish the workout
-    const { data: workout } = await supabase
+    const { data, error } = await supabase
         .from('workouts')
-        .select('exercises')
-        .eq('id', session.workout_id)
+        .select('access_password')
+        .eq('id', workoutId)
         .single();
     
-    const allExercises = (workout?.exercises as any[])?.map(e => e.exercise_id) || [];
-    const allDone = allExercises.every(id => completedExercises.includes(id));
-
-    if (allDone) {
-        await supabase
-            .from('workout_sessions')
-            .update({ completed_at: new Date().toISOString() })
-            .eq('id', sessionId);
+    if (error || !data) {
+        return { error: 'Treino não encontrado ou erro ao buscar dados.' };
     }
 
+    if (data.access_password === password) {
+        cookies().set(`workout-${workoutId}-auth`, 'true', {
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 // 24 hours
+        });
+        revalidatePath(`/public/workout/${workoutId}`);
+        redirect(`/public/workout/${workoutId}`);
+    } else {
+        return { error: 'Senha incorreta.' };
+    }
+}
 
-    revalidatePath(`/public/workout/${session.workout_id}`);
-    return { error: null };
+
+export async function updateCompletedExercises(sessionId: string, exerciseId: string, isCompleted: boolean) {
+  const supabase = createClient();
+
+  // First, fetch the current session to get the existing completed_exercises array
+  const { data: sessionData, error: fetchError } = await supabase
+    .from("workout_sessions")
+    .select("completed_exercises")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching session:", fetchError);
+    return { error: fetchError };
+  }
+
+  let completedExercises = sessionData.completed_exercises || [];
+
+  if (isCompleted) {
+    // Add the exerciseId if it's not already there
+    if (!completedExercises.includes(exerciseId)) {
+      completedExercises.push(exerciseId);
+    }
+  } else {
+    // Remove the exerciseId
+    completedExercises = completedExercises.filter((id) => id !== exerciseId);
+  }
+
+  // Now, update the session with the new array
+  const { error: updateError } = await supabase
+    .from("workout_sessions")
+    .update({ completed_exercises: completedExercises })
+    .eq("id", sessionId);
+
+  if (updateError) {
+    console.error("Error updating session:", updateError);
+    return { error: updateError };
+  }
+
+  revalidatePath(`/public/workout/[id]`); // Revalidate the workout page
+  return { error: null };
 }
