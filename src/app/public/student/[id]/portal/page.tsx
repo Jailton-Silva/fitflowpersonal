@@ -2,7 +2,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Workout, Measurement, Student } from "@/lib/definitions";
-import StudentPublicPortalClient from "./client-page";
+import StudentPortalClient from "./client-page";
+import { Dumbbell } from "lucide-react";
 
 
 async function getStudentPortalData(studentId: string) {
@@ -14,7 +15,7 @@ async function getStudentPortalData(studentId: string) {
         .from("workouts")
         .select("*, students (id, name)")
         .eq("student_id", studentId)
-        .eq("status", "active") // Only show active workouts
+        .eq("status", "active") 
         .order("created_at", { ascending: false });
 
     const measurementsPromise = supabase
@@ -43,14 +44,29 @@ async function getStudentPortalData(studentId: string) {
 }
 
 
-export default async function StudentPublicPortal({ params }: { params: { id: string } }) {
+export default async function StudentPublicPortalPage({ params }: { params: { id: string } }) {
     const { student, workouts, measurements } = await getStudentPortalData(params.id);
     
     return (
-        <StudentPublicPortalClient
-            student={student}
-            initialWorkouts={workouts}
-            initialMeasurements={measurements}
-        />
+        <div className="flex flex-col min-h-screen bg-muted">
+            <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-10 no-print">
+                <div className="max-w-4xl mx-auto flex items-center justify-between p-4">
+                    <div className="flex items-center gap-2">
+                        <Dumbbell className="h-6 w-6 text-primary" />
+                        <h1 className="text-xl font-bold font-headline hidden sm:block">FitFlow Portal</h1>
+                    </div>
+                </div>
+            </header>
+             <main className="flex-1 py-8 px-4">
+                <StudentPortalClient 
+                    student={student} 
+                    initialWorkouts={workouts} 
+                    initialMeasurements={measurements} 
+                />
+            </main>
+             <footer className="text-center py-4 text-muted-foreground text-xs no-print">
+                <p>&copy; {new Date().getFullYear()} FitFlow. Potencializado por IA.</p>
+            </footer>
+        </div>
     );
 }

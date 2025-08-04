@@ -2,22 +2,18 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-export async function verifyStudentPassword(
-  prevState: { error: string | null },
-  formData: FormData
-) {
+export async function verifyStudentPassword(prevState: any, formData: FormData) {
   const password = formData.get("password") as string;
   const studentId = formData.get("studentId") as string;
-  
+
   if (!password || !studentId) {
-    return { error: "Formulário inválido." };
+    return { error: "Dados inválidos." };
   }
 
   const supabase = createClient();
-
   const { data: student, error } = await supabase
     .from("students")
     .select("access_password")
@@ -27,22 +23,63 @@ export async function verifyStudentPassword(
   if (error || !student) {
     return { error: "Aluno não encontrado." };
   }
-
+  
   if (!student.access_password) {
-     return { error: "Este portal não requer senha." };
+      // No password set, allow access
+      const cookieStore = cookies();
+      cookieStore.set(`student-${studentId}-auth`, "true", { path: "/", httpOnly: true });
+      return { success: true, error: null };
   }
 
   if (student.access_password !== password) {
-    return { error: "Senha incorreta. Tente novamente." };
+    return { error: "Senha incorreta." };
   }
 
-  // Set cookie and redirect
-  cookies().set(`student-${studentId}-auth`, "true", {
-    path: "/",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24, // 1 day
-  });
+  // Set auth cookie
+  const cookieStore = cookies();
+  cookieStore.set(`student-${studentId}-auth`, "true", { path: "/", httpOnly: true });
 
-  redirect(`/public/student/${studentId}/portal`);
+  return { success: true, error: null };
+}
+
+export async function uploadStudentAvatar(studentId: string, formData: FormData) {
+    const file = formData.get('avatar') as File;
+    if (!file || file.size === 0) {
+        return { error: 'Nenhum arquivo enviado.' };
+    }
+    
+    const supabase = createClient();
+    const filePath = `${studentId}/${file.name}-${Date.now()}`;
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+            upsert: true,
+        });
+
+    if (uploadError) {
+        console.error('Upload Error:', uploadError);
+        return { error: `Erro no upload: ${uploadError.message}` };
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+    // Update students table
+    const { error: updateError } = await supabase
+        .from('students')
+        .update({ avatar_url: publicUrl })
+        .eq('id', studentId);
+        
+    if (updateError) {
+        console.error('Update Error:', updateError);
+        await supabase.storage.from('avatars').remove([filePath]);
+        return { error: `Erro ao atualizar perfil: ${updateError.message}` };
+    }
+    
+    revalidatePath(`/public/student/${studentId}/portal`);
+    return { error: null, path: publicUrl };
 }
