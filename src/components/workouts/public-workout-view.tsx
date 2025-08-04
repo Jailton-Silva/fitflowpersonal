@@ -44,6 +44,20 @@ async function getSessionData(workoutId: string) {
 
 async function startWorkoutSession(workoutId: string, studentId: string) {
     const supabase = createClient();
+    
+    // First, update the workout status to 'active'
+    const { error: updateError } = await supabase
+        .from('workouts')
+        .update({ status: 'active' })
+        .eq('id', workoutId);
+
+    if (updateError) {
+        console.error("Error updating workout status:", updateError);
+        // Decide if we should stop or continue. For now, let's stop.
+        return { session: null, error: updateError };
+    }
+
+    // Then, insert the new session
     const { data, error } = await supabase
         .from('workout_sessions')
         .insert({
@@ -57,7 +71,7 @@ async function startWorkoutSession(workoutId: string, studentId: string) {
     if (error) {
         console.error("Error starting session:", error);
     }
-    return data as WorkoutSession | null;
+    return { session: data as WorkoutSession | null, error };
 }
 
 const VideoPlayer = ({ videoUrl }: { videoUrl: string }) => {
@@ -129,13 +143,13 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
             return;
         }
         setLoading(true);
-        const newSession = await startWorkoutSession(workout.id, workout.student_id);
+        const { session: newSession, error } = await startWorkoutSession(workout.id, workout.student_id);
         if (newSession) {
             setSession(newSession);
         } else {
              toast({
                 title: "Erro ao iniciar treino",
-                description: "Não foi possível registrar o início da sessão. Tente novamente.",
+                description: error?.message || "Não foi possível registrar o início da sessão. Tente novamente.",
                 variant: "destructive",
             });
         }
