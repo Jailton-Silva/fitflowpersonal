@@ -7,11 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Dumbbell, Calendar, Activity } from "lucide-react";
+import { Users, Dumbbell, Calendar, Activity, Star, AlertTriangle } from "lucide-react";
 import EngagementChart, { EngagementData } from "@/components/dashboard/engagement-chart";
 import ProgressChart, { ProgressData } from "@/components/dashboard/progress-chart";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { subDays, startOfWeek, endOfWeek, format, parse } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, format, parse, sub } from 'date-fns';
+import { Student } from "@/lib/definitions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 async function getDashboardData(from: string, to: string) {
   const supabase = createClient();
@@ -28,6 +32,8 @@ async function getDashboardData(from: string, to: string) {
       progressData: [],
       engagementData: [],
       overallEngagementRate: 0,
+      mostEngagedStudents: [],
+      lowActivityStudents: [],
     };
   }
   
@@ -46,6 +52,8 @@ async function getDashboardData(from: string, to: string) {
       progressData: [],
       engagementData: [],
       overallEngagementRate: 0,
+      mostEngagedStudents: [],
+      lowActivityStudents: [],
     };
   }
 
@@ -56,9 +64,9 @@ async function getDashboardData(from: string, to: string) {
   const toDate = parse(to, 'yyyy-MM-dd', new Date());
 
   // STATS
-  const { count: totalStudents } = await supabase
+  const { data: allStudents, count: totalStudents } = await supabase
     .from('students')
-    .select('*', { count: 'exact', head: true })
+    .select('id, name, avatar_url, created_at', { count: 'exact' })
     .eq('trainer_id', trainerId)
     .eq('status', 'active');
 
@@ -85,9 +93,7 @@ async function getDashboardData(from: string, to: string) {
 
 
   // CHART DATA
-  // Progress Chart
-  const { data: studentIds } = await supabase.from('students').select('id').eq('trainer_id', trainerId);
-  const studentIdList = studentIds?.map(s => s.id) || [];
+  const studentIdList = allStudents?.map(s => s.id) || [];
 
   if (studentIdList.length === 0) {
     return {
@@ -98,6 +104,8 @@ async function getDashboardData(from: string, to: string) {
         progressData: [],
         engagementData: [],
         overallEngagementRate: 0,
+        mostEngagedStudents: [],
+        lowActivityStudents: [],
     }
   }
 
@@ -157,6 +165,40 @@ async function getDashboardData(from: string, to: string) {
   const completedTotal = engagementData.reduce((acc, curr) => acc + curr.completed, 0);
   const overallEngagementRate = scheduledTotal > 0 ? (completedTotal / scheduledTotal) * 100 : 0;
 
+  // ENGAGEMENT AND ACTIVITY LISTS
+  const { data: recentSessions } = await supabase.from('workout_sessions').select('student_id, completed_at').in('student_id', studentIdList).gte('started_at', sub(new Date(), {days: 30}).toISOString());
+  
+  const studentActivity: {[studentId: string]: {last_activity: string, completed_count: number}} = {};
+  (recentSessions || []).forEach(session => {
+      if(!studentActivity[session.student_id]) {
+          studentActivity[session.student_id] = { last_activity: session.completed_at || session.started_at, completed_count: 0};
+      }
+      if(session.completed_at) {
+        studentActivity[session.student_id].completed_count++;
+      }
+      if (new Date(session.completed_at || session.started_at) > new Date(studentActivity[session.student_id].last_activity)) {
+        studentActivity[session.student_id].last_activity = session.completed_at || session.started_at;
+      }
+  })
+
+  const mostEngagedStudents = (allStudents || [])
+    .map(s => ({...s, completed_count: studentActivity[s.id]?.completed_count || 0}))
+    .sort((a,b) => b.completed_count - a.completed_count)
+    .slice(0, 3);
+  
+  const lowActivityStudents = (allStudents || [])
+    .filter(s => {
+        const lastActivityDate = studentActivity[s.id]?.last_activity;
+        const studentCreationDate = new Date(s.created_at);
+        // Only consider students created more than 7 days ago to avoid flagging new students
+        if (differenceInDays(today, studentCreationDate) < 7) {
+            return false;
+        }
+        if (!lastActivityDate) return true; // No activity at all
+        return differenceInDays(today, new Date(lastActivityDate)) > 15;
+    })
+    .slice(0, 5);
+
 
   return {
     totalStudents: totalStudents ?? 0,
@@ -165,9 +207,17 @@ async function getDashboardData(from: string, to: string) {
     studentsCountLastMonth: studentsCountLastMonth ?? 0,
     progressData,
     engagementData,
-    overallEngagementRate
+    overallEngagementRate,
+    mostEngagedStudents,
+    lowActivityStudents,
   };
 }
+
+function differenceInDays(date1: Date, date2: Date) {
+    const diffTime = Math.abs(date2.getTime() - date1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+}
+
 
 export default async function DashboardPage({
   searchParams,
@@ -227,29 +277,88 @@ export default async function DashboardPage({
              <div className="text-2xl font-bold">
                 {data.overallEngagementRate?.toFixed(0) ?? 0}%
              </div>
-            <p className="text-xs text-muted-foreground">Treinos concluídos vs. agendados</p>
+            <p className="text-xs text-muted-foreground">Taxa de conclusão de treinos</p>
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle className="font-headline">Evolução Física Média</CardTitle>
             <CardDescription>Progresso médio dos alunos no período selecionado.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pl-2">
             <ProgressChart data={data.progressData} />
           </CardContent>
         </Card>
-        <Card>
+         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="font-headline">Engajamento dos Alunos</CardTitle>
             <CardDescription>Treinos concluídos vs. agendados no período.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pl-2">
             <EngagementChart data={data.engagementData} />
           </CardContent>
         </Card>
+      </div>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Star className="text-yellow-500" /> Alunos Mais Engajados</CardTitle>
+                <CardDescription>Top 3 alunos com mais treinos concluídos nos últimos 30 dias.</CardDescription>
+            </CardHeader>
+            <CardContent>
+               {data.mostEngagedStudents.length > 0 ? (
+                 <ul className="space-y-4">
+                    {data.mostEngagedStudents.map((student, index) => (
+                        <li key={student.id} className="flex items-center gap-4">
+                           <Avatar>
+                                <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-bold text-lg">{student.completed_count}</div>
+                                <div className="text-xs text-muted-foreground">treinos</div>
+                            </div>
+                        </li>
+                    ))}
+                 </ul>
+               ): (
+                <p className="text-muted-foreground text-center py-4">Nenhum dado de engajamento ainda.</p>
+               )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-orange-500" /> Alunos com Baixa Atividade</CardTitle>
+                <CardDescription>Alunos sem treinos registrados há mais de 15 dias.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {data.lowActivityStudents.length > 0 ? (
+                 <ul className="space-y-4">
+                    {data.lowActivityStudents.map((student) => (
+                        <li key={student.id} className="flex items-center gap-4">
+                           <Avatar>
+                                <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
+                            </div>
+                            <Button asChild size="sm" variant="outline">
+                               <Link href={`/students/${student.id}`}>Ver Perfil</Link>
+                            </Button>
+                        </li>
+                    ))}
+                 </ul>
+               ): (
+                <p className="text-muted-foreground text-center py-4">Ótimo! Nenhum aluno com baixa atividade.</p>
+               )}
+            </CardContent>
+          </Card>
       </div>
     </div>
   );

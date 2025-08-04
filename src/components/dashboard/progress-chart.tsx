@@ -1,6 +1,6 @@
 "use client"
 
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 export type ProgressData = { name: string; weight: number; bodyFat: number }[];
 
@@ -17,9 +17,9 @@ export default function ProgressChart({ data }: { data: ProgressData }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis yAxisId="left" unit="kg" name="Peso" domain={['dataMin - 2', 'dataMax + 2']} />
-          <YAxis yAxisId="right" orientation="right" unit="%" name="Gordura Corporal" domain={['dataMin - 2', 'dataMax + 2']}/>
+          <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false}/>
+          <YAxis yAxisId="left" unit="kg" name="Peso" domain={['dataMin - 2', 'dataMax + 2']} fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis yAxisId="right" orientation="right" unit="%" name="Gordura Corporal" domain={['dataMin - 2', 'dataMax + 2']} fontSize={12} tickLine={false} axisLine={false}/>
           <Tooltip
             contentStyle={{
               background: "hsl(var(--card))",
@@ -31,8 +31,9 @@ export default function ProgressChart({ data }: { data: ProgressData }) {
               name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)'
             ]}
           />
-          <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} />
-          <Line yAxisId="right" type="monotone" dataKey="bodyFat" name="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} />
+           <Legend />
+          <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+          <Line yAxisId="right" type="monotone" dataKey="bodyFat" name="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
