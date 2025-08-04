@@ -1,8 +1,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Workout, Measurement } from "@/lib/definitions";
+import { Workout, Measurement, WorkoutSession } from "@/lib/definitions";
 import StudentPortalClient from "@/app/public/student/[id]/portal/client-page";
+
+type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
 async function getStudentPortalData(studentId: string) {
     const supabase = createClient();
@@ -13,7 +15,6 @@ async function getStudentPortalData(studentId: string) {
         .from("workouts")
         .select("*, students (id, name)")
         .eq("student_id", studentId)
-        .eq("status", "active") // Only show active workouts
         .order("created_at", { ascending: false });
 
     const measurementsPromise = supabase
@@ -22,10 +23,17 @@ async function getStudentPortalData(studentId: string) {
         .eq('student_id', studentId)
         .order('created_at', { ascending: true });
     
-    const [studentResult, workoutsResult, measurementsResult] = await Promise.all([
+    const sessionsPromise = supabase
+        .from('workout_sessions')
+        .select(`*, workouts (name)`)
+        .eq('student_id', studentId)
+        .order('started_at', { ascending: false });
+
+    const [studentResult, workoutsResult, measurementsResult, sessionsResult] = await Promise.all([
         studentPromise,
         workoutsPromise,
-        measurementsPromise
+        measurementsPromise,
+        sessionsPromise
     ]);
 
      if (studentResult.error || !studentResult.data) {
@@ -33,23 +41,26 @@ async function getStudentPortalData(studentId: string) {
      }
      if (workoutsResult.error) console.error("Erro ao buscar treinos:", workoutsResult.error);
      if (measurementsResult.error) console.error("Erro ao buscar medições:", measurementsResult.error);
+     if (sessionsResult.error) console.error("Erro ao buscar sessões:", sessionsResult.error);
 
     return {
         student: studentResult.data,
         workouts: (workoutsResult.data as Workout[]) || [],
         measurements: (measurementsResult.data as Measurement[]) || [],
+        sessions: (sessionsResult.data as EnrichedWorkoutSession[]) || [],
     }
 }
 
 
 export default async function StudentPublicPortal({ studentId }: { studentId: string }) {
-    const { student, workouts, measurements } = await getStudentPortalData(studentId);
+    const { student, workouts, measurements, sessions } = await getStudentPortalData(studentId);
     
     return (
         <StudentPortalClient 
             student={student} 
             initialWorkouts={workouts}
             initialMeasurements={measurements}
+            initialSessions={sessions}
         />
     );
 }
