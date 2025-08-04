@@ -83,7 +83,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       diet_plan: "",
       access_password: "",
       exercises: [],
-      status: 'not-started',
+      status: "not-started",
     },
   });
 
@@ -123,7 +123,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             description: "",
             diet_plan: "",
             access_password: "",
-            status: 'not-started',
+            status: "not-started",
             exercises: [],
         });
     }
@@ -219,7 +219,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       form.setValue("name", template.name);
       form.setValue("description", template.description);
       form.setValue("diet_plan", template.diet_plan);
-      form.setValue("status", template.status);
+      form.setValue("status", "not-started"); // Always set to not-started when loading from template
       const templateExercises = (template.exercises || []).map(e => ({
         ...e, 
         video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
