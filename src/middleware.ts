@@ -55,9 +55,10 @@ export async function middleware(request: NextRequest) {
       
       const { data: student } = await supabase.from('students').select('access_password').eq('id', studentId).single();
 
-      // If student has a password and is not authenticated, redirect to login
+      // If student has a password and is not authenticated, redirect to login page for the student portal
       if (student?.access_password && !isAuthenticated) {
-         return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
+         const studentLoginPage = new URL(pathname.replace('/portal', ''), request.url);
+         return NextResponse.redirect(studentLoginPage);
       }
   }
 
