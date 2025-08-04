@@ -105,6 +105,14 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     };
 
     const handleStartWorkout = async () => {
+        if (workout.status === 'inactive') {
+            toast({
+                title: "Treino Concluído",
+                description: "Este plano de treino foi marcado como concluído e não pode ser iniciado.",
+                variant: "destructive"
+            });
+            return;
+        }
         if (!workout.student_id) {
              toast({
                 title: "Erro",
@@ -164,6 +172,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     }
     
     const isWorkoutFinished = finalSessionToDisplay && finalSessionToDisplay.completed_at;
+    const canStartWorkout = !finalSessionToDisplay && workout.status === 'active';
 
     return (
         <div className="flex flex-col min-h-screen bg-muted">
@@ -190,7 +199,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                 </div>
                             </div>
                              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto self-start no-print">
-                                {!finalSessionToDisplay && (
+                                {canStartWorkout && (
                                     <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
                                 )}
                                 <Button onClick={handlePrint} variant="outline" className="w-full sm:w-auto">
@@ -207,6 +216,13 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                             <h2 className="text-2xl font-bold font-headline mt-4">Parabéns!</h2>
                             <p className="text-muted-foreground mt-1">Você concluiu este treino. Ótimo trabalho!</p>
                              <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        </div>
+                    )}
+
+                    {workout.status === 'inactive' && !finalSessionToDisplay && (
+                        <div className="text-center py-6 px-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                             <h2 className="text-xl font-bold font-headline mt-2">Treino Concluído</h2>
+                            <p className="text-muted-foreground mt-1">Este plano de treino foi marcado como concluído pelo seu treinador e não pode ser mais executado.</p>
                         </div>
                     )}
                     
@@ -229,11 +245,11 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                          <div>
                             <h2 className="text-2xl font-bold font-headline mb-4">Exercícios</h2>
                             <div className="space-y-4">
-                            {!finalSessionToDisplay ? (
+                            {!finalSessionToDisplay && workout.status === 'active' ? (
                                 <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
                                     <p className="text-muted-foreground">Clique em "Iniciar Treino" para começar a registrar seu progresso.</p>
                                 </div>
-                            ) : (
+                            ) : finalSessionToDisplay ? (
                                 (workout.exercises as any[]).map((exercise, index) => {
                                     const isCompleted = finalSessionToDisplay?.completed_exercises?.includes(exercise.exercise_id) ?? false;
                                     return (
@@ -271,6 +287,10 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                         </div>
                                     )
                                 })
+                            ) : (
+                                 <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">Este treino foi concluído e arquivado.</p>
+                                </div>
                             )}
                             </div>
                         </div>
