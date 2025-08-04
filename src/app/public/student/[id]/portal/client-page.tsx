@@ -4,46 +4,51 @@
 import { useState, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Cake, Ruler, Weight, Dumbbell, Phone, Activity, Trophy } from "lucide-react";
-import { differenceInYears, parseISO } from 'date-fns';
+import { User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Activity, History, Calendar as CalendarIcon, Utensils, ArrowLeft, Trophy } from "lucide-react";
+import { format, differenceInYears, parseISO } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { Workout, Measurement, Student } from "@/lib/definitions";
 import MeasurementsHistory from "@/components/students/measurements-history";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ProgressChart from "@/components/students/progress-chart";
-import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import { Input } from "@/components/ui/input";
 import { DateRange } from "react-day-picker";
 
-type StudentPublicPortalClientProps = {
+type StudentPortalClientProps = {
     student: Student;
     initialWorkouts: Workout[];
     initialMeasurements: Measurement[];
 }
 
-export default function StudentPublicPortalClient({ student, initialWorkouts, initialMeasurements }: StudentPublicPortalClientProps) {
-    
+export default function StudentPublicPortalClient({ student, initialWorkouts, initialMeasurements }: StudentPortalClientProps) {
     const [workoutsFilter, setWorkoutsFilter] = useState("");
-    const [measurementsFilter, setMeasurementsFilter] = useState<DateRange | undefined>(undefined);
+    const [measurementsRange, setMeasurementsRange] = useState<DateRange | undefined>(undefined);
 
     const age = student.birth_date ? differenceInYears(new Date(), new Date(student.birth_date)) : 'N/A';
 
     const filteredWorkouts = useMemo(() => {
         const lowerCaseFilter = workoutsFilter.toLowerCase();
-        return initialWorkouts.filter(w => w.name.toLowerCase().includes(lowerCaseFilter));
+        if (!lowerCaseFilter) return initialWorkouts;
+
+        return initialWorkouts.filter(w => 
+            w.name.toLowerCase().includes(lowerCaseFilter)
+        );
     }, [initialWorkouts, workoutsFilter]);
 
     const filteredMeasurements = useMemo(() => {
-        const fromDate = measurementsFilter?.from ? new Date(measurementsFilter.from.setHours(0,0,0,0)) : null;
-        const toDate = measurementsFilter?.to ? new Date(measurementsFilter.to.setHours(23,59,59,999)) : null;
+        const fromDate = measurementsRange?.from ? new Date(measurementsRange.from.setHours(0,0,0,0)) : null;
+        const toDate = measurementsRange?.to ? new Date(measurementsRange.to.setHours(23,59,59,999)) : null;
 
+        if (!fromDate && !toDate) return initialMeasurements;
+        
         return initialMeasurements.filter(m => {
             const itemDate = parseISO(m.created_at);
             return (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
         });
-    }, [initialMeasurements, measurementsFilter]);
-    
+    }, [initialMeasurements, measurementsRange]);
+
     return (
         <div className="flex flex-col min-h-screen bg-muted">
             <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-10 no-print">
@@ -81,7 +86,7 @@ export default function StudentPublicPortalClient({ student, initialWorkouts, in
                                     placeholder="Buscar por nome do plano..."
                                     value={workoutsFilter}
                                     onChange={(e) => setWorkoutsFilter(e.target.value)}
-                                    className="h-9 max-w-sm"
+                                    className="max-w-sm h-9"
                                 />
                             </div>
                         </CardHeader>
@@ -101,7 +106,7 @@ export default function StudentPublicPortalClient({ student, initialWorkouts, in
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-muted-foreground text-center py-4">Nenhum plano de treino encontrado.</p>
+                                <p className="text-muted-foreground text-center py-4">Nenhum plano de treino encontrado para os filtros selecionados.</p>
                             )}
                         </CardContent>
                     </Card>
@@ -111,7 +116,7 @@ export default function StudentPublicPortalClient({ student, initialWorkouts, in
                             <CardHeader>
                                 <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Minhas Avaliações Físicas</CardTitle>
                                  <div className="pt-2">
-                                    <DateRangeFilter onDateChange={setMeasurementsFilter} />
+                                    <DateRangeFilter onDateChange={setMeasurementsRange} />
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -145,3 +150,4 @@ export default function StudentPublicPortalClient({ student, initialWorkouts, in
         </div>
     );
 }
+

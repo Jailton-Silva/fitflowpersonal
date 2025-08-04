@@ -35,18 +35,28 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
   const { pathname } = request.nextUrl;
 
-  // Protect authenticated routes
-  const protectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises"];
-  if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
+  // Protect authenticated routes for trainers
+  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises"];
+  if (!session && trainerProtectedPaths.some(p => pathname.startsWith(p))) {
     const url = new URL("/login", request.url);
     url.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users from login/signup
+  // Redirect authenticated trainers from login/signup
   if (session && (pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
+  // Protect student portal route
+  if (pathname.startsWith('/public/student/') && pathname.endsWith('/portal')) {
+      const studentId = pathname.split('/')[3];
+      const isAuthenticated = request.cookies.get(`student-${studentId}-auth`)?.value === "true";
+      if (!isAuthenticated) {
+          return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
+      }
+  }
+
 
   return response;
 }
@@ -65,4 +75,3 @@ export const config = {
     "/public/student/:path*"
 ],
 };
-

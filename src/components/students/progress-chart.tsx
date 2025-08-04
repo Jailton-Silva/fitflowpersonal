@@ -27,7 +27,7 @@ export default function ProgressChart({measurements}: {measurements?: Measuremen
                     borderColor: "hsl(var(--border))",
                     borderRadius: "var(--radius)",
                     }}
-                    formatter={(value, name) => [value, name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)']}
+                    formatter={(value, name) => [(value as number).toFixed(1), name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)']}
                 />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />

@@ -59,7 +59,11 @@ export function DateRangeFilter({
     if (onDateChange) {
       onDateChange(selectedDate);
     }
-    setIsOpen(false);
+    // Only close if it's not a client-side component with a handler
+    // Or if a full range is selected
+    if (!onDateChange || (selectedDate?.from && selectedDate?.to)) {
+        setIsOpen(false);
+    }
   }
 
   return (

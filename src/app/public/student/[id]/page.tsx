@@ -1,41 +1,40 @@
 
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { Student } from "@/lib/definitions";
 import { StudentPasswordForm } from "@/components/students/student-password-form";
-import StudentPublicPortal from "@/components/students/student-public-portal";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-async function getStudentDetails(studentId: string) {
+async function getStudent(studentId: string) {
     const supabase = createClient();
-    const { data: student, error } = await supabase
-        .from('students')
-        .select('*')
-        .eq('id', studentId)
-        .single();
-    
-    if (error || !student) {
-        notFound();
+    const { data: student, error } = await supabase.from('students').select('access_password').eq('id', studentId).single();
+    if (error) {
+        console.error("Student not found:", error);
+        return null;
     }
-    return student as Student;
+    return student;
 }
 
 export default async function PublicStudentPage({ params }: { params: { id: string } }) {
-    const student = await getStudentDetails(params.id);
+    const student = await getStudent(params.id);
 
-    // If student has no password, show the portal directly
+    if (!student) {
+        return <p>Aluno não encontrado.</p>;
+    }
+    
+    // If student has no password, grant access immediately
     if (!student.access_password) {
-        return <StudentPublicPortal studentId={params.id} />
+        const cookieStore = cookies();
+        cookieStore.set(`student-${params.id}-auth`, "true", { path: "/", maxAge: 3600 }); // Expires in 1 hour
+        redirect(`/public/student/${params.id}/portal`);
     }
 
-    // Check for auth cookie
+    // If there's a password, check if user is already authenticated via cookie
     const cookieStore = cookies();
-    const authCookie = cookieStore.get(`student_auth_${params.id}`);
+    const isAuthenticated = cookieStore.get(`student-${params.id}-auth`)?.value === "true";
 
-    if (authCookie?.value === 'true') {
-        return <StudentPublicPortal studentId={params.id} />
+    if (isAuthenticated) {
+        redirect(`/public/student/${params.id}/portal`);
     }
 
-    // If it has a password and user is not authenticated, show password form
     return <StudentPasswordForm studentId={params.id} />;
 }

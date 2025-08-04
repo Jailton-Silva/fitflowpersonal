@@ -1,7 +1,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Workout, Measurement } from "@/lib/definitions";
+import { Workout, Measurement, Student } from "@/lib/definitions";
 import StudentPublicPortalClient from "./client-page";
 
 
@@ -43,14 +43,14 @@ async function getStudentPortalData(studentId: string) {
 }
 
 
-export default async function StudentPublicPortalPage({ params }: { params: { id: string } }) {
+export default async function StudentPublicPortal({ params }: { params: { id: string } }) {
     const { student, workouts, measurements } = await getStudentPortalData(params.id);
     
     return (
-       <StudentPublicPortalClient 
-        student={student} 
-        initialWorkouts={workouts} 
-        initialMeasurements={measurements} 
-       />
+        <StudentPublicPortalClient
+            student={student}
+            initialWorkouts={workouts}
+            initialMeasurements={measurements}
+        />
     );
 }
