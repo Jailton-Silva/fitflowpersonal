@@ -6,47 +6,14 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function verifyStudentPassword(prevState: any, formData: FormData) {
-    const password = formData.get("password") as string;
-    const studentId = formData.get("studentId") as string;
-
-    const supabase = createClient();
-
-    const { data: student, error } = await supabase
-        .from("students")
-        .select("access_password")
-        .eq("id", studentId)
-        .single();
-    
-    if (error || !student) {
-        return { error: "Aluno não encontrado ou erro no servidor." };
-    }
-
-    if (student.access_password && student.access_password === password) {
-        cookies().set(`student-${studentId}-auth`, "true", {
-            path: "/",
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24, // 24 hours
-        });
-        redirect(`/public/student/${studentId}/portal`);
-    }
-
-    return { error: "Senha incorreta." };
-}
-
 export async function uploadStudentAvatar(studentId: string, formData: FormData) {
     const file = formData.get('avatar') as File;
     if (!file || file.size === 0) {
         return { error: 'Nenhum arquivo enviado.' };
     }
     
-    // We need to create a client that is authenticated as the student
-    const cookieStore = cookies();
     const supabase = createClient();
-    
-    // The RLS policy will handle auth, ensuring the student can only upload to their folder
-    const filePath = `${studentId}/${studentId}-${Date.now()}-${file.name}`;
+    const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
@@ -78,4 +45,10 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
     
     revalidatePath(`/public/student/${studentId}/portal`);
     return { error: null, path: publicUrl };
+}
+
+
+export async function logoutStudent(studentId: string) {
+    cookies().delete(`student-${studentId}-auth`);
+    redirect(`/public/student/${studentId}`);
 }
