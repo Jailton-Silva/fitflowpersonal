@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PublicHeader from "../layout/public-header";
+import { finishWorkoutSession } from "@/app/public/workout/[id]/actions";
 
 // Combined function to get relevant session data
 async function getSessionData(workoutId: string) {
@@ -96,6 +97,11 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
         });
     }, [workout.id]);
 
+    const handlePrint = () => {
+        if (typeof window !== 'undefined') {
+            window.print();
+        }
+    };
 
     const handleStartWorkout = async () => {
         if (!workout.student_id) {
@@ -139,10 +145,10 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
     const isWorkoutFinished = finalSessionToDisplay && finalSessionToDisplay.completed_at;
 
     return (
-        <div className="flex flex-col min-h-screen bg-muted" id="printable-area">
+        <div className="flex flex-col min-h-screen bg-muted">
             <PublicHeader studentId={workout.student_id} />
 
-            <main className="flex-1 py-8 px-4">
+            <main className="flex-1 py-8 px-4" id="printable-area">
                 <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8 space-y-8">
                      <header>
                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -157,9 +163,15 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                      <span className="text-sm">Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                                 </div>
                             </div>
-                            {!finalSessionToDisplay && (
-                                 <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
-                            )}
+                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto no-print">
+                                {!finalSessionToDisplay && (
+                                    <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
+                                )}
+                                <Button onClick={handlePrint} variant="outline" className="w-full sm:w-auto">
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Imprimir
+                                </Button>
+                            </div>
                         </div>
                     </header>
 
@@ -167,7 +179,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                         <div className="text-center py-6 px-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                             <Trophy className="h-12 w-12 mx-auto text-yellow-500" />
                             <h2 className="text-2xl font-bold font-headline mt-4">Parabéns!</h2>
-                            <p className="text-muted-foreground mt-1">Você concluiu todos os exercícios deste treino. Ótimo trabalho!</p>
+                            <p className="text-muted-foreground mt-1">Você concluiu este treino. Ótimo trabalho!</p>
                              <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                         </div>
                     )}
@@ -200,16 +212,16 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                                     const isCompleted = finalSessionToDisplay?.completed_exercises?.includes(exercise.exercise_id) ?? false;
                                     return (
                                         <div key={index} className={cn("flex gap-4 items-start p-4 border rounded-lg transition-colors", isCompleted ? "bg-green-500/10 border-green-500/20" : "")}>
-                                            <div className="mt-1">
-                                                <ExerciseCheck sessionId={finalSessionToDisplay.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} />
+                                            <div className="mt-1 no-print">
+                                                <ExerciseCheck sessionId={finalSessionToDisplay.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} disabled={!!isWorkoutFinished} />
                                             </div>
-                                            <div className="flex-1">
+                                             <div className="flex-1">
                                                 <div className="flex justify-between items-center mb-2">
                                                     <h3 className="font-bold text-lg font-headline">{exercise.name}</h3>
                                                     {exercise.video_url && (
                                                         <Dialog>
                                                             <DialogTrigger asChild>
-                                                                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                                                <Button variant="outline" size="sm" className="flex items-center gap-2 no-print">
                                                                     <Video className="h-4 w-4" />
                                                                     Ver Vídeo
                                                                 </Button>

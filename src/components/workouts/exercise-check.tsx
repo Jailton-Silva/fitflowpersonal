@@ -11,9 +11,10 @@ type ExerciseCheckProps = {
     sessionId: string;
     exerciseId: string;
     isCompleted: boolean;
+    disabled?: boolean;
 };
 
-export function ExerciseCheck({ sessionId, exerciseId, isCompleted }: ExerciseCheckProps) {
+export function ExerciseCheck({ sessionId, exerciseId, isCompleted, disabled = false }: ExerciseCheckProps) {
     const [checked, setChecked] = useState(isCompleted);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
@@ -44,7 +45,7 @@ export function ExerciseCheck({ sessionId, exerciseId, isCompleted }: ExerciseCh
                 id={`exercise-${exerciseId}`}
                 checked={checked}
                 onCheckedChange={handleChange}
-                disabled={isPending}
+                disabled={isPending || disabled}
                 className="h-5 w-5"
             />
         </div>
