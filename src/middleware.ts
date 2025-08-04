@@ -52,8 +52,12 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/public/student/') && pathname.endsWith('/portal')) {
       const studentId = pathname.split('/')[3];
       const isAuthenticated = request.cookies.get(`student-${studentId}-auth`)?.value === "true";
-      if (!isAuthenticated) {
-          return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
+      
+      const { data: student } = await supabase.from('students').select('access_password').eq('id', studentId).single();
+
+      // If student has a password and is not authenticated, redirect to login
+      if (student?.access_password && !isAuthenticated) {
+         return NextResponse.redirect(new URL(`/public/student/${studentId}`, request.url));
       }
   }
 
