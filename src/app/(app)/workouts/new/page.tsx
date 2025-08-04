@@ -1,14 +1,15 @@
 
 import WorkoutBuilder from "@/components/workouts/workout-builder";
 import { createClient } from "@/lib/supabase/server";
-import { Exercise, Student } from "@/lib/definitions";
+import { Exercise, Student, Workout } from "@/lib/definitions";
+import { notFound } from "next/navigation";
 
-async function getWorkoutInitialData() {
+async function getWorkoutInitialData(templateId?: string) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { students: [], exercises: [] };
+        return { students: [], exercises: [], template: undefined };
     }
 
     const { data: trainer } = await supabase
@@ -18,11 +19,22 @@ async function getWorkoutInitialData() {
         .single();
     
     if (!trainer) {
-        return { students: [], exercises: [] };
+        return { students: [], exercises: [], template: undefined };
     }
 
     const studentsPromise = supabase.from("students").select("id, name").eq('trainer_id', trainer.id).eq('status', 'active');
     const exercisesPromise = supabase.from("exercises").select("*").eq('trainer_id', trainer.id);
+    
+    let template: Workout | undefined = undefined;
+    if (templateId) {
+        const { data: templateData, error: templateError } = await supabase.from("workouts").select("*").eq("id", templateId).eq('trainer_id', trainer.id).is('student_id', null).single();
+        if (templateError) {
+           console.error("Template not found", templateError);
+        } else {
+           template = templateData as Workout;
+        }
+    }
+
 
     const [studentsResult, exercisesResult] = await Promise.all([studentsPromise, exercisesPromise]);
 
@@ -36,6 +48,7 @@ async function getWorkoutInitialData() {
     return {
         students: (studentsResult.data as Student[]) ?? [],
         exercises: (exercisesResult.data as Exercise[]) ?? [],
+        template,
     }
 }
 
@@ -43,9 +56,9 @@ async function getWorkoutInitialData() {
 export default async function NewWorkoutPage({
   searchParams,
 }: {
-  searchParams: { student_id?: string };
+  searchParams: { student_id?: string; template_id?: string };
 }) {
-  const { students, exercises } = await getWorkoutInitialData();
+  const { students, exercises, template } = await getWorkoutInitialData(searchParams.template_id);
   const studentId = searchParams.student_id;
 
   return (
@@ -53,7 +66,7 @@ export default async function NewWorkoutPage({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold font-headline">Criar Novo Treino</h1>
       </div>
-      <WorkoutBuilder students={students} exercises={exercises} defaultStudentId={studentId} />
+      <WorkoutBuilder students={students} exercises={exercises} defaultStudentId={studentId} workout={template} />
     </div>
   );
 }

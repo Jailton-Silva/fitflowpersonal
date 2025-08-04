@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,21 +29,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2, Loader2, Video, RefreshCw, Copy } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, Video, RefreshCw, Copy, Download } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import AiAssistant from "./ai-assistant";
 import { ExerciseRecommendationsOutput } from "@/ai/flows/exercise-recommendations";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const workoutSchema = z.object({
   name: z.string().min(3, "O nome do treino é obrigatório"),
-  student_id: z.string().min(1, "Por favor, selecione um aluno"),
+  student_id: z.string().optional(),
   status: z.enum(['active', 'inactive']),
   description: z.string().optional(),
   diet_plan: z.string().optional(),
   access_password: z.string().optional(),
   exercises: z.array(
     z.object({
-      exercise_id: z.string().optional(), // Becomes optional as we might have just the name
+      exercise_id: z.string().optional(),
       name: z.string(),
       video_url: z.string().optional(),
       sets: z.string().optional(),
@@ -61,16 +67,18 @@ type WorkoutBuilderProps = {
   exercises: Exercise[];
   workout?: Workout;
   defaultStudentId?: string;
+  isTemplateMode?: boolean;
 };
 
-export default function WorkoutBuilder({ students, exercises, workout, defaultStudentId }: WorkoutBuilderProps) {
+export default function WorkoutBuilder({ students, exercises, workout, defaultStudentId, isTemplateMode = false }: WorkoutBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [templates, setTemplates] = useState<Workout[]>([]);
   const form = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
     defaultValues: {
       name: "",
-      student_id: defaultStudentId || "",
+      student_id: isTemplateMode ? undefined : defaultStudentId || "",
       description: "",
       diet_plan: "",
       access_password: "",
@@ -87,10 +95,18 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
   });
 
   useEffect(() => {
+    // Fetch templates on component mount
+    const fetchTemplates = async () => {
+        const supabase = createClient();
+        const { data } = await supabase.from('workouts').select('*').is('student_id', null);
+        setTemplates(data || []);
+    }
+    fetchTemplates();
+
     if (isEditMode && workout) {
       form.reset({
         name: workout.name,
-        student_id: workout.student_id,
+        student_id: workout.student_id ?? undefined,
         description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
@@ -103,7 +119,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
     } else {
         form.reset({
             name: "",
-            student_id: defaultStudentId || "",
+            student_id: isTemplateMode ? undefined : defaultStudentId || "",
             description: "",
             diet_plan: "",
             access_password: "",
@@ -111,7 +127,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             exercises: [],
         });
     }
-  }, [workout, isEditMode, defaultStudentId, form, exercises]);
+  }, [workout, isEditMode, defaultStudentId, form, exercises, isTemplateMode]);
 
 
   const onSubmit = async (values: WorkoutFormData) => {
@@ -119,9 +135,9 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
     
     let error;
     
-    // Remove video_url from submission data as it's not a DB field
     const submissionData = {
         ...values,
+        student_id: isTemplateMode ? null : values.student_id,
         diet_plan: values.diet_plan || null,
         access_password: values.access_password || null,
         exercises: values.exercises.map(({ video_url, ...rest}) => rest),
@@ -152,10 +168,10 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
     }
     
     if (error) {
-      toast({ title: `Erro ao ${isEditMode ? 'atualizar' : 'criar'} treino`, description: error.message, variant: "destructive" });
+      toast({ title: `Erro ao ${isEditMode ? 'atualizar' : 'criar'} ${isTemplateMode ? 'template' : 'treino'}`, description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Sucesso!", description: `Plano de treino ${isEditMode ? 'atualizado' : 'criado'} com sucesso.` });
-      router.push("/workouts");
+      toast({ title: "Sucesso!", description: `${isTemplateMode ? 'Template' : 'Plano de treino'} ${isEditMode ? 'atualizado' : 'criado'} com sucesso.` });
+      router.push(isTemplateMode ? "/templates" : "/workouts");
       router.refresh();
     }
   };
@@ -181,7 +197,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             exercise_id: e.id,
             name: e.name,
             video_url: e.video_url,
-            sets: "3", // Default values, can be adjusted
+            sets: "3",
             reps: "12",
             load: "",
             rest: "60",
@@ -197,6 +213,19 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
        title: "Recomendações da IA aplicadas",
        description: "Exercícios, plano de dieta e detalhes do treino foram preenchidos. Revise e ajuste se necessário.",
      })
+  }
+
+  const loadFromTemplate = (template: Workout) => {
+      form.setValue("name", template.name);
+      form.setValue("description", template.description);
+      form.setValue("diet_plan", template.diet_plan);
+      form.setValue("status", template.status);
+      const templateExercises = (template.exercises || []).map(e => ({
+        ...e, 
+        video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
+      }));
+      replace(templateExercises);
+       toast({ title: "Template carregado", description: `O template "${template.name}" foi carregado com sucesso.`});
   }
 
   const generatePassword = () => {
@@ -220,8 +249,24 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Detalhes do Plano</CardTitle>
+              <CardHeader className="flex flex-row justify-between items-center">
+                <CardTitle>Detalhes do {isTemplateMode ? 'Template' : 'Plano'}</CardTitle>
+                 {!isTemplateMode && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline"><Download className="mr-2"/> Carregar de Template</Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {templates.length > 0 ? templates.map(t => (
+                            <DropdownMenuItem key={t.id} onClick={() => loadFromTemplate(t)}>
+                                {t.name}
+                            </DropdownMenuItem>
+                        )) : (
+                            <DropdownMenuItem disabled>Nenhum template encontrado</DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -229,38 +274,40 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do Treino</FormLabel>
+                      <FormLabel>Nome do {isTemplateMode ? 'Template' : 'Treino'}</FormLabel>
                       <FormControl><Input placeholder="Ex: Semana 1 - Corpo Inteiro" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="student_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Atribuir ao Aluno</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            {students.map((student) => (
-                              <SelectItem key={student.id} value={student.id}>
-                                {student.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!isTemplateMode && (
+                    <FormField
+                      control={form.control}
+                      name="student_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Atribuir ao Aluno</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione um aluno" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              {students.map((student) => (
+                                <SelectItem key={student.id} value={student.id}>
+                                  {student.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className={isTemplateMode ? 'sm:col-span-2' : ''}>
                         <FormLabel>Status</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
@@ -279,8 +326,8 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição/Notas do Treino</FormLabel>
-                      <FormControl><Textarea placeholder="Notas opcionais para o treino" {...field} value={field.value ?? ''} /></FormControl>
+                      <FormLabel>Descrição/Notas</FormLabel>
+                      <FormControl><Textarea placeholder="Notas opcionais" {...field} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -290,34 +337,36 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                   name="diet_plan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Plano de Dieta</FormLabel>
+                      <FormLabel>Plano de Dieta (Opcional)</FormLabel>
                       <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="access_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha de Acesso (Opcional)</FormLabel>
-                       <div className="flex items-center gap-2">
-                            <FormControl>
-                                <Input type="text" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                             <Button type="button" variant="outline" size="icon" onClick={copyPassword}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button type="button" variant="outline" size="icon" onClick={generatePassword}>
-                                <RefreshCw className="h-4 w-4" />
-                            </Button>
-                        </div>
-                       <FormDescription>Se preenchida, o aluno precisará desta senha para ver o treino.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 {!isTemplateMode && (
+                  <FormField
+                    control={form.control}
+                    name="access_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha de Acesso (Opcional)</FormLabel>
+                        <div className="flex items-center gap-2">
+                              <FormControl>
+                                  <Input type="text" placeholder="Deixe em branco para acesso livre" {...field} value={field.value ?? ''} />
+                              </FormControl>
+                              <Button type="button" variant="outline" size="icon" onClick={copyPassword}>
+                                  <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" variant="outline" size="icon" onClick={generatePassword}>
+                                  <RefreshCw className="h-4 w-4" />
+                              </Button>
+                          </div>
+                        <FormDescription>Se preenchida, o aluno precisará desta senha para ver o treino.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                 )}
               </CardContent>
             </Card>
 
@@ -357,7 +406,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
           </div>
 
           <div className="space-y-6">
-             <AiAssistant onRecommendation={handleRecommendation} studentId={form.watch('student_id')} exercises={exercises} />
+             {!isTemplateMode && <AiAssistant onRecommendation={handleRecommendation} studentId={form.watch('student_id')} exercises={exercises} />}
              <Card>
                 <CardHeader>
                     <CardTitle>Biblioteca de Exercícios</CardTitle>
@@ -383,7 +432,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
             <Button type="submit" disabled={form.formState.isSubmitting} className="ripple">
                 {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditMode ? 'Salvar Alterações' : 'Criar Plano de Treino'}
+                {isEditMode ? 'Salvar Alterações' : `Criar ${isTemplateMode ? 'Template' : 'Plano de Treino'}`}
             </Button>
         </div>
       </form>

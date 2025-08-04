@@ -54,7 +54,7 @@ export type WorkoutExercise = {
 export type Workout = {
   id: string;
   trainer_id: string;
-  student_id: string;
+  student_id: string | null;
   name: string;
   description?: string;
   diet_plan?: string;

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout, Shapes } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/students", label: "Alunos", icon: Users },
   { href: "/workouts", label: "Treinos", icon: Dumbbell },
+  { href: "/templates", label: "Templates", icon: Shapes },
   { href: "/schedule", label: "Agenda", icon: Calendar },
   { href: "/exercises", label: "Exercícios", icon: Sprout },
 ];
@@ -33,7 +34,7 @@ export function NavContent() {
               href={href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted",
-                pathname.startsWith(href) && "bg-muted text-primary"
+                (pathname === href || (href !== "/dashboard" && pathname.startsWith(href))) && "bg-muted text-primary"
               )}
             >
               <Icon className="h-4 w-4" />
