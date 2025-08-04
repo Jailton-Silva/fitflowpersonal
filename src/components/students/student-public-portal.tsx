@@ -146,4 +146,3 @@ export default async function StudentPublicPortal({ studentId }: { studentId: st
             </footer>
         </div>
     );
-}
