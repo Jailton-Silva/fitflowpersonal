@@ -143,105 +143,100 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
             <PublicHeader studentId={workout.student_id} />
 
             <main className="flex-1 py-8 px-4">
-                <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">
-                    {isWorkoutFinished ? (
-                        <div className="text-center py-12">
-                            <Trophy className="h-16 w-16 mx-auto text-yellow-500" />
-                            <h2 className="text-3xl font-bold font-headline mt-4">Parabéns!</h2>
-                            <p className="text-muted-foreground mt-2">Você concluiu todos os exercícios deste treino. Ótimo trabalho!</p>
-                             <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                            <Button asChild className="mt-6" variant="outline">
-                                <Link href={`/public/student/${workout.student_id}/portal`}>Voltar ao Portal</Link>
-                            </Button>
-                        </div>
-                    ) : (
-                    <>
-                        <header className="mb-8">
-                             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                                <div>
-                                    <Badge>Plano de Treino</Badge>
-                                    <h1 className="text-3xl sm:text-4xl font-bold font-headline mt-2">{workout.name}</h1>
-                                    <div className="flex items-center gap-4 mt-2 text-muted-foreground">
-                                        <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4" />
-                                            <span>{workout.students?.name}</span>
-                                        </div>
-                                         <span className="text-sm">Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+                <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8 space-y-8">
+                     <header>
+                         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                            <div>
+                                <Badge>Plano de Treino</Badge>
+                                <h1 className="text-3xl sm:text-4xl font-bold font-headline mt-2">{workout.name}</h1>
+                                <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        <span>{workout.students?.name}</span>
                                     </div>
+                                     <span className="text-sm">Criado em {format(new Date(workout.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                                 </div>
-                                {!finalSessionToDisplay && (
-                                     <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
-                                )}
                             </div>
-                        </header>
+                            {!finalSessionToDisplay && (
+                                 <Button onClick={handleStartWorkout} className="ripple w-full sm:w-auto">Iniciar Treino</Button>
+                            )}
+                        </div>
+                    </header>
 
-                        <section className="space-y-6">
-                             {workout.description && (
+                    {isWorkoutFinished && (
+                        <div className="text-center py-6 px-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <Trophy className="h-12 w-12 mx-auto text-yellow-500" />
+                            <h2 className="text-2xl font-bold font-headline mt-4">Parabéns!</h2>
+                            <p className="text-muted-foreground mt-1">Você concluiu todos os exercícios deste treino. Ótimo trabalho!</p>
+                             <p className="text-sm text-muted-foreground mt-1">Finalizado em: {format(new Date(finalSessionToDisplay.completed_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        </div>
+                    )}
+                    
+                    <section className="space-y-6">
+                         {workout.description && (
+                            <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                            <p>{workout.description}</p>
+                            </div>
+                        )}
+
+                         {workout.diet_plan && (
+                            <div className="p-4 bg-muted/50 rounded-lg">
+                                <h3 className="font-headline font-semibold mb-2">Plano de Dieta Sugerido</h3>
                                 <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                                <p>{workout.description}</p>
+                                <p>{workout.diet_plan}</p>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                             {workout.diet_plan && (
-                                <div className="p-4 bg-muted/50 rounded-lg">
-                                    <h3 className="font-headline font-semibold mb-2">Plano de Dieta Sugerido</h3>
-                                    <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                                    <p>{workout.diet_plan}</p>
-                                    </div>
+                         <div>
+                            <h2 className="text-2xl font-bold font-headline mb-4">Exercícios</h2>
+                            <div className="space-y-4">
+                            {!finalSessionToDisplay ? (
+                                <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">Clique em "Iniciar Treino" para começar a registrar seu progresso.</p>
                                 </div>
-                            )}
-
-                             <div>
-                                <h2 className="text-2xl font-bold font-headline mb-4">Exercícios</h2>
-                                <div className="space-y-4">
-                                {!finalSessionToDisplay ? (
-                                    <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
-                                        <p className="text-muted-foreground">Clique em "Iniciar Treino" para começar a registrar seu progresso.</p>
-                                    </div>
-                                ) : (
-                                    (workout.exercises as any[]).map((exercise, index) => {
-                                        const isCompleted = finalSessionToDisplay?.completed_exercises?.includes(exercise.exercise_id) ?? false;
-                                        return (
-                                            <div key={index} className={cn("flex gap-4 items-start p-4 border rounded-lg transition-colors", isCompleted ? "bg-green-500/10 border-green-500/20" : "")}>
-                                                <div className="mt-1">
-                                                    <ExerciseCheck sessionId={finalSessionToDisplay.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} />
+                            ) : (
+                                (workout.exercises as any[]).map((exercise, index) => {
+                                    const isCompleted = finalSessionToDisplay?.completed_exercises?.includes(exercise.exercise_id) ?? false;
+                                    return (
+                                        <div key={index} className={cn("flex gap-4 items-start p-4 border rounded-lg transition-colors", isCompleted ? "bg-green-500/10 border-green-500/20" : "")}>
+                                            <div className="mt-1">
+                                                <ExerciseCheck sessionId={finalSessionToDisplay.id} exerciseId={exercise.exercise_id} isCompleted={isCompleted} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h3 className="font-bold text-lg font-headline">{exercise.name}</h3>
+                                                    {exercise.video_url && (
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                                                    <Video className="h-4 w-4" />
+                                                                    Ver Vídeo
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="max-w-3xl">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>{exercise.name}</DialogTitle>
+                                                                </DialogHeader>
+                                                                <VideoPlayer videoUrl={exercise.video_url} />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    )}
                                                 </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <h3 className="font-bold text-lg font-headline">{exercise.name}</h3>
-                                                        {exercise.video_url && (
-                                                            <Dialog>
-                                                                <DialogTrigger asChild>
-                                                                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                                                        <Video className="h-4 w-4" />
-                                                                        Ver Vídeo
-                                                                    </Button>
-                                                                </DialogTrigger>
-                                                                <DialogContent className="max-w-3xl">
-                                                                    <DialogHeader>
-                                                                        <DialogTitle>{exercise.name}</DialogTitle>
-                                                                    </DialogHeader>
-                                                                    <VideoPlayer videoUrl={exercise.video_url} />
-                                                                </DialogContent>
-                                                            </Dialog>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                                                        <div><strong className="block text-muted-foreground">Séries</strong> {exercise.sets || '-'}</div>
-                                                        <div><strong className="block text-muted-foreground">Reps</strong> {exercise.reps || '-'}</div>
-                                                        <div><strong className="block text-muted-foreground">Carga</strong> {exercise.load ? `${exercise.load} kg` : '-'}</div>
-                                                        <div><strong className="block text-muted-foreground">Descanso</strong> {exercise.rest ? `${exercise.rest} s` : '-'}</div>
-                                                    </div>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                                                    <div><strong className="block text-muted-foreground">Séries</strong> {exercise.sets || '-'}</div>
+                                                    <div><strong className="block text-muted-foreground">Reps</strong> {exercise.reps || '-'}</div>
+                                                    <div><strong className="block text-muted-foreground">Carga</strong> {exercise.load ? `${exercise.load} kg` : '-'}</div>
+                                                    <div><strong className="block text-muted-foreground">Descanso</strong> {exercise.rest ? `${exercise.rest} s` : '-'}</div>
                                                 </div>
                                             </div>
-                                        )
-                                    })
-                                )}
-                                </div>
+                                        </div>
+                                    )
+                                })
+                            )}
                             </div>
-                        </section>
-                    </>
-                    )}
+                        </div>
+                    </section>
                 </div>
             </main>
 
