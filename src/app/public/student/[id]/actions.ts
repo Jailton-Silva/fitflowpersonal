@@ -4,42 +4,35 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function verifyStudentPassword(prevState: any, formData: FormData) {
-  const password = formData.get("password") as string;
-  const studentId = formData.get("studentId") as string;
+    const password = formData.get("password") as string;
+    const studentId = formData.get("studentId") as string;
 
-  if (!password || !studentId) {
-    return { error: "Dados inválidos." };
-  }
+    const supabase = createClient();
 
-  const supabase = createClient();
-  const { data: student, error } = await supabase
-    .from("students")
-    .select("access_password")
-    .eq("id", studentId)
-    .single();
+    const { data: student, error } = await supabase
+        .from("students")
+        .select("access_password")
+        .eq("id", studentId)
+        .single();
+    
+    if (error || !student) {
+        return { error: "Aluno não encontrado ou erro no servidor." };
+    }
 
-  if (error || !student) {
-    return { error: "Aluno não encontrado." };
-  }
-  
-  if (!student.access_password) {
-      // No password set, allow access
-      const cookieStore = cookies();
-      cookieStore.set(`student-${studentId}-auth`, "true", { path: "/", httpOnly: true });
-      return { success: true, error: null };
-  }
+    if (student.access_password && student.access_password === password) {
+        cookies().set(`student-${studentId}-auth`, "true", {
+            path: "/",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 60 * 60 * 24, // 24 hours
+        });
+        redirect(`/public/student/${studentId}/portal`);
+    }
 
-  if (student.access_password !== password) {
     return { error: "Senha incorreta." };
-  }
-
-  // Set auth cookie
-  const cookieStore = cookies();
-  cookieStore.set(`student-${studentId}-auth`, "true", { path: "/", httpOnly: true });
-
-  return { success: true, error: null };
 }
 
 export async function uploadStudentAvatar(studentId: string, formData: FormData) {
@@ -48,14 +41,18 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         return { error: 'Nenhum arquivo enviado.' };
     }
     
+    // We need to create a client that is authenticated as the student
+    const cookieStore = cookies();
     const supabase = createClient();
-    const filePath = `${studentId}/${file.name}-${Date.now()}`;
+    
+    // The RLS policy will handle auth, ensuring the student can only upload to their folder
+    const filePath = `${studentId}/${studentId}-${Date.now()}-${file.name}`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
-            upsert: true,
+            upsert: true, // Overwrite if file exists
         });
 
     if (uploadError) {
@@ -76,7 +73,6 @@ export async function uploadStudentAvatar(studentId: string, formData: FormData)
         
     if (updateError) {
         console.error('Update Error:', updateError);
-        await supabase.storage.from('avatars').remove([filePath]);
         return { error: `Erro ao atualizar perfil: ${updateError.message}` };
     }
     
