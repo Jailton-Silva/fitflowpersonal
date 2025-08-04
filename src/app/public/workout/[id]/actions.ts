@@ -3,18 +3,13 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers';
 
-export async function verifyPassword(previousState: any, formData: FormData) {
-    const workoutId = formData.get('workoutId') as string;
+export async function verifyPassword(prevState: any, formData: FormData) {
     const password = formData.get('password') as string;
-    
-    if (!workoutId || !password) {
-        return { error: 'ID do treino e senha são obrigatórios.' };
-    }
-
+    const workoutId = formData.get('workoutId') as string;
     const supabase = createClient();
+
     const { data, error } = await supabase
         .from('workouts')
         .select('access_password')
@@ -22,7 +17,7 @@ export async function verifyPassword(previousState: any, formData: FormData) {
         .single();
     
     if (error || !data) {
-        return { error: 'Treino não encontrado ou erro ao buscar dados.' };
+        return { error: 'Treino não encontrado.' };
     }
 
     if (data.access_password === password) {
@@ -30,54 +25,92 @@ export async function verifyPassword(previousState: any, formData: FormData) {
             path: '/',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 // 24 hours
+            sameSite: 'strict',
         });
         revalidatePath(`/public/workout/${workoutId}`);
-        redirect(`/public/workout/${workoutId}`);
+        return { error: null };
     } else {
         return { error: 'Senha incorreta.' };
     }
 }
 
-
 export async function updateCompletedExercises(sessionId: string, exerciseId: string, isCompleted: boolean) {
-  const supabase = createClient();
+    const supabase = createClient();
 
-  // First, fetch the current session to get the existing completed_exercises array
-  const { data: sessionData, error: fetchError } = await supabase
-    .from("workout_sessions")
-    .select("completed_exercises")
-    .eq("id", sessionId)
-    .single();
+    // 1. Fetch the current session
+    const { data: session, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .select('completed_exercises, workout_id')
+        .eq('id', sessionId)
+        .single();
 
-  if (fetchError) {
-    console.error("Error fetching session:", fetchError);
-    return { error: fetchError };
-  }
-
-  let completedExercises = sessionData.completed_exercises || [];
-
-  if (isCompleted) {
-    // Add the exerciseId if it's not already there
-    if (!completedExercises.includes(exerciseId)) {
-      completedExercises.push(exerciseId);
+    if (sessionError) {
+        console.error("Error fetching session:", sessionError);
+        return { error: 'Sessão não encontrada.' };
     }
-  } else {
-    // Remove the exerciseId
-    completedExercises = completedExercises.filter((id) => id !== exerciseId);
-  }
 
-  // Now, update the session with the new array
-  const { error: updateError } = await supabase
-    .from("workout_sessions")
-    .update({ completed_exercises: completedExercises })
-    .eq("id", sessionId);
+    // 2. Update the completed exercises array
+    let currentCompleted = session.completed_exercises || [];
+    if (isCompleted) {
+        if (!currentCompleted.includes(exerciseId)) {
+            currentCompleted.push(exerciseId);
+        }
+    } else {
+        currentCompleted = currentCompleted.filter(id => id !== exerciseId);
+    }
+    
+    const { data: updatedSession, error: updateError } = await supabase
+        .from('workout_sessions')
+        .update({ completed_exercises: currentCompleted })
+        .eq('id', sessionId)
+        .select('completed_exercises')
+        .single();
 
-  if (updateError) {
-    console.error("Error updating session:", updateError);
-    return { error: updateError };
-  }
+    if (updateError) {
+        console.error("Error updating session exercises:", updateError);
+        return { error: 'Erro ao atualizar exercício.' };
+    }
 
-  revalidatePath(`/public/workout/[id]`); // Revalidate the workout page
-  return { error: null };
+    // 3. Check if the workout is fully completed
+    const { data: workout, error: workoutError } = await supabase
+        .from('workouts')
+        .select('exercises')
+        .eq('id', session.workout_id)
+        .single();
+    
+    if (workoutError || !workout) {
+        console.error("Error fetching workout for completion check:", workoutError);
+        return { error: 'Erro ao verificar o plano de treino.' };
+    }
+
+    const totalExercises = (workout.exercises as any[]).length;
+    const completedCount = updatedSession.completed_exercises.length;
+
+    if (completedCount >= totalExercises) {
+        // All exercises are done, mark the session as completed
+        const { error: completeError } = await supabase
+            .from('workout_sessions')
+            .update({ completed_at: new Date().toISOString() })
+            .eq('id', sessionId);
+        
+        if (completeError) {
+            console.error("Error finalizing session:", completeError);
+            return { error: 'Erro ao finalizar a sessão.' };
+        }
+    } else {
+         // If a user un-checks an exercise, we should nullify completed_at
+         const { error: uncompleteError } = await supabase
+            .from('workout_sessions')
+            .update({ completed_at: null })
+            .eq('id', sessionId);
+        
+        if (uncompleteError) {
+             console.error("Error un-finalizing session:", uncompleteError);
+             return { error: 'Erro ao reabrir a sessão.' };
+        }
+    }
+
+    revalidatePath(`/public/workout/${session.workout_id}`);
+    revalidatePath(`/app/students/${session.workout_id}`);
+    return { error: null };
 }
