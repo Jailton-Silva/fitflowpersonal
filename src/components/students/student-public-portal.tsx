@@ -1,7 +1,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Workout, Measurement, Student } from "@/lib/definitions";
+import { Workout, Measurement } from "@/lib/definitions";
 import StudentPortalClient from "@/app/public/student/[id]/portal/client-page";
 
 async function getStudentPortalData(studentId: string) {
