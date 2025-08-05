@@ -1,7 +1,6 @@
 
 import Link from "next/link";
 import { Dumbbell, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -27,9 +26,13 @@ export default function ForgotPasswordPage({
 
     const email = formData.get("email") as string;
     const supabase = createClient();
-    const origin = headers().get("origin");
+    
+    // Para produção, é mais robusto usar uma variável de ambiente que define a URL do site.
+    // Garanta que NEXT_PUBLIC_SITE_URL esteja configurada no seu projeto Vercel
+    // como 'https://fitflowpersonal.vercel.app'.
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || headers().get("origin");
 
-    // Ensure the redirectTo URL is absolute and correct
+    // O usuário deve ser redirecionado para a página /reset-password após clicar no link do e-mail.
     const redirectTo = `${origin}/reset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
