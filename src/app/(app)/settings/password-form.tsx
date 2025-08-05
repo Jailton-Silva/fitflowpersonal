@@ -1,10 +1,10 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useFormState } from 'react-dom';
-import { useEffect } from 'react';
+import { useActionState, useEffect } from 'react';
 import { updateUserPassword } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
@@ -22,15 +22,18 @@ const initialState = {
 
 export default function PasswordForm() {
   const { toast } = useToast();
-  const [state, formAction] = useFormState(updateUserPassword, initialState);
+  const [state, formAction] = useActionState(updateUserPassword, initialState);
   const form = useForm({
     resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      password: ''
+    }
   });
 
    useEffect(() => {
     if (state?.error) {
       toast({ title: 'Erro ao Alterar Senha', description: state.error, variant: 'destructive' });
-    } else if (state?.error === null) {
+    } else if (state?.error === null && form.formState.isSubmitSuccessful) {
       toast({ title: 'Sucesso!', description: 'Sua senha foi alterada.' });
       form.reset({ password: '' });
     }
