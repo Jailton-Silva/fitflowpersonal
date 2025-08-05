@@ -54,7 +54,7 @@ export default function ForgotPasswordPage({
         </CardHeader>
         <CardContent>
           {searchParams?.message && (
-            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md"
+            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md break-words"
               dangerouslySetInnerHTML={{ __html: searchParams.message }}
             />
           )}
