@@ -3,6 +3,12 @@
 import {createClient} from '@/lib/supabase/server';
 import {revalidatePath} from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { z } from 'zod';
+
+const passwordSchema = z.object({
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
+});
+
 
 export async function updateTrainerProfile(userId: string, formData: FormData) {
   const supabase = createClient();
@@ -71,4 +77,29 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
     revalidatePath('/settings');
     revalidatePath('/dashboard'); // To update header
     return { error: null, path: publicUrl };
+}
+
+export async function updateUserPassword(formData: FormData) {
+  const supabase = createClient();
+
+  const password = formData.get('password') as string;
+  
+  const validation = passwordSchema.safeParse({ password });
+
+  if (!validation.success) {
+    return {
+      error: validation.error.errors.map((e) => e.message).join(', '),
+    };
+  }
+  
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error('Password Update Error:', error);
+    return {
+      error: 'Não foi possível atualizar a senha. Tente novamente mais tarde.',
+    };
+  }
+
+  return { error: null };
 }

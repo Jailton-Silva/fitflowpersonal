@@ -7,6 +7,8 @@ export type Trainer = {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
+  plan: 'Start' | 'Pro' | 'Elite';
+  billing_cycle_end: string;
 };
 
 export type Student = {

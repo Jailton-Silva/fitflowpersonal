@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { add } from 'date-fns';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -19,6 +20,8 @@ export async function GET(request: Request) {
             user_id: data.user.id,
             email: data.user.email,
             name: data.user.user_metadata.name || data.user.email, // Fallback to email if name is not available
+            plan: 'Pro', // Default to Pro plan on signup
+            billing_cycle_end: add(new Date(), { days: 7 }).toISOString(), // 7-day free trial
           });
         
         if (trainerError) {

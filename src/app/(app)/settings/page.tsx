@@ -5,10 +5,10 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} f
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Button} from '@/components/ui/button';
-import {User, Shield} from 'lucide-react';
-import {updateTrainerProfile} from './actions';
-import {SubmitButton} from '@/components/auth/submit-button';
+import {User, Shield, KeyRound} from 'lucide-react';
 import ProfileForm from './profile-form';
+import PasswordForm from './password-form';
+import SubscriptionCard from './subscription-card';
 
 async function getTrainerProfile() {
   const supabase = createClient();
@@ -38,33 +38,28 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold font-headline">Configurações</h1>
+      <h1 className="text-3xl font-bold font-headline">Configurações da Conta</h1>
       <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-8">
           <ProfileForm trainer={trainer} />
+          
+           <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound /> Segurança
+              </CardTitle>
+              <CardDescription>
+                Altere sua senha de acesso à plataforma.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PasswordForm />
+            </CardContent>
+          </Card>
         </div>
 
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield /> Assinatura
-              </CardTitle>
-              <CardDescription>Gerencie seu plano e pagamentos.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium">Seu plano atual:</p>
-                <p className="font-bold text-primary text-lg">Plano Pro</p>
-              </div>
-              <Button variant="outline" className="w-full" disabled>
-                Gerenciar Assinatura
-              </Button>
-               <p className="text-xs text-muted-foreground text-center">
-                O gerenciamento de assinaturas será habilitado em breve.
-              </p>
-            </CardContent>
-          </Card>
+          <SubscriptionCard trainer={trainer} />
         </div>
       </div>
     </div>
