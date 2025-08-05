@@ -29,11 +29,15 @@ export default function ForgotPasswordPage({
     const supabase = createClient();
     const origin = headers().get("origin");
 
+    // Ensure the redirectTo URL is absolute
+    const redirectTo = `${origin}/reset-password`;
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/reset-password`,
+        redirectTo: redirectTo,
     });
 
     if (error) {
+      console.error('Reset Password Error:', error);
       return redirect("/forgot-password?message=N&atilde;o foi poss&iacute;vel enviar o link de redefini&ccedil;&atilde;o. Verifique o e-mail digitado.");
     }
 
