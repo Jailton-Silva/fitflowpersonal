@@ -79,7 +79,7 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
     return { error: null, path: publicUrl };
 }
 
-export async function updateUserPassword(formData: FormData) {
+export async function updateUserPassword(prevState: any, formData: FormData) {
   const supabase = createClient();
 
   const password = formData.get('password') as string;
@@ -100,6 +100,8 @@ export async function updateUserPassword(formData: FormData) {
       error: 'Não foi possível atualizar a senha. Tente novamente mais tarde.',
     };
   }
+
+  revalidatePath('/settings');
 
   return { error: null };
 }
