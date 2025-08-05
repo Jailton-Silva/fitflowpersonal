@@ -43,9 +43,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated trainers from login/signup
-  if (session && (pathname === "/login" || pathname === "/signup")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Redirect authenticated trainers from public auth pages
+  const publicAuthPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
+  if (session && publicAuthPaths.some(p => pathname.startsWith(p))) {
+    // Exception: Allow access to reset-password if there's a recovery token,
+    // as the user might be logged in on one device but trying to reset from another.
+    if (pathname === '/reset-password' && request.nextUrl.searchParams.has('code')) {
+        // Continue to the page
+    } else {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   // Protect student portal route
@@ -76,7 +83,9 @@ export const config = {
     "/exercises/:path*", 
     "/settings",
     "/login", 
-    "/signup", 
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
     "/auth/callback",
     "/public/workout/:path*",
     "/public/student/:path*"

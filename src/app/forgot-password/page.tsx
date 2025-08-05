@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { Dumbbell } from "lucide-react";
 
+import Link from "next/link";
+import { Dumbbell, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,45 +11,33 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitButton } from "@/components/auth/submit-button";
 
-export default function LoginPage({
+export default function ForgotPasswordPage({
   searchParams,
 }: {
   searchParams: { message: string };
 }) {
 
-  const signIn = async (formData: FormData) => {
+  const sendResetLink = async (formData: FormData) => {
     "use server";
 
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
     const supabase = createClient();
+    const origin = headers().get("origin");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/reset-password`,
     });
 
     if (error) {
-      return redirect("/login?message=Não foi possível autenticar o usuário");
+      return redirect("/forgot-password?message=Não foi possível enviar o link de redefinição. Verifique o e-mail digitado.");
     }
 
-    return redirect("/dashboard");
+    return redirect("/forgot-password?message=Se o e-mail estiver cadastrado, um link para redefinição de senha foi enviado.");
   };
 
   return (
@@ -59,9 +47,9 @@ export default function LoginPage({
           <div className="flex justify-center mb-4">
              <Dumbbell className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl text-center font-headline">Bem-vindo de Volta</CardTitle>
+          <CardTitle className="text-2xl text-center font-headline">Redefinir Senha</CardTitle>
           <CardDescription className="text-center">
-            Digite seu e-mail abaixo para fazer login em sua conta
+            Digite seu e-mail e enviaremos um link para você voltar a acessar sua conta.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,7 +58,7 @@ export default function LoginPage({
               {searchParams.message}
             </div>
           )}
-          <form className="grid gap-4">
+          <form className="grid gap-4" action={sendResetLink}>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -81,29 +69,14 @@ export default function LoginPage({
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Senha</Label>
-                <Link
-                  href="/forgot-password"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Esqueceu sua senha?
-                </Link>
-              </div>
-              <Input id="password" name="password" type="password" required />
-            </div>
-            <SubmitButton
-              formAction={signIn}
-              className="w-full ripple"
-            >
-              Login
+            <SubmitButton className="w-full ripple">
+              Enviar Link de Redefinição
             </SubmitButton>
           </form>
-          <div className="mt-4 text-center text-sm">
-            Não tem uma conta?{" "}
-            <Link href="/signup" className="underline">
-              Cadastre-se
+           <div className="mt-4 text-center text-sm">
+            <Link href="/login" className="flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para o Login
             </Link>
           </div>
         </CardContent>
