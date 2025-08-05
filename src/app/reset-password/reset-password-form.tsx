@@ -20,7 +20,7 @@ import { z } from "zod";
 import { useActionState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 
 const passwordSchema = z.object({
@@ -32,32 +32,25 @@ const initialState = {
   success: false,
 };
 
+// This server action now correctly handles the password update.
+// Supabase JS client automatically handles the session from the recovery link.
 async function updatePassword(prevState: any, formData: FormData) {
     const password = formData.get("password") as string;
-    const code = formData.get("code") as string;
     
     const validation = passwordSchema.safeParse({ password });
     if (!validation.success) {
       return { error: validation.error.errors.map((e) => e.message).join(', '), success: false };
     }
     
-    if (!code) {
-        return { error: "Código de verificação não encontrado. Por favor, use o link do seu e-mail.", success: false };
-    }
-
     const supabase = createClient();
-    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (sessionError) {
-        console.error('Session Exchange Error:', sessionError);
-        return { error: "O link de redefinição é inválido ou expirou. Por favor, solicite um novo.", success: false };
-    }
     
-    const { error: updateError } = await supabase.auth.updateUser({ password });
+    // No need to exchange code manually. The Supabase client handles the session
+    // when the user lands on this page from the email link.
+    const { error } = await supabase.auth.updateUser({ password });
 
-    if (updateError) {
-        console.error('Password Update Error:', updateError);
-        return { error: 'Não foi possível atualizar a senha. Tente novamente.', success: false };
+    if (error) {
+        console.error('Password Update Error:', error);
+        return { error: 'Não foi possível atualizar a senha. O link pode ter expirado ou ser inválido. Por favor, tente novamente.', success: false };
     }
     
     return { error: null, success: true };
@@ -66,7 +59,6 @@ async function updatePassword(prevState: any, formData: FormData) {
 export default function ResetPasswordForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [state, formAction] = useActionState(updatePassword, initialState);
 
   const form = useForm({
@@ -75,8 +67,6 @@ export default function ResetPasswordForm() {
       password: ''
     }
   });
-  
-  const code = searchParams.get('code');
 
    useEffect(() => {
     if (state.error) {
@@ -109,11 +99,11 @@ export default function ResetPasswordForm() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 required
               />
               {form.formState.errors.password && <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>}
             </div>
-            <input type="hidden" name="code" value={code || ''} />
             <SubmitButton className="w-full ripple">
               Salvar Nova Senha
             </SubmitButton>
