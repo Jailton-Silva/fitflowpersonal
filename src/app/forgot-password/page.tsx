@@ -34,10 +34,10 @@ export default function ForgotPasswordPage({
     });
 
     if (error) {
-      return redirect("/forgot-password?message=Não foi possível enviar o link de redefinição. Verifique o e-mail digitado.");
+      return redirect("/forgot-password?message=N&atilde;o foi poss&iacute;vel enviar o link de redefini&ccedil;&atilde;o. Verifique o e-mail digitado.");
     }
 
-    return redirect("/forgot-password?message=Se o e-mail estiver cadastrado, um link para redefinição de senha foi enviado.");
+    return redirect("/forgot-password?message=Se o e-mail estiver cadastrado, um link para redefini&ccedil;&atilde;o de senha foi enviado.");
   };
 
   return (
@@ -54,9 +54,9 @@ export default function ForgotPasswordPage({
         </CardHeader>
         <CardContent>
           {searchParams?.message && (
-            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md">
-              {searchParams.message}
-            </div>
+            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md"
+              dangerouslySetInnerHTML={{ __html: searchParams.message }}
+            />
           )}
           <form className="grid gap-4" action={sendResetLink}>
             <div className="grid gap-2">
