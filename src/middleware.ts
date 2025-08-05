@@ -49,10 +49,9 @@ export async function middleware(request: NextRequest) {
     // Exception: Allow access to reset-password if there's a recovery token,
     // as the user might be logged in on one device but trying to reset from another.
     if (pathname === '/reset-password' && request.nextUrl.searchParams.has('code')) {
-        // Continue to the page
-    } else {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+        return response;
     }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Protect student portal route
