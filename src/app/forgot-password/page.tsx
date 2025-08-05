@@ -29,7 +29,7 @@ export default function ForgotPasswordPage({
     const supabase = createClient();
     const origin = headers().get("origin");
 
-    // Ensure the redirectTo URL is absolute
+    // Ensure the redirectTo URL is absolute and correct
     const redirectTo = `${origin}/reset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
