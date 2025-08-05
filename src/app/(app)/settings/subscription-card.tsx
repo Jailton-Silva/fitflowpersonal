@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +30,8 @@ const planFeatures = {
 
 
 export default function SubscriptionCard({ trainer }: { trainer: Trainer }) {
-    const trialExpired = isPast(new Date(trainer.billing_cycle_end));
+    const hasBillingDate = trainer.billing_cycle_end;
+    const trialExpired = hasBillingDate ? isPast(new Date(trainer.billing_cycle_end)) : false;
     
     return (
          <Card>
@@ -42,19 +44,25 @@ export default function SubscriptionCard({ trainer }: { trainer: Trainer }) {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm font-medium">Seu plano atual:</p>
-                <p className="font-bold text-primary text-lg">{trainer.plan}</p>
+                <p className="font-bold text-primary text-lg">{trainer.plan || 'Não definido'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium">Status:</p>
-                <p className={`font-semibold ${trialExpired ? 'text-destructive' : 'text-green-600'}`}>
-                    {trialExpired ? 'Período de teste expirado' : 'Período de teste ativo'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                    Sua próxima fatura será em {format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy", { locale: ptBR })}.
-                </p>
+                {hasBillingDate ? (
+                  <>
+                    <p className={`font-semibold ${trialExpired ? 'text-destructive' : 'text-green-600'}`}>
+                        {trialExpired ? 'Período de teste expirado' : 'Período de teste ativo'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Sua próxima fatura será em {format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy", { locale: ptBR })}.
+                    </p>
+                  </>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Data de faturamento não disponível.</p>
+                )}
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                  {planFeatures[trainer.plan].map(feature => (
+                  {planFeatures[trainer.plan]?.map(feature => (
                       <li key={feature} className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-primary" />
                           <span>{feature}</span>
