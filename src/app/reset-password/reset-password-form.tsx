@@ -47,12 +47,16 @@ async function updatePassword(prevState: any, formData: FormData) {
 
     const supabase = createClient();
     const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-    if(sessionError) {
-        return { error: "O link de redefinição é inválido ou expirou.", success: false };
+
+    if (sessionError) {
+        console.error('Session Exchange Error:', sessionError);
+        return { error: "O link de redefinição é inválido ou expirou. Por favor, solicite um novo.", success: false };
     }
     
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+
+    if (updateError) {
+        console.error('Password Update Error:', updateError);
         return { error: 'Não foi possível atualizar a senha. Tente novamente.', success: false };
     }
     
