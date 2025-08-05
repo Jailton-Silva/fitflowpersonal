@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 
@@ -11,20 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitButton } from "@/components/auth/submit-button";
 
 export default function LoginPage({
@@ -46,7 +35,9 @@ export default function LoginPage({
     });
 
     if (error) {
-      return redirect("/login?message=Não foi possível autenticar o usuário");
+      const url = new URL("/login", "https://fitflowpersonal.vercel.app");
+      url.searchParams.set("message", "E-mail ou senha inválidos. Por favor, tente novamente.");
+      return redirect(url.toString());
     }
 
     return redirect("/dashboard");
@@ -66,7 +57,7 @@ export default function LoginPage({
         </CardHeader>
         <CardContent>
           {searchParams?.message && (
-            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md">
+            <div className="mb-4 p-4 text-center text-sm text-destructive bg-destructive/10 rounded-md">
               {searchParams.message}
             </div>
           )}

@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 
@@ -20,7 +21,7 @@ import { SubmitButton } from "@/components/auth/submit-button";
 export default function SignupPage({
   searchParams,
 }: {
-  searchParams: { message: string };
+  searchParams: { message: string, type?: string };
 }) {
   const signUp = async (formData: FormData) => {
     "use server";
@@ -29,6 +30,7 @@ export default function SignupPage({
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const supabase = createClient();
+    const origin = headers().get("origin");
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -37,15 +39,21 @@ export default function SignupPage({
         data: {
           name: name,
         },
-        emailRedirectTo: `${headers().get("origin")}/auth/callback`,
+        emailRedirectTo: `${origin}/auth/callback`,
       },
     });
 
     if (error) {
-      return redirect("/signup?message=Não foi possível autenticar o usuário");
+      const url = new URL("/signup", origin!);
+      url.searchParams.set("message", "Não foi possível realizar o cadastro. O e-mail pode já estar em uso ou a senha é muito fraca.");
+      url.searchParams.set("type", "error");
+      return redirect(url.toString());
     }
 
-    return redirect("/signup?message=Verifique seu e-mail para continuar o processo de cadastro");
+    const url = new URL("/signup", origin!);
+    url.searchParams.set("message", "Verifique seu e-mail para continuar o processo de cadastro.");
+    url.searchParams.set("type", "success");
+    return redirect(url.toString());
   };
 
   return (
@@ -62,7 +70,7 @@ export default function SignupPage({
         </CardHeader>
         <CardContent>
           {searchParams?.message && (
-            <div className="mb-4 p-4 text-center text-sm text-foreground bg-accent/20 rounded-md">
+             <div className={`mb-4 p-4 text-center text-sm rounded-md ${searchParams.type === 'error' ? 'text-destructive bg-destructive/10' : 'text-foreground bg-accent/20'}`}>
               {searchParams.message}
             </div>
           )}
