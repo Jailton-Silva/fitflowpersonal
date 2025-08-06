@@ -200,7 +200,7 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
                                             <p className="text-sm text-muted-foreground">{(workout.exercises as any[]).length} exercícios</p>
                                         </div>
                                         <div className="flex items-center gap-2 self-end sm:self-center">
-                                            <Badge variant={statusMap[workout.status]?.variant || 'secondary'} className="hidden sm:inline-flex">
+                                            <Badge variant={statusMap[workout.status]?.variant || 'secondary'} className="inline-flex">
                                                 {statusMap[workout.status]?.text || 'Desconhecido'}
                                             </Badge>
                                             <Button variant="outline" size="sm" asChild>
@@ -256,5 +256,3 @@ export default function StudentPortalClient({ student, initialWorkouts = [], ini
     </div>
     );
 }
-
-    
