@@ -1,21 +1,28 @@
+
 {
-  "name": "FitFlow - App do Aluno",
-  "short_name": "FitFlow",
-  "description": "Seu app de treinos pessoal da FitFlow.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#F0F4F7",
-  "theme_color": "#4285F4",
-  "icons": [
-    {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    "name": "FitFlow - Portal do Aluno",
+    "short_name": "FitFlow",
+    "description": "Acesse seus treinos e acompanhe seu progresso com o FitFlow.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#F0F4F7",
+    "theme_color": "#4285F4",
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
 }
