@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 export default function SignupPage({
@@ -29,8 +30,17 @@ export default function SignupPage({
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const supabase = createClient();
+    const terms = formData.get("terms") as string;
     const origin = headers().get("origin");
+
+    if (terms !== "on") {
+      const url = new URL("/signup", origin!);
+      url.searchParams.set("message", "Você deve aceitar os Termos de Uso e a Política de Privacidade para continuar.");
+      url.searchParams.set("type", "error");
+      return redirect(url.toString());
+    }
+
+    const supabase = createClient();
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -92,6 +102,20 @@ export default function SignupPage({
             <div className="grid gap-2">
               <Label htmlFor="password">Senha</Label>
               <Input id="password" name="password" type="password" required />
+            </div>
+            <div className="items-top flex space-x-2">
+                <Checkbox id="terms" name="terms" />
+                <div className="grid gap-1.5 leading-none">
+                    <label
+                    htmlFor="terms"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                    Aceitar termos e condições
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                    Você concorda com nossos <Link href="/termos-de-uso" className="underline">Termos de Uso</Link> e <Link href="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+                    </p>
+                </div>
             </div>
              <SubmitButton
               formAction={signUp}
