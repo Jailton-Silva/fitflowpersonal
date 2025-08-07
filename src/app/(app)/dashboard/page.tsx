@@ -107,7 +107,7 @@ async function getDashboardData(from: string, to: string) {
         overallEngagementRate: 0,
         mostEngagedStudents: [],
         lowActivityStudents: [],
-    }
+    };
   }
 
 
@@ -167,7 +167,7 @@ async function getDashboardData(from: string, to: string) {
   const overallEngagementRate = scheduledTotal > 0 ? (completedTotal / scheduledTotal) * 100 : 0;
 
   // ENGAGEMENT AND ACTIVITY LISTS
-  const { data: recentSessions } = await supabase.from('workout_sessions').select('student_id, completed_at').in('student_id', studentIdList).gte('started_at', sub(new Date(), {days: 30}).toISOString());
+  const { data: recentSessions } = await supabase.from('workout_sessions').select('student_id, completed_at, started_at').in('student_id', studentIdList).gte('started_at', sub(new Date(), {days: 30}).toISOString());
   
   const studentActivity: {[studentId: string]: {last_activity: string, completed_count: number}} = {};
   (recentSessions || []).forEach(session => {
@@ -343,7 +343,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
