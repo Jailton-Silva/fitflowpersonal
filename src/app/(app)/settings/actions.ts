@@ -115,18 +115,15 @@ export async function deleteUserAccount() {
     redirect('/login');
   }
 
-  // This RPC function should be created in your Supabase dashboard.
-  // It needs to delete all data related to the user (students, workouts, etc.)
-  // and finally call auth.admin_delete_user(user.id)
-  const { error: rpcError } = await supabase.rpc('delete_user_account');
-
-  if (rpcError) {
-    console.error('Error deleting user account:', rpcError);
+  const { error: deletionError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+  
+  if (deletionError) {
+    console.error('Error deleting user account:', deletionError);
     return {
       error: 'Ocorreu um erro e não foi possível excluir sua conta. Por favor, tente novamente.',
     };
   }
-
+  
   // Sign out the user from the current session
   await supabase.auth.signOut();
   
