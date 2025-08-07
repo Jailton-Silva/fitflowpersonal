@@ -24,18 +24,20 @@ async function getDashboardData(from: string, to: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const emptyData = {
+    totalStudents: 0,
+    activeWorkouts: 0,
+    weekAppointments: 0,
+    studentsCountLastMonth: 0,
+    progressData: [],
+    engagementData: [],
+    overallEngagementRate: 0,
+    mostEngagedStudents: [],
+    lowActivityStudents: [],
+  };
+
   if (!user) {
-    return {
-      totalStudents: 0,
-      activeWorkouts: 0,
-      weekAppointments: 0,
-      studentsCountLastMonth: 0,
-      progressData: [],
-      engagementData: [],
-      overallEngagementRate: 0,
-      mostEngagedStudents: [],
-      lowActivityStudents: [],
-    };
+    return emptyData;
   }
   
   const { data: trainer } = await supabase
@@ -45,17 +47,7 @@ async function getDashboardData(from: string, to: string) {
     .single();
 
   if (!trainer) {
-     return {
-      totalStudents: 0,
-      activeWorkouts: 0,
-      weekAppointments: 0,
-      studentsCountLastMonth: 0,
-      progressData: [],
-      engagementData: [],
-      overallEngagementRate: 0,
-      mostEngagedStudents: [],
-      lowActivityStudents: [],
-    };
+     return emptyData;
   }
 
   const trainerId = trainer.id;
@@ -180,7 +172,7 @@ async function getDashboardData(from: string, to: string) {
       if (new Date(session.completed_at || session.started_at) > new Date(studentActivity[session.student_id].last_activity)) {
         studentActivity[session.student_id].last_activity = session.completed_at || session.started_at;
       }
-  })
+  });
 
   const mostEngagedStudents = (allStudents || [])
     .map(s => ({...s, completed_count: studentActivity[s.id]?.completed_count || 0}))
