@@ -21,7 +21,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { deleteUserAccount } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import { Trainer, User } from '@/lib/definitions';
+import { Trainer } from '@/lib/definitions';
+import type { User } from '@supabase/supabase-js';
+
 
 interface SettingsClientPageProps {
   user: User;
