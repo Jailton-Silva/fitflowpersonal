@@ -4,6 +4,7 @@ import {createClient} from '@/lib/supabase/server';
 import {revalidatePath} from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
+import { redirect } from 'next/navigation';
 
 const passwordSchema = z.object({
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
@@ -104,4 +105,28 @@ export async function updateUserPassword(prevState: any, formData: FormData) {
   revalidatePath('/settings');
 
   return { error: null };
+}
+
+export async function deleteUserAccount() {
+  const supabase = createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { error: rpcError } = await supabase.rpc('delete_user_account');
+
+  if (rpcError) {
+    console.error('Error deleting user account:', rpcError);
+    return {
+      error: 'Ocorreu um erro e não foi possível excluir sua conta. Por favor, tente novamente.',
+    };
+  }
+
+  // Sign out the user from the current session
+  await supabase.auth.signOut();
+  
+  // No need to revalidate, just redirect
+  redirect('/');
 }
