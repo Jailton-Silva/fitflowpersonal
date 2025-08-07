@@ -16,7 +16,7 @@ import { Student } from "@/lib/definitions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import OnboardingGuide from "@/components/dashboard/onboarding-guide"; // Import the new component
+import OnboardingGuide from "@/components/dashboard/onboarding-guide";
 
 async function getDashboardData(from: string, to: string) {
   const supabase = createClient();
@@ -343,7 +343,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
