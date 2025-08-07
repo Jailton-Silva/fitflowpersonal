@@ -110,15 +110,19 @@ export async function updateUserPassword(prevState: any, formData: FormData) {
 export async function deleteUserAccount() {
   const supabase = createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+  
+  if (getUserError || !user) {
+    console.error('Error getting user or no user logged in:', getUserError?.message);
     redirect('/login');
   }
 
-  const { error: deletionError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+  // Instead of calling admin.deleteUser, we call the Supabase RPC function
+  // that handles the deletion of related data (like from the profiles table)
+  const { error: rpcError } = await supabase.rpc('delete_user_account');
   
-  if (deletionError) {
-    console.error('Error deleting user account:', deletionError.message);
+  if (rpcError) {
+    console.error('Error deleting user account via RPC:', rpcError.message);
     return {
       error: 'Ocorreu um erro e não foi possível excluir sua conta. Por favor, tente novamente.',
     };
