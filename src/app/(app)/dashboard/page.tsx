@@ -52,67 +52,56 @@ async function getDashboardData(from: string, to: string) {
 
   const trainerId = trainer.id;
   const today = new Date();
-  const lastMonth = subDays(today, 30);
   const fromDate = parse(from, 'yyyy-MM-dd', new Date());
   const toDate = parse(to, 'yyyy-MM-dd', new Date());
 
-  // STATS
-  const { data: allStudents, count: totalStudents } = await supabase
+  const { data: allStudentsData, count: totalStudents } = await supabase
     .from('students')
     .select('id, name, avatar_url, created_at', { count: 'exact' })
     .eq('trainer_id', trainerId)
     .eq('status', 'active');
+  const allStudents = allStudentsData ?? [];
 
-  const { count: studentsCountLastMonth } = await supabase
-    .from('students')
-    .select('*', { count: 'exact', head: true })
-    .eq('trainer_id', trainerId)
-    .gte('created_at', lastMonth.toISOString());
-
-  const { count: activeWorkouts } = await supabase
-    .from('workouts')
-    .select('*', { count: 'exact', head: true })
-    .eq('trainer_id', trainerId);
-
-  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
-  const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
-
-  const { count: weekAppointments } = await supabase
-    .from('appointments')
-    .select('id', { count: 'exact', head: true })
-    .eq('trainer_id', trainerId)
-    .gte('start_time', startOfCurrentWeek.toISOString())
-    .lte('end_time', endOfCurrentWeek.toISOString());
-
-
-  // CHART DATA
-  const studentIdList = allStudents?.map(s => s.id) || [];
+  const studentIdList = allStudents.map(s => s.id);
 
   if (studentIdList.length === 0) {
     return {
+        ...emptyData,
         totalStudents: totalStudents ?? 0,
-        activeWorkouts: activeWorkouts ?? 0,
-        weekAppointments: weekAppointments ?? 0,
-        studentsCountLastMonth: studentsCountLastMonth ?? 0,
-        progressData: [],
-        engagementData: [],
-        overallEngagementRate: 0,
-        mostEngagedStudents: [],
-        lowActivityStudents: [],
     };
   }
 
+  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
+  const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
+  const lastMonth = subDays(today, 30);
+  
+  // Batch all queries
+  const [
+      studentsCountLastMonthResult,
+      activeWorkoutsResult,
+      weekAppointmentsResult,
+      measurementsResult,
+      appointmentsResult,
+      recentSessionsResult,
+  ] = await Promise.all([
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('trainer_id', trainerId).gte('created_at', lastMonth.toISOString()),
+    supabase.from('workouts').select('*', { count: 'exact', head: true }).eq('trainer_id', trainerId),
+    supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('trainer_id', trainerId).gte('start_time', startOfCurrentWeek.toISOString()).lte('end_time', endOfCurrentWeek.toISOString()),
+    supabase.from('measurements').select('created_at, weight, body_fat').in('student_id', studentIdList).gte('created_at', fromDate.toISOString()).lte('created_at', toDate.toISOString()).order('created_at', { ascending: true }),
+    supabase.from('appointments').select('start_time, status').eq('trainer_id', trainerId).gte('start_time', fromDate.toISOString()).lte('end_time', toDate.toISOString()),
+    supabase.from('workout_sessions').select('student_id, completed_at, started_at').in('student_id', studentIdList).gte('started_at', sub(new Date(), {days: 30}).toISOString()),
+  ]);
 
-  const { data: measurements } = await supabase
-    .from('measurements')
-    .select('created_at, weight, body_fat')
-    .in('student_id', studentIdList)
-    .gte('created_at', fromDate.toISOString())
-    .lte('created_at', toDate.toISOString())
-    .order('created_at', { ascending: true });
+  const studentsCountLastMonth = studentsCountLastMonthResult.count ?? 0;
+  const activeWorkouts = activeWorkoutsResult.count ?? 0;
+  const weekAppointments = weekAppointmentsResult.count ?? 0;
+  const measurements = measurementsResult.data ?? [];
+  const appointments = appointmentsResult.data ?? [];
+  const recentSessions = recentSessionsResult.data ?? [];
 
+  // CHART DATA
   const monthlyProgress: { [key: string]: { weights: number[], fats: number[] } } = {};
-  (measurements || []).forEach(m => {
+  measurements.forEach(m => {
       const month = format(new Date(m.created_at), 'yyyy-MM');
       if (!monthlyProgress[month]) {
           monthlyProgress[month] = { weights: [], fats: [] };
@@ -127,17 +116,9 @@ async function getDashboardData(from: string, to: string) {
       bodyFat: data.fats.length ? data.fats.reduce((a, b) => a + b, 0) / data.fats.length : 0,
   }));
 
-
   // Engagement Chart
-  const { data: appointments } = await supabase
-    .from('appointments')
-    .select('start_time, status')
-    .eq('trainer_id', trainerId)
-    .gte('start_time', fromDate.toISOString())
-    .lte('end_time', toDate.toISOString());
-
   const monthlyEngagement: { [key: string]: { scheduled: number, completed: number } } = {};
-  (appointments || []).forEach(apt => {
+  appointments.forEach(apt => {
       const month = format(new Date(apt.start_time), 'yyyy-MM');
       if (!monthlyEngagement[month]) {
           monthlyEngagement[month] = { scheduled: 0, completed: 0 };
@@ -159,10 +140,8 @@ async function getDashboardData(from: string, to: string) {
   const overallEngagementRate = scheduledTotal > 0 ? (completedTotal / scheduledTotal) * 100 : 0;
 
   // ENGAGEMENT AND ACTIVITY LISTS
-  const { data: recentSessions } = await supabase.from('workout_sessions').select('student_id, completed_at, started_at').in('student_id', studentIdList).gte('started_at', sub(new Date(), {days: 30}).toISOString());
-  
   const studentActivity: {[studentId: string]: {last_activity: string, completed_count: number}} = {};
-  (recentSessions || []).forEach(session => {
+  recentSessions.forEach(session => {
       if(!studentActivity[session.student_id]) {
           studentActivity[session.student_id] = { last_activity: session.completed_at || session.started_at, completed_count: 0};
       }
@@ -174,12 +153,12 @@ async function getDashboardData(from: string, to: string) {
       }
   });
 
-  const mostEngagedStudents = (allStudents || [])
+  const mostEngagedStudents = allStudents
     .map(s => ({...s, completed_count: studentActivity[s.id]?.completed_count || 0}))
     .sort((a,b) => b.completed_count - a.completed_count)
     .slice(0, 3);
   
-  const lowActivityStudents = (allStudents || [])
+  const lowActivityStudents = allStudents
     .filter(s => {
         const lastActivityDate = studentActivity[s.id]?.last_activity;
         const studentCreationDate = new Date(s.created_at);
@@ -195,9 +174,9 @@ async function getDashboardData(from: string, to: string) {
 
   return {
     totalStudents: totalStudents ?? 0,
-    activeWorkouts: activeWorkouts ?? 0,
-    weekAppointments: weekAppointments ?? 0,
-    studentsCountLastMonth: studentsCountLastMonth ?? 0,
+    activeWorkouts,
+    weekAppointments,
+    studentsCountLastMonth,
     progressData,
     engagementData,
     overallEngagementRate,
