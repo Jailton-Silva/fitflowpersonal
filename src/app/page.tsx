@@ -4,6 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Users, Calendar, BarChart, CheckCircle, ShieldCheck, Cpu, Smartphone } from "lucide-react";
 import Image from "next/image";
 import LandingPageHeader from "@/components/layout/landing-header";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 
 export default function LandingPage() {
@@ -223,6 +229,53 @@ export default function LandingPage() {
             </div>
         </section>
         
+        <section id="faq" className="w-full py-12 md:py-24 lg:py-32 border-t">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold font-headline tracking-tighter sm:text-4xl">Dúvidas Frequentes (FAQ)</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Respostas diretas para as perguntas mais comuns sobre o FitFlow.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto max-w-3xl pt-12">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>O FitFlow oferece período de teste?</AccordionTrigger>
+                  <AccordionContent>
+                    Sim! Você pode testar todas as funcionalidades do plano Pro gratuitamente por 7 dias, sem compromisso e sem precisar cadastrar um cartão de crédito.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger>Como funciona o app para o aluno?</AccordionTrigger>
+                  <AccordionContent>
+                    Seu aluno acessa o FitFlow através de um link exclusivo, como um portal. Funciona como um aplicativo (PWA) que ele pode adicionar à tela inicial do celular, sem precisar baixar nada da App Store ou Google Play. Lá ele visualiza os treinos, marca como concluído e acompanha o próprio progresso.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger>Posso cancelar minha assinatura a qualquer momento?</AccordionTrigger>
+                  <AccordionContent>
+                    Com certeza. O FitFlow não tem contrato de fidelidade. Você pode cancelar sua assinatura quando quiser, diretamente no seu painel de configurações, sem burocracia.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-4">
+                  <AccordionTrigger>Meus dados e os dados dos meus alunos estão seguros?</AccordionTrigger>
+                  <AccordionContent>
+                    Totalmente. Levamos a segurança e a privacidade a sério. Utilizamos as melhores práticas de segurança do mercado e estamos em conformidade com a LGPD. Seus dados são seus e você tem total controle sobre eles.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-5">
+                  <AccordionTrigger>Preciso ter conhecimento técnico para usar a plataforma?</AccordionTrigger>
+                  <AccordionContent>
+                    Não. O FitFlow foi desenhado para ser intuitivo e fácil de usar, mesmo para quem não tem familiaridade com tecnologia. Nosso objetivo é que você gaste seu tempo com o que realmente importa: seus alunos.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
+        </section>
+
         <section id="tech" className="w-full py-12 md:py-24 lg:py-32">
             <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
                 <div className="space-y-3">
@@ -281,7 +334,7 @@ export default function LandingPage() {
           <Link href="/politica-de-privacidade" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Privacidade
           </Link>
-           <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+           <Link href="#faq" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Dúvidas? (FAQ)
           </Link>
         </nav>
