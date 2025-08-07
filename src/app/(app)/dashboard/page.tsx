@@ -219,89 +219,89 @@ export default async function DashboardPage({
   const showOnboarding = data.totalStudents === 0;
 
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
-        <DateRangeFilter defaultFrom={from} defaultTo={to} />
-      </div>
+ return (
+ <div className="space-y-6">
+ <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+ <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
+ <DateRangeFilter defaultFrom={from} defaultTo={to} />
+ </div>
 
-      {showOnboarding && <OnboardingGuide />}
+ {showOnboarding && <OnboardingGuide />}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              +{data.studentsCountLastMonth} desde o mês passado
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Treinos Ativos</CardTitle>
-            <Dumbbell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.activeWorkouts}</div>
-            <p className="text-xs text-muted-foreground">Atribuídos aos alunos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Consultas da Semana</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.weekAppointments}</div>
-            <p className="text-xs text-muted-foreground">Agendadas para esta semana</p>
-          </CardContent>
-        </Card>
-         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Engajamento Geral</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-             <div className="text-2xl font-bold">
-                {data.overallEngagementRate?.toFixed(0) ?? 0}%
-             </div>
-            <p className="text-xs text-muted-foreground">Taxa de conclusão de treinos</p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle className="font-headline">Evolução Física Média</CardTitle>
-            <CardDescription>Progresso médio dos alunos no período selecionado.</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ProgressChart data={data.progressData} />
-          </CardContent>
-        </Card>
-         <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="font-headline">Engajamento dos Alunos</CardTitle>
-            <CardDescription>Treinos concluídos vs. agendados no período.</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <EngagementChart data={data.engagementData} />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Star className="text-yellow-500" /> Alunos Mais Engajados</CardTitle>
-                <CardDescription>Top 3 alunos com mais treinos concluídos nos últimos 30 dias.</CardDescription>
-            </CardHeader>
-            <CardContent>
-               {data.mostEngagedStudents.length > 0 ? (
+ <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+ <Card>
+ <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+ <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
+ <Users className="h-4 w-4 text-muted-foreground" />
+ </CardHeader>
+ <CardContent>
+ <div className="text-2xl font-bold">{data.totalStudents}</div>
+ <p className="text-xs text-muted-foreground">
+ +{data.studentsCountLastMonth} desde o mês passado
+ </p>
+ </CardContent>
+ </Card>
+ <Card>
+ <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+ <CardTitle className="text-sm font-medium">Treinos Ativos</CardTitle>
+ <Dumbbell className="h-4 w-4 text-muted-foreground" />
+ </CardHeader>
+ <CardContent>
+ <div className="text-2xl font-bold">{data.activeWorkouts}</div>
+ <p className="text-xs text-muted-foreground">Atribuídos aos alunos</p>
+ </CardContent>
+ </Card>
+ <Card>
+ <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+ <CardTitle className="text-sm font-medium">Consultas da Semana</CardTitle>
+ <Calendar className="h-4 w-4 text-muted-foreground" />
+ </CardHeader>
+ <CardContent>
+ <div className="text-2xl font-bold">{data.weekAppointments}</div>
+ <p className="text-xs text-muted-foreground">Agendadas para esta semana</p>
+ </CardContent>
+ </Card>
+ <Card>
+ <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+ <CardTitle className="text-sm font-medium">Engajamento Geral</CardTitle>
+ <Activity className="h-4 w-4 text-muted-foreground" />
+ </CardHeader>
+ <CardContent>
+ <div className="text-2xl font-bold">
+ {data.overallEngagementRate?.toFixed(0) ?? 0}%
+ </div>
+ <p className="text-xs text-muted-foreground">Taxa de conclusão de treinos</p>
+ </CardContent>
+ </Card>
+ </div>
+ <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+ <Card className="lg:col-span-4">
+ <CardHeader>
+ <CardTitle className="font-headline">Evolução Física Média</CardTitle>
+ <CardDescription>Progresso médio dos alunos no período selecionado.</CardDescription>
+ </CardHeader>
+ <CardContent className="pl-2">
+ <ProgressChart data={data.progressData} />
+ </CardContent>
+ </Card>
+ <Card className="lg:col-span-3">
+ <CardHeader>
+ <CardTitle className="font-headline">Engajamento dos Alunos</CardTitle>
+ <CardDescription>Treinos concluídos vs. agendados no período.</CardDescription>
+ </CardHeader>
+ <CardContent className="pl-2">
+ <EngagementChart data={data.engagementData} />
+ </CardContent>
+ </Card>
+ </div>
+ <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+ <Card>
+ <CardHeader>
+ <CardTitle className="font-headline flex items-center gap-2"><Star className="text-yellow-500" /> Alunos Mais Engajados</CardTitle>
+ <CardDescription>Top 3 alunos com mais treinos concluídos nos últimos 30 dias.</CardDescription>
+ </CardHeader>
+ <CardContent>
+ {data.mostEngagedStudents.length > 0 ? (
                  <ul className="space-y-4">
                     {data.mostEngagedStudents.map((student, index) => (
                         <li key={student.id} className="flex items-center gap-4">
@@ -323,11 +323,11 @@ export default async function DashboardPage({
                 <p className="text-muted-foreground text-center py-4">Nenhum dado de engajamento ainda.</p>
                )}
             </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-orange-500" /> Alunos com Baixa Atividade</CardTitle>
-                <CardDescription>Alunos sem treinos registrados há mais de 15 dias.</CardDescription>
+ </Card>
+ <Card>
+ <CardHeader>
+ <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-orange-500" /> Alunos com Baixa Atividade</CardTitle>
+ <CardDescription>Alunos sem treinos registrados há mais de 15 dias.</CardDescription>
             </CardHeader>
             <CardContent>
                 {data.lowActivityStudents.length > 0 ? (
@@ -356,8 +356,8 @@ export default async function DashboardPage({
                 <p className="text-muted-foreground text-center py-4">Ótimo! Nenhum aluno com baixa atividade.</p>
                )}
             </CardContent>
-          </Card>
-      </div>
-    </div>
+ </Card>
+ </div>
+ </div>
   );
 }
