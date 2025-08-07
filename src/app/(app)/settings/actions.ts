@@ -118,7 +118,7 @@ export async function deleteUserAccount() {
   const { error: deletionError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
   
   if (deletionError) {
-    console.error('Error deleting user account:', deletionError);
+    console.error('Error deleting user account:', deletionError.message);
     return {
       error: 'Ocorreu um erro e não foi possível excluir sua conta. Por favor, tente novamente.',
     };
