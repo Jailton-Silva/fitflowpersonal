@@ -16,6 +16,7 @@ import { Student } from "@/lib/definitions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import OnboardingGuide from "@/components/dashboard/onboarding-guide"; // Import the new component
 
 async function getDashboardData(from: string, to: string) {
   const supabase = createClient();
@@ -223,6 +224,7 @@ export default async function DashboardPage({
   const from = searchParams.from || format(subDays(new Date(), 180), 'yyyy-MM-dd'); // Default to last 6 months
 
   const data = await getDashboardData(from, to);
+  const showOnboarding = data.totalStudents === 0;
 
   return (
     <div className="space-y-6">
@@ -230,6 +232,9 @@ export default async function DashboardPage({
         <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
         <DateRangeFilter defaultFrom={from} defaultTo={to} />
       </div>
+
+      {showOnboarding && <OnboardingGuide />}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -309,7 +314,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
@@ -338,7 +343,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
@@ -363,5 +368,3 @@ export default async function DashboardPage({
     </div>
   );
 }
-
-    
