@@ -48,6 +48,7 @@ export default function PasswordForm() {
             id="password" 
             name="password" 
             type="password" 
+            autoComplete="new-password"
             {...form.register('password')}
             required 
             />
