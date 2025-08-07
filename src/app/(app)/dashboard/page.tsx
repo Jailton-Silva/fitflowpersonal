@@ -55,11 +55,16 @@ async function getDashboardData(from: string, to: string) {
   const fromDate = parse(from, 'yyyy-MM-dd', new Date());
   const toDate = parse(to, 'yyyy-MM-dd', new Date());
 
-  const { data: allStudents, count: totalStudents } = await supabase
+  const { data: allStudents, count: totalStudents, error } = await supabase
     .from('students')
     .select('id, name, avatar_url, created_at', { count: 'exact' })
     .eq('trainer_id', trainerId)
     .eq('status', 'active');
+  
+  if (error) {
+      console.error("Dashboard data error:", error);
+      return emptyData;
+  }
 
   const studentIdList = (allStudents ?? []).map(s => s.id);
 
@@ -74,7 +79,7 @@ async function getDashboardData(from: string, to: string) {
   const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
   const lastMonth = subDays(today, 30);
   
-  // Batch all queries
+  // Batch all other queries
   const [
       studentsCountLastMonthResult,
       activeWorkoutsResult,
@@ -142,13 +147,16 @@ async function getDashboardData(from: string, to: string) {
   const studentActivity: {[studentId: string]: {last_activity: string, completed_count: number}} = {};
   recentSessions.forEach(session => {
       if(!studentActivity[session.student_id]) {
-          studentActivity[session.student_id] = { last_activity: session.completed_at || session.started_at, completed_count: 0};
+          studentActivity[session.student_id] = { last_activity: session.started_at, completed_count: 0};
       }
       if(session.completed_at) {
         studentActivity[session.student_id].completed_count++;
       }
-      if (new Date(session.completed_at || session.started_at) > new Date(studentActivity[session.student_id].last_activity)) {
-        studentActivity[session.student_id].last_activity = session.completed_at || session.started_at;
+      const currentLastActivity = studentActivity[session.student_id].last_activity;
+      const sessionActivityDate = session.completed_at || session.started_at;
+
+      if (new Date(sessionActivityDate) > new Date(currentLastActivity)) {
+        studentActivity[session.student_id].last_activity = sessionActivityDate;
       }
   });
 
@@ -285,7 +293,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
@@ -314,7 +322,7 @@ export default async function DashboardPage({
                         <li key={student.id} className="flex items-center gap-4">
                            <Avatar>
                                 <AvatarImage src={student.avatar_url || undefined} alt={student.name} />
-                                <AvatarFallback>{student.name.charAt(0)}</Fallback>
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                                 <Link href={`/students/${student.id}`} className="font-semibold hover:underline">{student.name}</Link>
