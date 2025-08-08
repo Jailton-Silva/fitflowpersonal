@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect authenticated routes for trainers
-  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings"];
+  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing"];
   if (!session && trainerProtectedPaths.some(p => pathname.startsWith(p))) {
     const url = new URL("/login", request.url);
     url.searchParams.set("redirectedFrom", pathname);
@@ -81,6 +81,7 @@ export const config = {
     "/schedule/:path*", 
     "/exercises/:path*", 
     "/settings",
+    "/billing",
     "/login", 
     "/signup",
     "/forgot-password",

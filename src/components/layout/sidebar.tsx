@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout, Shapes, Settings } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Calendar, Sprout, Shapes, Settings, CreditCard } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,8 +14,12 @@ const navItems = [
   { href: "/templates", label: "Templates", icon: Shapes },
   { href: "/schedule", label: "Agenda", icon: Calendar },
   { href: "/exercises", label: "Exercícios", icon: Sprout },
-  { href: "/settings", label: "Configurações", icon: Settings },
 ];
+
+const secondaryNavItems = [
+    { href: "/billing", label: "Planos e Preços", icon: CreditCard },
+    { href: "/settings", label: "Configurações", icon: Settings },
+]
 
 export function NavContent() {
   const pathname = usePathname();
@@ -27,8 +31,8 @@ export function NavContent() {
           <span className="">FitFlow</span>
         </Link>
       </div>
-      <div className="flex-1">
-        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+      <div className="flex-1 overflow-y-auto">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -42,6 +46,23 @@ export function NavContent() {
               {label}
             </Link>
           ))}
+        </nav>
+      </div>
+       <div className="mt-auto p-4">
+         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 gap-1">
+            {secondaryNavItems.map(({ href, label, icon: Icon }) => (
+                 <Link
+                key={href}
+                href={href}
+                className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted",
+                    (pathname === href || (href !== "/dashboard" && pathname.startsWith(href))) && "bg-muted text-primary"
+                )}
+                >
+                <Icon className="h-4 w-4" />
+                {label}
+                </Link>
+            ))}
         </nav>
       </div>
     </>
