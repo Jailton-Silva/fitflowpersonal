@@ -55,18 +55,18 @@ async function getDashboardData(from: string, to: string) {
   const fromDate = parse(from, 'yyyy-MM-dd', new Date());
   const toDate = parse(to, 'yyyy-MM-dd', new Date());
 
-  const { data: allStudents, count: totalStudents, error } = await supabase
+  const { data: allStudents, count: totalStudents } = await supabase
     .from('students')
     .select('id, name, avatar_url, created_at', { count: 'exact' })
     .eq('trainer_id', trainerId)
     .eq('status', 'active');
   
-  if (error) {
-      console.error("Dashboard data error:", error);
+  if (!allStudents) {
+      console.error("Dashboard data error: could not fetch students");
       return emptyData;
   }
 
-  const studentIdList = (allStudents ?? []).map(s => s.id);
+  const studentIdList = allStudents.map(s => s.id);
 
   if (studentIdList.length === 0) {
     return {
@@ -160,12 +160,12 @@ async function getDashboardData(from: string, to: string) {
       }
   });
 
-  const mostEngagedStudents = (allStudents ?? [])
+  const mostEngagedStudents = allStudents
     .map(s => ({...s, completed_count: studentActivity[s.id]?.completed_count || 0}))
     .sort((a,b) => b.completed_count - a.completed_count)
     .slice(0, 3);
   
-  const lowActivityStudents = (allStudents ?? [])
+  const lowActivityStudents = allStudents
     .filter(s => {
         const lastActivityDate = studentActivity[s.id]?.last_activity;
         const studentCreationDate = new Date(s.created_at);
