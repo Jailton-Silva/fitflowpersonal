@@ -89,7 +89,7 @@ export default async function BillingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                 {plans.map(plan => (
-                    <Card key={plan.name} className={`flex flex-col ${plan.isCurrent ? 'border-primary border-2' : ''} ${plan.isPopular ? 'shadow-lg' : ''}`}>
+                    <Card key={plan.name} className={`relative flex flex-col ${plan.isCurrent ? 'border-primary border-2' : ''} ${plan.isPopular ? 'shadow-lg' : ''}`}>
                         {plan.isPopular && (
                             <div className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
                                 <Star className="h-4 w-4" /> Popular
