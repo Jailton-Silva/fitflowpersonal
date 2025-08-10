@@ -35,8 +35,25 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
   const { pathname } = request.nextUrl;
 
+  // Protect admin route
+  if (pathname.startsWith('/admin')) {
+      if (!session) {
+          return NextResponse.redirect(new URL("/login", request.url));
+      }
+
+      const { data: trainer } = await supabase
+        .from('trainers')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (trainer?.role !== 'admin') {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+  }
+
   // Protect authenticated routes for trainers
-  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing", "/admin"];
+  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing"];
   if (!session && trainerProtectedPaths.some(p => pathname.startsWith(p))) {
     const url = new URL("/login", request.url);
     url.searchParams.set("redirectedFrom", pathname);

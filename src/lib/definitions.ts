@@ -16,6 +16,7 @@ export type Trainer = {
   plan: 'Start' | 'Pro' | 'Elite';
   billing_cycle_end: string;
   status: 'active' | 'inactive' | 'banned';
+  role?: 'admin' | 'trainer';
 };
 
 export type Student = {
