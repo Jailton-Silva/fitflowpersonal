@@ -1,110 +1,31 @@
 
-"use client";
-
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { Trainer } from "@/lib/definitions";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AdminTrainerCard, AdminTrainerTableRow, AdminTrainerTableHeader } from "@/components/admin/trainer-list-components";
+import AdminClientPage from "./client-page";
 
-export default function AdminPage() {
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [filteredTrainers, setFilteredTrainers] = useState<Trainer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    const getTrainers = async () => {
-      setIsLoading(true);
-      const supabase = createClient();
-      
-      // In a real scenario, you'd protect this with RLS or an edge function
-      // to ensure only admins can fetch all trainers.
-      const { data, error } = await supabase
+async function getTrainers() {
+    const supabase = createClient();
+    
+    // This query is now running on the server, bypassing RLS issues for an admin role
+    // In a production app, you would have specific RLS policies for admins.
+    const { data, error } = await supabase
         .from("trainers")
         .select("*")
-        .eq('role', 'trainer') // Only fetch users with the 'trainer' role
+        .eq('role', 'trainer')
         .order("created_at", { ascending: false });
 
-      if (error) {
+    if (error) {
         console.error("Error fetching trainers:", error);
-      } else {
-        setTrainers(data as Trainer[]);
-        setFilteredTrainers(data as Trainer[]);
-      }
-      setIsLoading(false);
-    };
+        return [];
+    }
+    
+    return data as Trainer[];
+}
 
-    getTrainers();
-  }, []);
-
-  useEffect(() => {
-    const lowercasedFilter = searchTerm.toLowerCase();
-    const filteredData = trainers.filter((item) => {
-      return item.name.toLowerCase().includes(lowercasedFilter) ||
-             item.email.toLowerCase().includes(lowercasedFilter);
-    });
-    setFilteredTrainers(filteredData);
-  }, [searchTerm, trainers]);
+export default async function AdminPage() {
+  const trainers = await getTrainers();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold font-headline">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Gerencie todos os treinadores da plataforma.</p>
-        </div>
-      </div>
-
-       <div className="rounded-md border bg-card">
-        <div className="p-4">
-            <Input
-              placeholder="Filtrar por nome ou email..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="max-w-sm"
-            />
-        </div>
-
-        {isLoading ? (
-            <div className="p-4 space-y-2">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-            </div>
-        ) : (
-          <>
-            {/* Mobile View */}
-            <div className="md:hidden">
-                {filteredTrainers.length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {filteredTrainers.map((trainer) => <AdminTrainerCard key={trainer.id} trainer={trainer} />)}
-                  </div>
-                ) : (
-                  <p className="p-4 text-center text-muted-foreground">Nenhum treinador encontrado.</p>
-                )}
-            </div>
-            {/* Desktop View */}
-            <div className="hidden md:block">
-               <table className="w-full text-sm">
-                  <AdminTrainerTableHeader />
-                  <tbody className="divide-y divide-border">
-                    {filteredTrainers.length > 0 ? (
-                      filteredTrainers.map((trainer) => <AdminTrainerTableRow key={trainer.id} trainer={trainer} />)
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="p-4 text-center text-muted-foreground">
-                          Nenhum treinador encontrado.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-               </table>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+      <AdminClientPage trainers={trainers} />
   );
 }
