@@ -7,6 +7,7 @@ import { KeyRound, Trash2 } from 'lucide-react';
 import ProfileForm from './profile-form';
 import PasswordForm from './password-form';
 import SubscriptionCard from './subscription-card';
+import PwaInstallButton from './pwa-install-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export default function SettingsClientPage({ user, trainer }: SettingsClientPage
   const [confirmationInput, setConfirmationInput] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const isAdmin = trainer.role === 'admin';
 
   const handleAccountDeletion = async () => {
     if (confirmationInput !== DELETE_CONFIRMATION_TEXT) {
@@ -131,8 +133,9 @@ export default function SettingsClientPage({ user, trainer }: SettingsClientPage
 
         </div>
 
-        <div>
-          <SubscriptionCard trainer={trainer} />
+        <div className="space-y-6">
+          {!isAdmin && <SubscriptionCard trainer={trainer} />}
+          <PwaInstallButton />
         </div>
       </div>
     </div>
