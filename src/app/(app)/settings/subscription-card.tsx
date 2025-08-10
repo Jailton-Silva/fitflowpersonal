@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trainer } from '@/lib/definitions';
@@ -30,8 +31,20 @@ const planFeatures = {
 
 
 export default function SubscriptionCard({ trainer }: { trainer: Trainer }) {
-    const hasBillingDate = trainer.billing_cycle_end;
-    const trialExpired = hasBillingDate ? isPast(new Date(trainer.billing_cycle_end)) : false;
+    const [statusInfo, setStatusInfo] = useState<{
+        isExpired: boolean | null;
+        formattedDate: string | null;
+    }>({ isExpired: null, formattedDate: null });
+
+    useEffect(() => {
+        if (trainer.billing_cycle_end) {
+            const endDate = new Date(trainer.billing_cycle_end);
+            setStatusInfo({
+                isExpired: isPast(endDate),
+                formattedDate: format(endDate, "dd/MM/yyyy", { locale: ptBR })
+            });
+        }
+    }, [trainer.billing_cycle_end]);
     
     return (
          <Card>
@@ -48,13 +61,13 @@ export default function SubscriptionCard({ trainer }: { trainer: Trainer }) {
               </div>
               <div>
                 <p className="text-sm font-medium">Status:</p>
-                {hasBillingDate ? (
+                {statusInfo.formattedDate !== null ? (
                   <>
-                    <p className={`font-semibold ${trialExpired ? 'text-destructive' : 'text-green-600'}`}>
-                        {trialExpired ? 'Período de teste expirado' : 'Período de teste ativo'}
+                    <p className={`font-semibold ${statusInfo.isExpired ? 'text-destructive' : 'text-green-600'}`}>
+                        {statusInfo.isExpired ? 'Período de teste expirado' : 'Período de teste ativo'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        Sua próxima fatura será em {format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy", { locale: ptBR })}.
+                        Sua próxima fatura será em {statusInfo.formattedDate}.
                     </p>
                   </>
                 ) : (
