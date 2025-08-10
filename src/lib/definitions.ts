@@ -14,6 +14,7 @@ export type Trainer = {
   updated_at: string;
   plan: 'Start' | 'Pro' | 'Elite';
   billing_cycle_end: string;
+  status: 'active' | 'inactive' | 'banned';
 };
 
 export type Student = {
