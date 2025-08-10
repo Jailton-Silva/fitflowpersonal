@@ -24,6 +24,7 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from("trainers")
         .select("*")
+        .eq('role', 'trainer') // Only fetch users with the 'trainer' role
         .order("created_at", { ascending: false });
 
       if (error) {
