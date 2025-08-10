@@ -29,15 +29,26 @@ export default function LoginPage({
     const password = formData.get("password") as string;
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
+    if (error || !authData.user) {
       const url = new URL("/login", "https://fitflowpersonal.vercel.app");
       url.searchParams.set("message", "E-mail ou senha inválidos. Por favor, tente novamente.");
       return redirect(url.toString());
+    }
+
+    // Check user role after successful login
+    const { data: trainer } = await supabase
+        .from('trainers')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .single();
+    
+    if (trainer?.role === 'admin') {
+        return redirect('/admin');
     }
 
     return redirect("/dashboard");

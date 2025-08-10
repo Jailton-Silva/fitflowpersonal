@@ -75,7 +75,7 @@ function TrainerActions({ trainer }: { trainer: Trainer }) {
 
 // Component for Mobile Card View
 export function AdminTrainerCard({ trainer }: { trainer: Trainer }) {
-    const trialExpired = isPast(new Date(trainer.billing_cycle_end));
+    const trialExpired = trainer.billing_cycle_end && isPast(new Date(trainer.billing_cycle_end));
     return (
         <div className="p-4 flex items-center gap-4">
              <Avatar className="h-12 w-12">
@@ -97,7 +97,7 @@ export function AdminTrainerCard({ trainer }: { trainer: Trainer }) {
                             {trialExpired ? "Inativo" : "Ativo"}
                         </Badge>
                     </div>
-                     <p className="text-xs">Próximo Venc: {format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy")}</p>
+                     <p className="text-xs">Próximo Venc: {trainer.billing_cycle_end ? format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy") : 'N/A'}</p>
                 </div>
             </div>
         </div>
@@ -106,7 +106,7 @@ export function AdminTrainerCard({ trainer }: { trainer: Trainer }) {
 
 // Component for Desktop Table Row
 export function AdminTrainerTableRow({ trainer }: { trainer: Trainer }) {
-  const trialExpired = isPast(new Date(trainer.billing_cycle_end));
+  const trialExpired = trainer.billing_cycle_end && isPast(new Date(trainer.billing_cycle_end));
   return (
     <tr className="hover:bg-muted/50">
       <td className="p-4">
@@ -123,7 +123,7 @@ export function AdminTrainerTableRow({ trainer }: { trainer: Trainer }) {
         </Badge>
       </td>
       <td className="p-4 text-muted-foreground">{format(new Date(trainer.created_at), "dd/MM/yyyy")}</td>
-      <td className="p-4 text-muted-foreground">{format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy")}</td>
+      <td className="p-4 text-muted-foreground">{trainer.billing_cycle_end ? format(new Date(trainer.billing_cycle_end), "dd/MM/yyyy") : 'N/A'}</td>
       <td className="p-4 text-right">
         <TrainerActions trainer={trainer} />
       </td>
