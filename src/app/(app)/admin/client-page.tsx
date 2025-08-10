@@ -8,19 +8,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AdminTrainerCard, AdminTrainerTableRow, AdminTrainerTableHeader } from "@/components/admin/trainer-list-components";
 
 export default function AdminClientPage({ trainers: initialTrainers }: { trainers: Trainer[] }) {
-  const [trainers, setTrainers] = useState<Trainer[]>(initialTrainers);
   const [filteredTrainers, setFilteredTrainers] = useState<Trainer[]>(initialTrainers);
-  const [isLoading, setIsLoading] = useState(false); // Set to false as data is pre-loaded
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const lowercasedFilter = searchTerm.toLowerCase();
-    const filteredData = trainers.filter((item) => {
-      return item.name.toLowerCase().includes(lowercasedFilter) ||
-             item.email.toLowerCase().includes(lowercasedFilter);
-    });
-    setFilteredTrainers(filteredData);
-  }, [searchTerm, trainers]);
+    // No need to set initial trainers again if they are passed as props
+    setFilteredTrainers(initialTrainers.filter(item => {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        return item.name.toLowerCase().includes(lowercasedFilter) ||
+               item.email.toLowerCase().includes(lowercasedFilter);
+    }));
+  }, [searchTerm, initialTrainers]);
 
   return (
     <div className="space-y-6">
@@ -68,7 +67,7 @@ export default function AdminClientPage({ trainers: initialTrainers }: { trainer
                       filteredTrainers.map((trainer) => <AdminTrainerTableRow key={trainer.id} trainer={trainer} />)
                     ) : (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                        <td colSpan={7} className="p-4 text-center text-muted-foreground">
                           Nenhum treinador encontrado.
                         </td>
                       </tr>
