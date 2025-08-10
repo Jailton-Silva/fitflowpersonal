@@ -9,16 +9,17 @@ import { AdminTrainerCard, AdminTrainerTableRow, AdminTrainerTableHeader } from 
 
 export default function AdminClientPage({ trainers: initialTrainers }: { trainers: Trainer[] }) {
   const [filteredTrainers, setFilteredTrainers] = useState<Trainer[]>(initialTrainers);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Kept for future client-side loading states
   const [searchTerm, setSearchTerm] = useState("");
 
+  // This effect will now correctly filter the `initialTrainers` prop whenever the search term changes.
   useEffect(() => {
-    // No need to set initial trainers again if they are passed as props
-    setFilteredTrainers(initialTrainers.filter(item => {
-        const lowercasedFilter = searchTerm.toLowerCase();
-        return item.name.toLowerCase().includes(lowercasedFilter) ||
-               item.email.toLowerCase().includes(lowercasedFilter);
-    }));
+    const lowercasedFilter = searchTerm.toLowerCase();
+    const filteredData = initialTrainers.filter(item => 
+        item.name.toLowerCase().includes(lowercasedFilter) ||
+        item.email.toLowerCase().includes(lowercasedFilter)
+    );
+    setFilteredTrainers(filteredData);
   }, [searchTerm, initialTrainers]);
 
   return (
