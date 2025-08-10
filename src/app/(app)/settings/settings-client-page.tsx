@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -67,6 +68,10 @@ export default function SettingsClientPage({ user, trainer }: SettingsClientPage
         // The redirection will happen on the server action
     }
   };
+
+  if (!trainer) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
