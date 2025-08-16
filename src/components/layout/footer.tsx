@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function Footer() G {
+export default function Footer() {
   return (
     <footer className="py-6 mt-8 border-t">
       <div className="container mx-auto px-4">
@@ -9,10 +9,10 @@ export default function Footer() G {
             © {new Date().getFullYear()} Seu App de Treinos. Todos os direitos reservados.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <Link href="/termos-de-uso" className="text-sm text-gray-600 hover:underline">
+            <Link href="/terms-and-conditions" className="text-sm text-gray-600 hover:underline">
               Termos de Uso
             </Link>
-            <Link href="/politica-de-privacidade" className="text-sm text-gray-600 hover:underline">
+            <Link href="/privacy-policy" className="text-sm text-gray-600 hover:underline">
               Política de Privacidade
             </Link>
           </div>

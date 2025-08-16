@@ -113,7 +113,7 @@ export default function SignupPage({
                     Aceitar termos e condições
                     </label>
                     <p className="text-sm text-muted-foreground">
-                    Você concorda com nossos <Link href="/termos-de-uso" className="underline">Termos de Uso</Link> e <Link href="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+                    Você concorda com nossos <Link href="/terms-and-conditions" className="underline">Termos de Uso</Link> e <Link href="/privacy-policy" className="underline">Política de Privacidade</Link>.
                     </p>
                 </div>
             </div>

@@ -41,10 +41,10 @@ export default function ForgotPasswordPage({
 
     if (error) {
       console.error('Reset Password Error:', error);
-      return redirect("/forgot-password?message=N&atilde;o foi poss&iacute;vel enviar o link de redefini&ccedil;&atilde;o. Verifique o e-mail digitado.");
+      return redirect("/forgot?message=N&atilde;o foi poss&iacute;vel enviar o link de redefini&ccedil;&atilde;o. Verifique o e-mail digitado.");
     }
 
-    return redirect("/forgot-password?message=Se o e-mail estiver cadastrado, um link para redefini&ccedil;&atilde;o de senha foi enviado.");
+    return redirect("/forgot?message=Se o e-mail estiver cadastrado, um link para redefini&ccedil;&atilde;o de senha foi enviado.");
   };
 
   return (

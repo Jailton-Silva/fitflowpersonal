@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -60,9 +59,9 @@ export default function ExercisesPage() {
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase();
     const filteredData = exercises.filter((item) => {
-      return item.name.toLowerCase().includes(lowercasedFilter) || 
-             (item.muscle_groups as string[])?.join(' ').toLowerCase().includes(lowercasedFilter) ||
-             item.equipment?.toLowerCase().includes(lowercasedFilter);
+      return item.name.toLowerCase().includes(lowercasedFilter) ||
+        (item.muscle_groups as string[])?.join(' ').toLowerCase().includes(lowercasedFilter) ||
+        item.equipment?.toLowerCase().includes(lowercasedFilter);
     });
     setFilteredExercises(filteredData);
   }, [searchTerm, exercises]);
@@ -82,50 +81,50 @@ export default function ExercisesPage() {
         </ExerciseForm>
       </div>
 
-       <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card">
         <div className="p-4">
-            <Input
-              placeholder="Filtrar por nome, músculo..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="max-w-sm"
-            />
+          <Input
+            placeholder="Filtrar por nome, músculo..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="max-w-sm"
+          />
         </div>
 
         {isLoading ? (
-            <div className="p-4 space-y-2">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-            </div>
+          <div className="p-4 space-y-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
         ) : (
           <>
             {/* Mobile View */}
             <div className="md:hidden">
-                {filteredExercises.length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {filteredExercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} />)}
-                  </div>
-                ) : (
-                  <p className="p-4 text-center text-muted-foreground">Nenhum exercício encontrado.</p>
-                )}
+              {filteredExercises.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {filteredExercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} />)}
+                </div>
+              ) : (
+                <p className="p-4 text-center text-muted-foreground">Nenhum exercício encontrado.</p>
+              )}
             </div>
             {/* Desktop View */}
             <div className="hidden md:block">
-               <table className="w-full text-sm">
-                  <ExerciseTableHeader />
-                  <tbody className="divide-y divide-border">
-                    {filteredExercises.length > 0 ? (
-                      filteredExercises.map((exercise) => <ExerciseTableRow key={exercise.id} exercise={exercise} />)
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                          Nenhum exercício encontrado.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-               </table>
+              <table className="w-full text-sm">
+                <ExerciseTableHeader />
+                <tbody className="divide-y divide-border">
+                  {filteredExercises.length > 0 ? (
+                    filteredExercises.map((exercise) => <ExerciseTableRow key={exercise.id} exercise={exercise} />)
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                        Nenhum exercício encontrado.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </>
         )}

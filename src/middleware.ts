@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated trainers from public auth pages
-  const publicAuthPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
+  const publicAuthPaths = ["/login", "/signup", "/forgot", "/reset-password"];
   if (session && publicAuthPaths.some(p => pathname.startsWith(p))) {
     // Exception: Allow access to reset-password if there's a recovery token,
     // as the user might be logged in on one device but trying to reset from another.
@@ -102,7 +102,7 @@ export const config = {
     "/admin/:path*",
     "/login", 
     "/signup",
-    "/forgot-password",
+    "/forgot",
     "/reset-password",
     "/auth/callback",
     "/public/workout/:path*",
