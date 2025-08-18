@@ -5,7 +5,12 @@ import type { ProgressData } from "@/components/dashboard/progress-chart";
 import { createClient } from "@/lib/supabase/server";
 import { differenceInDays, endOfWeek, format, parse, startOfWeek, subDays, sub } from "date-fns";
 
-export const getDashboardData = async ({ from, to }: { from: string; to: string }) => {
+interface GetDashboardData {
+  to: string;
+  from: string;
+}
+
+export const getDashboardData = async ({ from, to }: GetDashboardData) => {
   const db = createClient();
   const { data: { user } } = await db.auth.getUser();
 
