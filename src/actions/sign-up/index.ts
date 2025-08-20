@@ -6,12 +6,20 @@ interface SignUp {
   name: string;
   email: string;
   password: string;
-  terms: string;
+  terms: boolean;
   origin: string;
 }
 
-export const signUpAction = async ({ name, email, password, terms, origin }: SignUp) => {
-  if (terms !== "on") throw new Error("Aceite os termos de uso da plataforma")
+export const signUpAction = async ({
+  name,
+  email,
+  password,
+  terms,
+  origin
+}: SignUp): Promise<{ success: boolean; message: string }> => {
+  if (terms === false) {
+    return { success: false, message: "Aceite os termos de uso da plataforma" }
+  }
 
   const supabase = createClient();
 
@@ -19,16 +27,27 @@ export const signUpAction = async ({ name, email, password, terms, origin }: Sig
     email,
     password,
     options: {
-      data: {
-        name,
-      },
-      emailRedirectTo: `${origin}/auth/callback`
-    }
+      data: name ? { name } : undefined,
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   });
 
   if (error) {
-    throw new Error("Não foi possível realizar o cadastro. O e-mail pode já estar em uso ou a senha é muito fraca.")
-  };
+    return {
+      success: false,
+      message: "Não foi possível realizar o cadastro. Tente novamente.",
+    };
+  }
 
-  return data;
-}
+  if (data.user?.identities?.length === 0) {
+    return {
+      success: false,
+      message: "Este e-mail já está cadastrado. Por favor, faça login ou redefina sua senha.",
+    }
+  }
+
+  return {
+    success: true,
+    message: "Verifique seu e-mail para continuar o processo de cadastro.",
+  };
+};

@@ -9,14 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SignUpForm } from "./_components/sign-up-form";
-import { headers } from "next/headers";
 
-export default async function SignupPage({
-  searchParams,
-}: {
-  searchParams: { message: string, type?: string };
-}) {
-  const headersOrigin = (await headers()).get("origin")
+export default async function SignupPage() {
   // const signUp = async (formData: FormData) => {
   //   "use server";
 
@@ -72,12 +66,7 @@ export default async function SignupPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {searchParams?.message && (
-            <div className={`mb-4 p-4 text-center text-sm rounded-md ${searchParams.type === 'error' ? 'text-destructive bg-destructive/10' : 'text-foreground bg-accent/20'}`}>
-              {searchParams.message}
-            </div>
-          )}
-          <SignUpForm origin={headersOrigin!} />
+          <SignUpForm />
 
           <div className="mt-4 text-center text-sm">
             Já tem uma conta?{" "}
