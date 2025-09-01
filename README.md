@@ -5,6 +5,10 @@ This is a NextJS starter in Firebase Studio.
 To get started, take a look at src/app/page.tsx.
 
 # TODO
+## PRIORIDADE
+- [] Página de ADMIN
+- [] Validar formas de pagamento
+## NORMAL
 - [] Colocar informativo na tela para confirmar no e-mail ao cadastrar
 - [] Corrigir Total de alunos desde o mes passado que esta fixo como se tivesse sempre positivo
 - [] Ajustar layout do dashboard

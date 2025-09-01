@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -18,7 +17,8 @@ const trainerNavItems = [
 ];
 
 const adminNavItems = [
-    { href: "/admin", label: "Admin Dashboard", icon: Shield },
+    { href: "/dashboard", label: "Dashboard", icon: Shield },
+    { href: "/trainers", label: "Treinadores", icon: Users },
 ]
 
 const secondaryNavItems = [
@@ -31,7 +31,7 @@ export function NavContent() {
   const { trainer } = useTrainer();
   const isAdmin = trainer?.role === 'admin';
 
-  const primaryNavItems = isAdmin ? adminNavItems : trainerNavItems;
+  const primaryNavItems = !isAdmin ? adminNavItems : trainerNavItems;
 
   return (
     <>

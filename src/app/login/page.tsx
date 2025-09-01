@@ -34,6 +34,7 @@ export default function LoginPage({
             </div>
           )}
           <SignInForm />
+
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{" "}
             <Link href="/signup" className="underline">
