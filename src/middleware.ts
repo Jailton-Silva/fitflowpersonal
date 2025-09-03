@@ -36,21 +36,21 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect admin route
-  if (pathname.startsWith('/admin')) {
-      if (!session) {
-          return NextResponse.redirect(new URL("/login", request.url));
-      }
+  // if (pathname.startsWith('/admin')) {
+  //     if (!session) {
+  //         return NextResponse.redirect(new URL("/login", request.url));
+  //     }
 
-      const { data: trainer } = await supabase
-        .from('trainers')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single();
+  //     const { data: trainer } = await supabase
+  //       .from('trainers')
+  //       .select('role')
+  //       .eq('user_id', session.user.id)
+  //       .single();
       
-      if (trainer?.role !== 'admin') {
-          return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-  }
+  //     if (trainer?.role !== 'admin') {
+  //         return NextResponse.redirect(new URL("/dashboard", request.url));
+  //     }
+  // }
 
   // Protect authenticated routes for trainers
   const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing"];

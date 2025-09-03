@@ -31,7 +31,7 @@ export function NavContent() {
   const { trainer } = useTrainer();
   const isAdmin = trainer?.role === 'admin';
 
-  const primaryNavItems = !isAdmin ? adminNavItems : trainerNavItems;
+  const primaryNavItems = isAdmin ? adminNavItems : trainerNavItems;
 
   return (
     <>

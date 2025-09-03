@@ -31,7 +31,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      { trainer?.role !== "admin" ? (
+      { trainer?.role === "admin" ? (
         <AdminMetrics
           from={from}
           to={to}
