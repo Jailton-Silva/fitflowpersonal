@@ -6,7 +6,7 @@ import { WeekView } from "@/components/schedule/week-view";
 import { ScheduleFilters } from "@/components/schedule/schedule-filters";
 
 async function getScheduleData(studentId?: string, status?: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { appointments: [], students: [] };

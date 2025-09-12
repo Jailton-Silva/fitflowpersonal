@@ -4,7 +4,7 @@ import { Trainer } from "@/lib/definitions";
 import AdminClientPage from "./client-page";
 
 async function getTrainers() {
-    const supabase = createClient();
+    const supabase = await createClient();
     const PAGE_SIZE = 1000;
     let allTrainers: Trainer[] = [];
     let page = 0;

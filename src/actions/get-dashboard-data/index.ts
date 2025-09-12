@@ -11,7 +11,7 @@ interface GetDashboardData {
 }
 
 export const getDashboardData = async ({ from, to }: GetDashboardData) => {
-  const db = createClient();
+  const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
 
   const emptyData = {

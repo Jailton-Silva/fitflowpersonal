@@ -12,7 +12,7 @@ export async function uploadAvatar(studentId: string, formData: FormData) {
     }
     
     // Use the standard client for storage upload, respecting storage policies
-    const supabase = createClient();
+    const supabase = await createClient();
     const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage

@@ -12,7 +12,7 @@ const passwordSchema = z.object({
 
 
 export async function updateTrainerProfile(userId: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const name = formData.get('name') as string;
   const phone = formData.get('phone') as string;
@@ -43,7 +43,7 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
         return { error: 'Nenhum arquivo enviado.' };
     }
     
-    const supabase = createClient();
+    const supabase = await createClient();
     const filePath = `trainer-${trainerId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage
@@ -81,7 +81,7 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
 }
 
 export async function updateUserPassword(prevState: any, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const password = formData.get('password') as string;
   
@@ -108,7 +108,7 @@ export async function updateUserPassword(prevState: any, formData: FormData) {
 }
 
 export async function deleteUserAccount() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: { user }, error: getUserError } = await supabase.auth.getUser();
   

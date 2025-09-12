@@ -16,7 +16,7 @@ export const createTrainerAction = async ({
   password,
   phone
 }: CreateTrainer): Promise<{ success: boolean; message: string }> => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     // 1. Criar usuário na autenticação
@@ -51,7 +51,7 @@ export const createTrainerAction = async ({
           name,
           email,
           phone: phone || null,
-          plan: "Start",
+          plan: "Free",
           billing_cycle_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
           status: "active",
           role: "trainer",

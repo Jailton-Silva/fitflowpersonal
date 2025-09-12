@@ -8,7 +8,7 @@ interface SignIn {
 }
 
 export const signInAction = async ({ email, password }: SignIn) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,

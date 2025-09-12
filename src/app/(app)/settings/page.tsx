@@ -5,7 +5,7 @@ import SettingsClientPage from './settings-client-page';
 import { Trainer, User } from '@/lib/definitions';
 
 async function getTrainerProfile() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: {user},
   } = await supabase.auth.getUser();
