@@ -39,6 +39,7 @@ export default function TrainersPage() {
       let query = supabase
         .from("trainers")
         .select("*")
+        .eq('role', 'trainer')
         .order("name", { ascending: true });
 
       // Se não for admin, só mostrar treinadores ativos

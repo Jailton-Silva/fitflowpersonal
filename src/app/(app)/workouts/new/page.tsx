@@ -1,12 +1,12 @@
+"use server";
 
 import WorkoutBuilder from "@/components/workouts/workout-builder";
-import { createClient } from "@/lib/supabase/server";
 import { Exercise, Student, Workout } from "@/lib/definitions";
-import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 async function getWorkoutInitialData(templateId?: string) {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
         return { students: [], exercises: [], template: undefined };

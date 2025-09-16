@@ -13,10 +13,14 @@ export type Trainer = {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
-  plan: 'Start' | 'Pro' | 'Elite';
+  plan: 'Free' | 'Start' | 'Pro' | 'Elite';
   billing_cycle_end: string;
   status: 'active' | 'inactive' | 'banned';
   role: 'admin' | 'trainer';
+  // Campos do Stripe
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status: 'inactive' | 'active' | 'past_due' | 'canceled' | 'unpaid';
 };
 
 export type Student = {

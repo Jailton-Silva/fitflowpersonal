@@ -17,7 +17,7 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescri
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export async function Header() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: trainer } = user ? await supabase.from('trainers').select('avatar_url').eq('user_id', user.id).single() : { data: null };
@@ -26,7 +26,7 @@ export async function Header() {
   const signOut = async () => {
     "use server";
     const supabase = createClient();
-    await supabase.auth.signOut();
+    (await supabase).auth.signOut();
     return redirect("/login");
   };
 

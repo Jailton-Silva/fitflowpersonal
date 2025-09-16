@@ -10,7 +10,7 @@ const planSchema = z.object({
 });
 
 export async function updateUserPlan(prevState: any, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const rawFormData = Object.fromEntries(formData.entries());
 
   const validation = planSchema.safeParse(rawFormData);
