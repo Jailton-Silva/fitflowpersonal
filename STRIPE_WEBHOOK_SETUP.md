@@ -108,6 +108,32 @@ POST /api/test-stripe
 
 Verifique os logs do seu servidor para acompanhar o processamento dos webhooks.
 
+## Preços Dinâmicos
+
+O sistema agora suporta preços dinâmicos do Stripe:
+
+### Funcionalidades
+- ✅ Busca automática de preços do Stripe
+- ✅ Cache de 5 minutos para otimizar performance
+- ✅ Fallback para preços estáticos em caso de erro
+- ✅ Suporte a planos mensais e anuais
+- ✅ Formatação automática de preços em BRL
+
+### Gerenciamento de Cache
+```bash
+# Verificar status do cache
+GET /api/cache/pricing
+
+# Limpar cache (forçar atualização)
+DELETE /api/cache/pricing
+```
+
+### Configuração de Produtos
+Os produtos são mapeados através das variáveis de ambiente:
+- `STRIPE_PLAN_START_ID` → Plano Start
+- `STRIPE_PLAN_PRO_ID` → Plano Pro  
+- `STRIPE_PLAN_ELITE_ID` → Plano Elite
+
 ## Testando o Webhook
 
 1. Use o Stripe CLI para testar webhooks localmente:

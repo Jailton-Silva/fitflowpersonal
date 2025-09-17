@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
 const trainerNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/students", label: "Alunos", icon: Users },
+  { href: "/exercises", label: "Exercícios", icon: Sprout },
   { href: "/workouts", label: "Treinos", icon: Dumbbell },
   { href: "/templates", label: "Templates", icon: Shapes },
   { href: "/schedule", label: "Agenda", icon: Calendar },
-  { href: "/exercises", label: "Exercícios", icon: Sprout },
 ];
 
 const adminNavItems = [

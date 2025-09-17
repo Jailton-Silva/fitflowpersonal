@@ -12,18 +12,30 @@ export default function PlanSelectionForm({
   isCurrent,
   isDisabled = false,
   subscriptionStatus,
+  priceId,
 }: {
   plan: Trainer['plan'];
   trainerId: string;
   isCurrent: boolean;
   isDisabled?: boolean;
   subscriptionStatus?: string;
+  priceId?: string;
 }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCheckout = async () => {
     if (isCurrent || isLoading || isDisabled) return;
+
+    // Para o plano gratuito, não fazer checkout
+    if (plan === 'Free') {
+      toast({
+        title: 'Plano Gratuito',
+        description: 'Você já está no plano gratuito. Faça upgrade para acessar mais recursos.',
+        variant: 'default',
+      });
+      return;
+    }
 
     setIsLoading(true);
     
@@ -36,6 +48,7 @@ export default function PlanSelectionForm({
         body: JSON.stringify({
           plan,
           trainerId,
+          priceId, // Incluir priceId se disponível
         }),
       });
 
@@ -90,6 +103,13 @@ export default function PlanSelectionForm({
     return null;
   };
 
+  const getButtonVariant = () => {
+    if (isCurrent) return 'secondary';
+    if (isDisabled) return 'outline';
+    if (plan === 'Free') return 'outline';
+    return 'default';
+  };
+
   return (
     <div className="w-full">
       <Button
@@ -97,7 +117,7 @@ export default function PlanSelectionForm({
         className="w-full ripple"
         onClick={handleCheckout}
         disabled={isCurrent || isLoading || isDisabled}
-        variant={isCurrent ? 'secondary' : 'default'}
+        variant={getButtonVariant()}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {!isLoading && getButtonIcon()}

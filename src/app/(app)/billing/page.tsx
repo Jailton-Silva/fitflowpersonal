@@ -1,19 +1,10 @@
-
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Star, Clock, Check } from 'lucide-react';
 import PlanSelectionForm from './_components/plan-selection-form';
-
-type PlanCard = {
-    name: 'Free' | 'Start' | 'Pro' | 'Elite';
-    price: string;
-    description: string;
-    features: string[];
-    isCurrent: boolean;
-    isPopular?: boolean;
-    isDisabled?: boolean;
-};
+import { getCachedPricingData } from '@/lib/stripe-pricing-cache';
+import { formatPrice } from '@/lib/stripe-pricing';
 
 async function getTrainerProfile() {
     const supabase = await createClient();
@@ -21,8 +12,6 @@ async function getTrainerProfile() {
     const {
         data: { user },
     } = await supabase.auth.getUser();
-
-    console.log("biling data user =>", user);
 
     if (!user) {
         redirect('/login?next=/billing');
@@ -33,8 +22,6 @@ async function getTrainerProfile() {
         .select('*')
         .eq('user_id', user.id)
         .single();
-    
-    console.log("biling data trainer =>", trainer);
 
     if (error || !trainer) {
         redirect('/dashboard?message=perfil-nao-encontrado');
@@ -43,69 +30,17 @@ async function getTrainerProfile() {
     return { user, trainer };
 }
 
-const planFeatures = {
-    Free: [
-        'Até 1 alunos ativos',
-        'Criação de treinos básicos',
-        'Suporte por email',
-    ],
-    Start: [
-        'Até 20 alunos ativos',
-        'Criação de treinos ilimitada',
-        'Agenda e app para alunos',
-    ],
-    Pro: [
-        'Até 100 alunos ativos',
-        'Tudo do plano Start',
-        'Assistente IA de exercícios',
-        'Relatórios avançados',
-    ],
-    Elite: [
-        'Alunos ilimitados',
-        'Tudo do plano Pro',
-        'Marca branca no app',
-        'Múltiplos treinadores',
-    ]
-}
-
 export default async function BillingPage() {
     const { trainer } = await getTrainerProfile();
 
-    // Determinar o plano atual do trainer
-    const currentPlan = trainer.plan || 'Free';
+    // Buscar preços dinâmicos do Stripe (com cache)
+    const stripePlans = await getCachedPricingData();
 
-    const plans: PlanCard[] = [
-        {
-            name: 'Free',
-            price: '0',
-            description: 'Plano gratuito para começar.',
-            features: planFeatures.Free,
-            isCurrent: currentPlan === 'Free',
-        },
-        {
-            name: 'Start',
-            price: '29',
-            description: 'Ideal para quem está começando.',
-            features: planFeatures.Start,
-            isCurrent: currentPlan === 'Start',
-        },
-        {
-            name: 'Pro',
-            price: '59',
-            description: 'Para personais que buscam crescimento.',
-            features: planFeatures.Pro,
-            isCurrent: currentPlan === 'Pro',
-            isPopular: true,
-        },
-        {
-            name: 'Elite',
-            price: '99',
-            description: 'Para top performers e estúdios.',
-            features: planFeatures.Elite,
-            isCurrent: currentPlan === 'Elite',
-            isDisabled: true,
-        }
-    ];
+    // Marcar plano atual
+    const plansWithCurrentStatus = stripePlans.map(plan => ({
+        ...plan,
+        isCurrent: plan.name === trainer.plan,
+    }));
 
     return (
         <div className="space-y-6">
@@ -119,8 +54,17 @@ export default async function BillingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                {plans.map(plan => (
-                    <Card key={plan.name} className={`relative flex flex-col h-[26.25rem] ${plan.isCurrent ? 'border-primary border-2' : ''} ${plan.isPopular ? 'shadow-lg' : ''} ${plan.isDisabled ? 'opacity-75' : ''}`}>
+                {plansWithCurrentStatus.map(plan => (
+                    <Card 
+                        key={plan.id} 
+                        className={`relative flex flex-col h-[26.25rem] ${
+                            plan.isCurrent ? 'border-primary border-2' : ''
+                        } ${
+                            plan.isPopular ? 'shadow-lg' : ''
+                        } ${
+                            plan.isDisabled ? 'opacity-75' : ''
+                        }`}
+                    >
                         {plan.isPopular && !plan.isCurrent && (
                             <div className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
                                 <Star className="h-4 w-4" /> Popular
@@ -141,10 +85,21 @@ export default async function BillingPage() {
                             <CardDescription>{plan.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1 space-y-4">
-                            <p className="text-4xl font-bold">
-                                {plan.price === '0' ? 'Grátis' : `R$${plan.price}`}
-                                {plan.price !== '0' && <span className="text-lg font-normal text-muted-foreground">/mês</span>}
-                            </p>
+                            <div className="space-y-1">
+                                <p className="text-4xl font-bold">
+                                    {plan.price === '0' ? 'Grátis' : formatPrice(parseFloat(plan.price))}
+                                    {plan.price !== '0' && (
+                                        <span className="text-lg font-normal text-muted-foreground">
+                                            /{plan.interval === 'year' ? 'ano' : 'mês'}
+                                        </span>
+                                    )}
+                                </p>
+                                {plan.price !== '0' && plan.interval === 'year' && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Economize 2 meses por ano
+                                    </p>
+                                )}
+                            </div>
                             <ul className="space-y-2 text-muted-foreground text-sm">
                                 {plan.features.map(feature => (
                                     <li key={feature} className="flex items-center gap-2">
@@ -155,17 +110,18 @@ export default async function BillingPage() {
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <PlanSelectionForm 
-                                plan={plan.name} 
-                                trainerId={trainer.id} 
-                                isCurrent={plan.isCurrent} 
+                            <PlanSelectionForm
+                                plan={plan.name as any}
+                                trainerId={trainer.id}
+                                isCurrent={plan.isCurrent}
                                 isDisabled={plan.isDisabled}
                                 subscriptionStatus={trainer.subscription_status}
+                                priceId={plan.priceId}
                             />
                         </CardFooter>
                     </Card>
                 ))}
             </div>
         </div>
-    )
+    );
 }

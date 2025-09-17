@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { STRIPE_PLANS } from '@/lib/stripe';
+import { getPlanDetails } from '@/lib/stripe-pricing';
 
 export async function POST(request: NextRequest) {
   try {
-    const { plan, trainerId } = await request.json();
+    const { plan, trainerId, priceId } = await request.json();
 
     if (!plan || !trainerId) {
       return NextResponse.json(
@@ -14,9 +15,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS]) {
+    // Para plano gratuito, não criar checkout
+    if (plan === 'Free') {
       return NextResponse.json(
-        { error: 'Plano inválido' },
+        { error: 'Plano gratuito não requer pagamento' },
         { status: 400 }
       );
     }
@@ -46,7 +48,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const planConfig = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+    // Determinar o priceId a ser usado
+    let finalPriceId: string;
+
+    if (priceId) {
+      // Usar priceId fornecido (dinâmico)
+      finalPriceId = priceId;
+    } else {
+      // Fallback para configuração estática
+      const planConfig = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+      if (!planConfig?.priceID) {
+        return NextResponse.json(
+          { error: 'Configuração de preço não encontrada para este plano' },
+          { status: 400 }
+        );
+      }
+      finalPriceId = planConfig.priceID;
+    }
+
+    // Verificar se o priceId existe no Stripe
+    try {
+      await stripe.prices.retrieve(finalPriceId);
+    } catch (error) {
+      console.error('Erro ao verificar priceId:', error);
+      return NextResponse.json(
+        { error: 'Preço inválido ou não encontrado' },
+        { status: 400 }
+      );
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
     // Criar sessão de checkout do Stripe
@@ -55,7 +85,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: planConfig.priceID,
+          price: finalPriceId,
           quantity: 1,
         },
       ],
@@ -65,18 +95,33 @@ export async function POST(request: NextRequest) {
       metadata: {
         trainer_id: trainerId,
         plan: plan,
+        price_id: finalPriceId,
       },
       subscription_data: {
         metadata: {
           trainer_id: trainerId,
           plan: plan,
+          price_id: finalPriceId,
         },
       },
+      // Configurações adicionais para melhorar a experiência
+      billing_address_collection: 'required',
+      tax_id_collection: {
+        enabled: true,
+      },
+      allow_promotion_codes: true,
+    });
+
+    console.log('✅ [CHECKOUT] Sessão criada com sucesso:', {
+      sessionId: session.id,
+      plan,
+      priceId: finalPriceId,
+      trainerId
     });
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Erro ao criar sessão de checkout:', error);
+    console.error('❌ [CHECKOUT] Erro ao criar sessão de checkout:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
