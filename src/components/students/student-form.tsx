@@ -39,7 +39,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, Copy, Upload } from "lucide-react";
-import { uploadAvatar } from "@/app/(app)/students/actions";
+// import { uploadAvatar } from "@/app/(app)/students/actions"; // TODO: Implementar upload de avatar
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const formSchema = z.object({
@@ -131,19 +131,19 @@ export default function StudentForm({ children, student }: StudentFormProps) {
       reader.readAsDataURL(file);
 
       // Upload logic
-      if(isEditMode) {
-          const formData = new FormData();
-          formData.append('avatar', file);
-          startUploadTransition(async () => {
-             const { error, path } = await uploadAvatar(student.id, formData);
-              if (error) {
-                  toast({ title: "Erro no Upload", description: error, variant: "destructive" });
-              } else {
-                  toast({ title: "Sucesso!", description: "Avatar atualizado."});
-                  // No need to set preview here, revalidation will update the image everywhere
-              }
-          });
-      }
+      // if(isEditMode) {
+      //     const formData = new FormData();
+      //     formData.append('avatar', file);
+      //     startUploadTransition(async () => {
+      //        const { error, path } = await uploadAvatar(student.id, formData);
+      //         if (error) {
+      //             toast({ title: "Erro no Upload", description: error, variant: "destructive" });
+      //         } else {
+      //             toast({ title: "Sucesso!", description: "Avatar atualizado."});
+      //             // No need to set preview here, revalidation will update the image everywhere
+      //         }
+      //     });
+      // }
     }
   };
 
@@ -234,7 +234,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-             {isEditMode && (
+             {/* {isEditMode && (
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="w-24 h-24 border-2 border-primary relative group">
                         <AvatarImage src={avatarPreview || undefined} alt={student?.name} />
@@ -252,7 +252,7 @@ export default function StudentForm({ children, student }: StudentFormProps) {
                        </label>
                    </Button>
                 </div>
-            )}
+            )} */}
             <FormField
               control={form.control}
               name="name"

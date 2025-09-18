@@ -7,7 +7,7 @@ import PublicWorkoutView from "@/components/workouts/public-workout-view";
 import { Workout } from "@/lib/definitions";
 
 async function getWorkout(workoutId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
         .from('workouts')
         .select(
@@ -28,7 +28,8 @@ export default async function PublicWorkoutPage({ params }: { params: { id: stri
     
     // Check if the associated student requires auth and if user is authenticated
     if (workout.student_id) {
-         const { data: student } = await createClient().from('students').select('access_password').eq('id', workout.student_id).single();
+         const supabase = await createClient();
+         const { data: student } = await supabase.from('students').select('access_password').eq('id', workout.student_id).single();
          const isStudentAuthenticated = cookieStore.get(`student-${workout.student_id}-auth`)?.value === "true";
          if(student?.access_password && !isStudentAuthenticated) {
             // This case should ideally be handled by middleware redirecting to student login

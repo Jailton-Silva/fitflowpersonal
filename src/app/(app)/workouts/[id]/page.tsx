@@ -13,7 +13,7 @@ import WorkoutDetailClient from "./client-page";
 import { WorkoutExerciseCard, WorkoutExerciseRow, WorkoutExerciseHeader } from "@/components/workouts/workout-exercise-list";
 
 async function getWorkoutDetails(workoutId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         notFound();

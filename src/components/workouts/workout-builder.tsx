@@ -83,7 +83,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       diet_plan: "",
       access_password: "",
       exercises: [],
-      status: "not-started",
+      status: "active",
     },
   });
 
@@ -110,7 +110,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
         description: workout.description ?? "",
         diet_plan: workout.diet_plan ?? "",
         access_password: workout.access_password ?? "",
-        status: workout.status ?? 'not-started',
+        status: workout.status ?? 'active',
         exercises: (workout.exercises || []).map(e => ({
           ...e, 
           video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
@@ -123,7 +123,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
             description: "",
             diet_plan: "",
             access_password: "",
-            status: "not-started",
+            status: "active",
             exercises: [],
         });
     }
@@ -219,7 +219,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
       form.setValue("name", template.name);
       form.setValue("description", template.description);
       form.setValue("diet_plan", template.diet_plan);
-      form.setValue("status", "not-started"); // Always set to not-started when loading from template
+      form.setValue("status", "active"); // Always set to not-started when loading from template
       const templateExercises = (template.exercises || []).map(e => ({
         ...e, 
         video_url: exercises.find(exDb => exDb.id === e.exercise_id)?.video_url || undefined 
@@ -340,8 +340,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Plano de Dieta (Opcional)</FormLabel>
-                      <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} value={field.value ?? ''} /></FormControl>
-                      <FormMessage />
+                      <FormControl><Textarea placeholder="Detalhes do plano alimentar, suplementação, etc." {...field} rows={5} value={field.value ?? ''} /></FormControl>                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -401,7 +400,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                         <Input {...form.register(`exercises.${index}.rest`)} placeholder="Descanso (s)" />
                     </div>
                   </div>
-                ))}
+                )) eyeliner}
                  {fields.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhum exercício adicionado ainda.</p>}
               </CardContent>
             </Card>
@@ -423,7 +422,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                                     Adicionar
                                 </Button>
                             </div>
-                        ))}
+                        )) eyeliner}
                     </div>
                 </CardContent>
              </Card>

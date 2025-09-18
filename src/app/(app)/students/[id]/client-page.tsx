@@ -3,9 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Calendar as CalendarIcon, History, PlusCircle } from "lucide-react";
-import { parseISO, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Activity, Calendar as CalendarIcon, History, PlusCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
@@ -18,6 +16,7 @@ import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import StudentAccessForm from "@/components/students/student-access-form";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -43,7 +42,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         const lowerCaseFilter = measurementsFilter.text.toLowerCase();
 
         return initialMeasurements.filter(m => {
-            const itemDate = parseISO(m.created_at);
+            const itemDate = new Date(m.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
             const textMatch = !lowerCaseFilter || (m.notes?.toLowerCase().includes(lowerCaseFilter));
             return dateMatch && textMatch;
@@ -55,7 +54,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
         const toDate = workoutsFilter.range?.to ? new Date(workoutsFilter.range.to.setHours(23,59,59,999)) : null;
 
         return initialWorkouts.filter(w => {
-            const itemDate = parseISO(w.created_at);
+            const itemDate = new Date(w.created_at);
             const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
             const statusMatch = !workoutsFilter.status || workoutsFilter.status === 'all' || w.status === workoutsFilter.status;
             return dateMatch && statusMatch;
@@ -69,7 +68,7 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
         return initialSessions
             .filter(s => {
-                const itemDate = parseISO(s.started_at);
+                const itemDate = new Date(s.started_at);
                 const dateMatch = (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
                 const textMatch = !lowerCaseFilter || s.workouts?.name.toLowerCase().includes(lowerCaseFilter);
                 
@@ -91,7 +90,13 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
     // Renders the page content
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="lg:col-span-2">
+                 <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Lock className="mr-2"/> Acesso ao Portal do Aluno</CardTitle></CardHeader>
+                 <CardContent>
+                     <StudentAccessForm student={student} />
+                 </CardContent>
+            </Card>
+             <Card>
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                         <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>

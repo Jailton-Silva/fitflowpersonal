@@ -2,50 +2,102 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-export async function uploadAvatar(studentId: string, formData: FormData) {
-    const file = formData.get('avatar') as File;
-    if (!file || file.size === 0) {
-        return { error: 'Nenhum arquivo enviado.' };
-    }
-    
-    // Use the standard client for storage upload, respecting storage policies
+const StudentFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(3, "O nome do aluno é obrigatório."),
+  email: z.string().email("Formato de email inválido."),
+  phone: z.string().optional(),
+  birth_date: z.string().optional(),
+  status: z.enum(['active', 'inactive']).default('active'),
+  height: z.coerce.number().optional(),
+  weight: z.coerce.number().optional(),
+  goals: z.string().optional(),
+  medical_conditions: z.string().optional(),
+});
+
+export async function saveStudent(formData: FormData) {
     const supabase = await createClient();
-    const filePath = `${studentId}/${file.name}-${new Date().getTime()}`;
+    const rawFormData = Object.fromEntries(formData.entries());
 
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-            upsert: true, // Overwrite if file exists
-        });
+    const validatedFields = StudentFormSchema.safeParse(rawFormData);
 
-    if (uploadError) {
-        console.error('Upload Error:', uploadError);
-        return { error: `Erro no upload: ${uploadError.message}` };
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+    const { id, ...studentData } = validatedFields.data;
 
-    // Use the admin client to bypass RLS for updating the student's avatar URL
-    const { error: updateError } = await supabaseAdmin
-        .from('students')
-        .update({ avatar_url: publicUrl })
-        .eq('id', studentId);
-        
-    if (updateError) {
-        console.error('Update Error:', updateError);
-        // Attempt to remove the uploaded file if the DB update fails
-        await supabase.storage.from('avatars').remove([filePath]);
-        return { error: `Erro ao atualizar perfil: ${updateError.message}` };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {  throw new Error("Usuário não autenticado"); }
+
+    const { data: trainer } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+    if (!trainer) { throw new Error("Personal não encontrado"); }
+
+    let error;
+    if (id) {
+        // Update
+        const { error: updateError } = await supabase.from('students').update(studentData).eq('id', id);
+        error = updateError;
+    } else {
+        // Create
+        const { error: insertError } = await supabase.from('students').insert([{ ...studentData, trainer_id: trainer.id }]);
+        error = insertError;
     }
-    
-    revalidatePath(`/students/${studentId}`);
-    revalidatePath(`/public/student/${studentId}/portal`);
-    return { error: null, path: publicUrl };
+
+    if (error) {
+        console.error("Erro ao salvar aluno:", error);
+        throw new Error(`Ocorreu um erro ao salvar o aluno: ${error.message}`);
+    }
+
+    revalidatePath("/students");
+    revalidatePath(`/students/${id}`);
+}
+
+const AccessPasswordSchema = z.object({
+  studentId: z.string(),
+  access_password: z.string().min(4, "A senha deve ter pelo menos 4 caracteres.").or(z.literal('')),
+});
+
+export async function updateStudentAccessPassword(prevState: any, formData: FormData) {
+  const supabase = await createClient();
+  const rawFormData = Object.fromEntries(formData.entries());
+
+  const validatedFields = AccessPasswordSchema.safeParse(rawFormData);
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Houve um erro de validação."
+    };
+  }
+
+  const { studentId, access_password } = validatedFields.data;
+
+  const { error } = await supabase
+    .from('students')
+    .update({ access_password: access_password || null })
+    .eq('id', studentId);
+
+  if (error) {
+    console.error("Erro ao atualizar senha de acesso do aluno:", error);
+    return {
+      message: `Erro no banco de dados: ${error.message}`
+    }
+  }
+
+  revalidatePath(`/students/${studentId}`);
+  
+  return {
+    message: "Senha de acesso atualizada com sucesso!"
+  }
 }

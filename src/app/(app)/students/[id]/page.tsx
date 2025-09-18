@@ -10,11 +10,12 @@ import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions
 import StudentDetailClient from "./client-page";
 import StudentForm from "@/components/students/student-form";
 import { Button } from "@/components/ui/button";
+import CopyPortalLinkButton from "@/components/students/copy-portal-link-button"; // Importando o novo componente
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
 async function getStudentPageData(studentId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -103,13 +104,14 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                         </div>
                     )}
                 </div>
-                 <div className="shrink-0">
+                 <div className="shrink-0 flex flex-col sm:flex-row gap-2">
                     <StudentForm student={student}>
                         <Button variant="outline">
                             <Edit className="mr-2 h-4 w-4" />
                             Editar Aluno
                         </Button>
                     </StudentForm>
+                    <CopyPortalLinkButton studentId={student.id} />
                  </div>
             </div>
 
