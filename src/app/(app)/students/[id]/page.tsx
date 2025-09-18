@@ -36,19 +36,19 @@ async function getStudentPageData(studentId: string) {
         .eq("trainer_id", trainer.id)
         .order("created_at", { ascending: false });
 
-    // CORREÇÃO: Trocado 'measurements' para 'student_measurements'
+    // CORREÇÃO: Nome da tabela corrigido para 'measurements' e verificação de segurança RLS aplicada.
     const measurementsPromise = supabase
-        .from('student_measurements')
-        .select('*')
+        .from('measurements') // NOME DA TABELA CORRIGIDO
+        .select('*, students!inner(trainer_id)')
         .eq('student_id', studentId)
+        .eq('students.trainer_id', trainer.id) 
         .order('created_at', { ascending: true });
 
-    // CORREÇÃO: Trocado 'started_at' para 'start_time'
     const sessionsPromise = supabase
         .from('workout_sessions')
         .select(`*, workouts (name)`)
         .eq('student_id', studentId)
-        .order('start_time', { ascending: false });
+        .order('started_at', { ascending: false });
     
     const [workoutsResult, measurementsResult, sessionsResult] = await Promise.all([
         workoutsPromise,
@@ -58,7 +58,7 @@ async function getStudentPageData(studentId: string) {
 
      if (workoutsResult.error) console.error("Erro ao buscar treinos:", workoutsResult.error);
      if (measurementsResult.error) console.error("Erro ao buscar medições:", measurementsResult.error);
-     if (sessionsResult.error) console.error("Erro ao buscar sessões:", sessionsResult.error);
+     if (sessionsResult.error) console.error("Erro ao buscar sessões:", sessionsResult.error.message);
 
     return {
         student,

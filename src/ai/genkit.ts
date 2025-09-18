@@ -1,10 +1,15 @@
 /**
- * @fileOverview This file previously configured the Genkit AI framework.
- * It has been temporarily disabled to resolve build issues.
- * The AI-related functionalities are currently not available.
+ * @fileOverview Configures and initializes the Genkit AI framework for the application.
+ *
+ * - ai: The main entry point for defining AI prompts and flows.
+ * - googleAI: The provider for Google's AI models (e.g., Gemini).
  */
 
-// A exportação 'ai' é mantida como um objeto vazio para evitar que as importações
-// em outros arquivos quebrem o build. No entanto, qualquer tentativa de usar
-// seus métodos (como ai.defineFlow) resultará em um erro em tempo de execução.
-export const ai = {};
+import {configureGenkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
+
+export const ai = configureGenkit({
+  plugins: [googleAI({apiVersion: 'v1beta'})],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
