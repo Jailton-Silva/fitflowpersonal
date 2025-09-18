@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Calendar as CalendarIcon, History, PlusCircle, Lock } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +17,8 @@ import { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import StudentAccessForm from "@/components/students/student-access-form";
+import CopyWorkoutLinkButton from "@/components/workouts/copy-workout-link-button";
+import { useToast } from "@/hooks/use-toast"; // Importando o hook de toast
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
@@ -30,11 +32,35 @@ type StudentDetailClientProps = {
 
 export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentDetailClientProps) {
     
+    const { toast } = useToast(); // Instanciando o toast
+    const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null); // Estado centralizado
+
+    // Lógica de cópia agora reside no componente pai
+    const handleCopyWorkoutLink = (workoutId: string) => {
+        if (typeof window !== "undefined") {
+            const workoutUrl = `${window.location.origin}/portal/${student.id}/workout/${workoutId}`;
+            navigator.clipboard.writeText(workoutUrl).then(() => {
+                toast({
+                    title: "Sucesso!",
+                    description: "Link do treino copiado para a área de transferência.",
+                });
+                setCopiedWorkoutId(workoutId); // Define o ID do treino copiado
+                setTimeout(() => setCopiedWorkoutId(null), 3000); // Limpa o estado após 3s
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+                toast({
+                    title: "Erro!",
+                    description: "Não foi possível copiar o link.",
+                    variant: "destructive",
+                });
+            });
+        }
+    };
+
     // Filter states
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
     const [workoutsFilter, setWorkoutsFilter] = useState<{ range?: DateRange; status?: string }>({});
     const [sessionsFilter, setSessionsFilter] = useState<{ text: string; range?: DateRange, status?: 'all' | 'completed' | 'in-progress' }>({ text: "", status: 'all' });
-
 
     const filteredMeasurements = useMemo(() => {
         const fromDate = measurementsFilter.range?.from ? new Date(measurementsFilter.range.from.setHours(0,0,0,0)) : null;
@@ -166,6 +192,10 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                                                 Ver Plano
                                             </Link>
                                        </Button>
+                                       <CopyWorkoutLinkButton 
+                                            onClick={() => handleCopyWorkoutLink(workout.id)}
+                                            isCopied={copiedWorkoutId === workout.id}
+                                        />
                                    </div>
                                </li>
                            ))}
