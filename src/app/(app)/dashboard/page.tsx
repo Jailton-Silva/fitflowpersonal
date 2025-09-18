@@ -1,3 +1,4 @@
+
 import { getDashboardData } from "@/actions/get-dashboard-data";
 import { UserMetrics } from "./_components/user-metrics";
 import { createClient } from "@/lib/supabase/server";
@@ -19,8 +20,11 @@ export default async function DashboardPage({
   .eq('user_id', user?.id)
   .single();
 
-  const to = searchParams.to || format(new Date(), 'yyyy-MM-dd');
-  const from = searchParams.from || format(subDays(new Date(), 180), 'yyyy-MM-dd'); // Default to last 6 months
+  // CORREÇÃO: Extrai os parâmetros de busca de forma segura
+  const { from: fromParam, to: toParam } = searchParams;
+
+  const to = toParam || format(new Date(), 'yyyy-MM-dd');
+  const from = fromParam || format(subDays(new Date(), 180), 'yyyy-MM-dd'); // Default to last 6 months
 
   const data = await getDashboardData({
     from,

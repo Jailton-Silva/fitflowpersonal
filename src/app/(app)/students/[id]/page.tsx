@@ -69,7 +69,9 @@ async function getStudentPageData(studentId: string) {
 
 // 2. O componente apenas busca os dados e os passa para o Client Component.
 export default async function StudentDetailPage({ params }: { params: { id: string }}) {
-    const { student, workouts, measurements, sessions } = await getStudentPageData(params.id);
+    // CORREÇÃO: Extrai o id de params antes de usá-lo.
+    const studentId = params.id;
+    const { student, workouts, measurements, sessions } = await getStudentPageData(studentId);
     
     // 3. Toda a lógica de renderização foi movida para StudentDetailClient.
     return (

@@ -1,31 +1,24 @@
 
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
-import PortalClientPage from "./client-page";
+import { notFound, redirect } from "next/navigation";
 import { Student, Workout } from "@/lib/definitions";
+import { cookies } from "next/headers";
+import StudentDetailClient from "./student-detail-client";
 
-// Esta função busca os dados no servidor. 
-// A criação do cliente Supabase aqui usará as credenciais de ANOM KEY,
-// portanto, as políticas de RLS no Supabase devem permitir a leitura pública
-// dos dados necessários para o portal.
 async function getPortalData(studentId: string) {
-    // A função createClient é assíncrona e deve ser chamada com await.
     const supabase = await createClient();
-
-    // 1. Busca os dados do aluno pelo ID
+    
     const { data: student, error: studentError } = await supabase
         .from('students')
-        .select('id, name, avatar_url, status, access_password') // Seleciona apenas os campos necessários
+        .select('*')
         .eq('id', studentId)
         .single();
 
-    // Se o aluno não for encontrado ou estiver inativo, retorna 404.
     if (studentError || !student || student.status !== 'active') {
         if (studentError) console.error("Portal Error (Student Fetch):", studentError.message);
         notFound();
     }
 
-    // 2. Busca os treinos ativos (ou não iniciados) associados a esse aluno
     const { data: workouts, error: workoutsError } = await supabase
         .from('workouts')
         .select('*')
@@ -35,7 +28,6 @@ async function getPortalData(studentId: string) {
     
     if (workoutsError) {
         console.error("Portal Error (Workouts Fetch):", workoutsError.message);
-        // Não retorna notFound() para que o portal carregue mesmo sem treinos
     }
 
     return {
@@ -45,13 +37,19 @@ async function getPortalData(studentId: string) {
 }
 
 export default async function StudentPortalPage({ params }: { params: { id: string } }) {
+    const cookieStore = cookies();
     
-    if (!params.id) {
+    const studentId = params.id;
+    if (!studentId) {
         notFound();
     }
 
-    const { student, workouts } = await getPortalData(params.id);
+    const sessionCookie = cookieStore.get(`portal-session-${studentId}`);
+    if (!sessionCookie) {
+        redirect('/portal');
+    }
 
-    // Passamos o objeto do aluno (incluindo o hash da senha, se houver) e os treinos para o Client Component
-    return <PortalClientPage student={student} initialWorkouts={workouts} />;
+    const { student, workouts } = await getPortalData(studentId);
+
+    return <StudentDetailClient student={student} workouts={workouts} />;
 }

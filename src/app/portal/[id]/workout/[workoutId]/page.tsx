@@ -1,18 +1,17 @@
 
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Student, Workout } from "@/lib/definitions";
 import WorkoutClientPage from "./client-page";
 import { cookies } from "next/headers";
 
-// Usa o cliente admin para bypassar RLS em uma página pública
 async function getWorkoutPortalData(studentId: string, workoutId: string) {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore, { isAdmin: true });
+    const supabase = await createClient();
 
+    // A busca do aluno não precisa mais da senha
     const { data: student, error: studentError } = await supabase
         .from('students')
-        .select('id, name, avatar_url, status, access_password') // Pega a senha do aluno também
+        .select('id, name, avatar_url, status')
         .eq('id', studentId)
         .single();
 
@@ -40,12 +39,20 @@ async function getWorkoutPortalData(studentId: string, workoutId: string) {
 }
 
 export default async function StudentWorkoutPortalPage({ params }: { params: { id: string, workoutId: string } }) {
+    const cookieStore = cookies();
     
     if (!params.id || !params.workoutId) {
         notFound();
     }
 
+    // LÓGICA DE SESSÃO: Garante que apenas usuários logados acessem esta página.
+    const sessionCookie = cookieStore.get(`portal-session-${params.id}`);
+    if (!sessionCookie) {
+        redirect('/portal');
+    }
+
     const { student, workout } = await getWorkoutPortalData(params.id, params.workoutId);
 
+    // Passa os dados para o componente de cliente, que agora é apenas de exibição.
     return <WorkoutClientPage student={student} workout={workout} />;
 }
