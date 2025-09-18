@@ -41,15 +41,11 @@ const formatSafeDate = (dateStr: string | null | undefined, includeTime = false)
     return format(adjustedDate, formatString, { locale: ptBR });
 };
 
-const formatSessionStatus = (status: string | null) => {
-    switch (status) {
-        case 'completed':
-            return <Badge variant="default">Finalizado</Badge>;
-        case 'in-progress':
-            return <Badge variant="secondary">Em Andamento</Badge>;
-        default:
-            return <Badge variant="outline">Não Iniciado</Badge>;
+const formatSessionStatus = (session: (WorkoutSession & { workouts: { name: string } | null })) => {
+    if (session.completed_at) {
+        return <Badge variant="default">Finalizado</Badge>;
     }
+    return <Badge variant="secondary">Em Andamento</Badge>;
 }
 
 // --- Componentes de Card (Histórico e Gráfico) ---
@@ -78,7 +74,7 @@ const MeasurementsHistoryCard = ({ measurements }: { measurements: StudentMeasur
                                 <TableCell>{formatSafeDate(m.created_at)}</TableCell>
                                 <TableCell className="text-right">{m.weight || '-'} kg</TableCell>
                                 <TableCell className="text-right">{m.height || '-'} cm</TableCell>
-                                <TableCell className="text-right">{m.body_fat_percentage || '-'} %</TableCell>
+                                <TableCell className="text-right">{m.body_fat || '-'} %</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -96,7 +92,7 @@ const EvolutionChartCard = ({ measurements }: { measurements: StudentMeasurement
         .map(m => ({
             date: formatSafeDate(m.created_at),
             Peso: m.weight,
-            "Gordura Corporal (%)": m.body_fat_percentage,
+            "Gordura Corporal (%)": m.body_fat,
         }))
         .reverse(); // Recharts precisa dos dados em ordem cronológica
 
@@ -111,11 +107,11 @@ const EvolutionChartCard = ({ measurements }: { measurements: StudentMeasurement
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                         <YAxis yAxisId="left" stroke="hsl(var(--primary))" label={{ value: 'Peso (kg)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--primary))' }} />
-                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--secondary-foreground))" label={{ value: 'Gordura (%)', angle: -90, position: 'insideRight', fill: 'hsl(var(--secondary-foreground))' }} />
+                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" label={{ value: 'Gordura (%)', angle: -90, position: 'insideRight', fill: 'hsl(var(--accent))' }} />
                         <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
                         <Legend />
                         <Line yAxisId="left" type="monotone" dataKey="Peso" stroke="hsl(var(--primary))" strokeWidth={2} name="Peso (kg)" />
-                        <Line yAxisId="right" type="monotone" dataKey="Gordura Corporal (%)" stroke="hsl(var(--secondary-foreground))" strokeWidth={2} name="Gordura Corporal (%)" />
+                        <Line yAxisId="right" type="monotone" dataKey="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} name="Gordura Corporal (%)" connectNulls />
                     </LineChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -144,8 +140,8 @@ const SessionsHistoryCard = ({ sessions }: { sessions: (WorkoutSession & { worko
                         {sessions.map((s) => (
                             <TableRow key={s.id}>
                                 <TableCell>{s.workouts?.name || 'Treino Avulso'}</TableCell>
-                                <TableCell>{formatSafeDate(s.start_time, true)}</TableCell>
-                                <TableCell>{formatSessionStatus(s.status)}</TableCell>
+                                <TableCell>{formatSafeDate(s.started_at, true)}</TableCell>
+                                <TableCell>{formatSessionStatus(s)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -163,12 +159,12 @@ export default function StudentDetailClient({ student, workouts, measurements, s
     const { setTheme } = useTheme();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [contactPhone, setContactPhone] = useState(student.contact_phone || "");
+    const [contactPhone, setContactPhone] = useState(student.phone || "");
     const [isSaving, setIsSaving] = useState(false);
 
     const handleProfileUpdate = async () => {
         setIsSaving(true);
-        const result = await updateStudentProfile(student.id, { contact_phone: contactPhone });
+        const result = await updateStudentProfile(student.id, { phone: contactPhone });
         setIsSaving(false);
 
         if (result.success) {
@@ -181,7 +177,8 @@ export default function StudentDetailClient({ student, workouts, measurements, s
     
     const handleThemeChange = async (theme: string) => {
         setTheme(theme);
-        await updateStudentProfile(student.id, { theme_preference: theme });
+        // Não precisamos esperar o update do tema para mudar a UI
+        updateStudentProfile(student.id, { /* Adicionar campo de tema aqui se existir no BD */ });
     };
 
     return (
@@ -276,7 +273,7 @@ export default function StudentDetailClient({ student, workouts, measurements, s
                             <CardTitle className="flex items-center gap-2"><Activity/> Observações do Personal</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground">{student.observations || "Nenhuma observação."}</p>
+                            <p className="text-sm text-muted-foreground">{student.medical_conditions || "Nenhuma observação."}</p>
                         </CardContent>
                     </Card>
                 </div>

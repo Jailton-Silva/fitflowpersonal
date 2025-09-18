@@ -9,6 +9,8 @@ export default function ProgressChart({measurements}: {measurements?: Measuremen
     const chartData = (measurements && measurements.length > 0 ? measurements : []).map(m => ({
         ...m,
         name: format(new Date(m.created_at), "dd/MM/yy"),
+        "Peso (kg)": m.weight,
+        "Gordura Corporal (%)": m.body_fat
     }));
 
 
@@ -27,11 +29,11 @@ export default function ProgressChart({measurements}: {measurements?: Measuremen
                     borderColor: "hsl(var(--border))",
                     borderRadius: "var(--radius)",
                     }}
-                    formatter={(value, name) => [(value as number).toFixed(1), name === 'weight' ? 'Peso (kg)' : 'Gordura Corporal (%)']}
+                    formatter={(value, name) => [(value as number).toFixed(1), name.toString()]}
                 />
                 <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
-                <Line yAxisId="right" type="monotone" dataKey="body_fat" name="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} connectNulls />
+                <Line yAxisId="left" type="monotone" dataKey="Peso (kg)" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                <Line yAxisId="right" type="monotone" dataKey="Gordura Corporal (%)" stroke="hsl(var(--accent))" strokeWidth={2} connectNulls />
                 </LineChart>
             </ResponsiveContainer>
         ) : (

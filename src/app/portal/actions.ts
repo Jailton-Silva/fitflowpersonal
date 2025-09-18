@@ -67,7 +67,7 @@ interface UpdateProfileResponse {
  */
 export async function updateStudentProfile(
     studentId: string,
-    data: { contact_phone?: string; theme_preference?: string }
+    data: { phone?: string; }
 ): Promise<UpdateProfileResponse> {
     noStore();
     const cookieStore = cookies();
@@ -99,4 +99,3 @@ export async function updateStudentProfile(
 
     return { success: true };
 }
-

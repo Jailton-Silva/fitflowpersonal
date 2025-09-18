@@ -1,4 +1,5 @@
 
+
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
 // Re-exporting SupabaseUser to be used in client components
@@ -111,6 +112,8 @@ export type Measurement = {
   notes?: string;
 }
 
+export type StudentMeasurement = Measurement;
+
 export type WorkoutSession = {
     id: string;
     workout_id: string;
@@ -118,4 +121,5 @@ export type WorkoutSession = {
     started_at: string;
     completed_at?: string | null;
     completed_exercises: string[]; // Array of exercise_id
+    status?: 'completed' | 'in-progress'
 }
