@@ -1,12 +1,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
+import { Workout, StudentMeasurement, WorkoutSession, Student } from "@/lib/definitions";
 import StudentDetailClient from "./client-page";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
-// 1. A responsabilidade deste Server Component agora é apenas buscar os dados.
 async function getStudentPageData(studentId: string) {
     const supabase = await createClient();
 
@@ -37,17 +36,19 @@ async function getStudentPageData(studentId: string) {
         .eq("trainer_id", trainer.id)
         .order("created_at", { ascending: false });
 
+    // CORREÇÃO: Trocado 'measurements' para 'student_measurements'
     const measurementsPromise = supabase
-        .from('measurements')
+        .from('student_measurements')
         .select('*')
         .eq('student_id', studentId)
         .order('created_at', { ascending: true });
 
+    // CORREÇÃO: Trocado 'started_at' para 'start_time'
     const sessionsPromise = supabase
         .from('workout_sessions')
         .select(`*, workouts (name)`)
         .eq('student_id', studentId)
-        .order('started_at', { ascending: false });
+        .order('start_time', { ascending: false });
     
     const [workoutsResult, measurementsResult, sessionsResult] = await Promise.all([
         workoutsPromise,
@@ -62,18 +63,15 @@ async function getStudentPageData(studentId: string) {
     return {
         student,
         workouts: (workoutsResult.data as Workout[]) || [],
-        measurements: (measurementsResult.data as Measurement[]) || [],
+        measurements: (measurementsResult.data as StudentMeasurement[]) || [],
         sessions: (sessionsResult.data as EnrichedWorkoutSession[]) || [],
     }
 }
 
-// 2. O componente apenas busca os dados e os passa para o Client Component.
 export default async function StudentDetailPage({ params }: { params: { id: string }}) {
-    // CORREÇÃO: Extrai o id de params antes de usá-lo.
     const studentId = params.id;
     const { student, workouts, measurements, sessions } = await getStudentPageData(studentId);
     
-    // 3. Toda a lógica de renderização foi movida para StudentDetailClient.
     return (
         <StudentDetailClient 
             student={student} 
