@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Lock, Video, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 
 interface WorkoutClientPageProps {
@@ -31,6 +31,8 @@ export default function WorkoutClientPage({ student, workout }: WorkoutClientPag
             // Se o portal não tem senha, verifica a do treino
             if (!workout.access_password) {
                 setWorkoutAuthenticated(true);
+            } else {
+                document.getElementById("workout-password-input")?.focus();
             }
         } else {
              document.getElementById("portal-password-input")?.focus();
@@ -53,7 +55,8 @@ export default function WorkoutClientPage({ student, workout }: WorkoutClientPag
                 if (!workout.access_password) {
                     setWorkoutAuthenticated(true);
                 } else {
-                    document.getElementById("workout-password-input")?.focus();
+                    // Foca no campo de senha do treino após um breve delay
+                    setTimeout(() => document.getElementById("workout-password-input")?.focus(), 100);
                 }
             } else {
                 throw new Error(result.error || "Senha do portal incorreta.");

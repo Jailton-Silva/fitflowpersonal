@@ -8,45 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Lock, Video, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/toast";
 
 interface PortalClientPageProps {
     student: Pick<Student, 'id' | 'name' | 'avatar_url' | 'access_password'>;
     initialWorkouts: Workout[];
 }
-
-// Componente para a tela de bloqueio do portal
-function PortalLockScreen({ onUnlock }: { onUnlock: () => void }) {
-    const [password, setPassword] = useState("");
-    const { toast } = useToast();
-    const studentAccessPassword = ""; // Esta variável será preenchida no componente principal
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // A verificação de senha real será feita no componente principal
-        // Esta é apenas uma implementação de UI
-    };
-
-    return (
-        <div className="max-w-md mx-auto text-center py-12">
-            <ShieldAlert className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h2 className="mt-4 text-2xl font-bold">Portal Protegido</h2>
-            <p className="mt-2 text-muted-foreground">Por favor, insira sua senha de acesso para continuar.</p>
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-                <Input
-                    id="portal-password-input"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Senha de acesso do portal"
-                    required
-                />
-                <Button type="submit">Desbloquear</Button>
-            </form>
-        </div>
-    );
-}
-
 
 export default function PortalClientPage({ student, initialWorkouts }: PortalClientPageProps) {
     const { toast } = useToast();
@@ -57,10 +24,11 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
     const [workoutPassword, setWorkoutPassword] = useState("");
     const [workoutAuthenticated, setWorkoutAuthenticated] = useState(false);
 
-    // Verifica se o portal precisa de senha ao carregar
     useEffect(() => {
         if (!student.access_password) {
             setPortalAuthenticated(true);
+        } else {
+            document.getElementById("portal-password-input")?.focus();
         }
     }, [student.access_password]);
 
@@ -91,6 +59,7 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
         } else {
             setWorkoutAuthenticated(false);
             setWorkoutPassword("");
+            setTimeout(() => document.getElementById("workout-password-input")?.focus(), 100);
         }
     };
 
@@ -110,7 +79,6 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
         setWorkoutPassword("");
     }
 
-    // Renderização principal
     return (
         <div className="container mx-auto p-4 md:p-8 space-y-8">
             <header className="flex items-center gap-4">
@@ -126,7 +94,6 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
 
             <main>
                 {!portalAuthenticated ? (
-                    // 1. Tela de senha do PORTAL
                     <div className="max-w-md mx-auto text-center py-12">
                          <ShieldAlert className="mx-auto h-12 w-12 text-muted-foreground" />
                         <h2 className="mt-4 text-2xl font-bold">Portal Protegido</h2>
@@ -144,7 +111,6 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
                         </form>
                     </div>
                 ) : !selectedWorkout ? (
-                    // 2. Tela de seleção de TREINO (após autenticação do portal)
                     <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="text-green-500"/> Acesso Liberado</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
@@ -165,7 +131,6 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
                         </CardContent>
                     </Card>
                 ) : (
-                    // 3. Tela de visualização de TREINO
                     <div>
                          <Button variant="outline" onClick={handleBackToList} className="mb-4">Voltar para a lista</Button>
                         <Card>
@@ -173,10 +138,12 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
                              <CardContent>
                                 {selectedWorkout.description && <p className="text-muted-foreground mb-6">{selectedWorkout.description}</p>}
                                 {!workoutAuthenticated ? (
-                                    // 3a. Senha do TREINO
-                                    <form onSubmit={handleWorkoutPasswordSubmit} className="flex flex-col gap-4 max-w-sm mx-auto py-8">
-                                        <p className="text-center text-muted-foreground">Este treino também é protegido. Digite a senha.</p>
+                                     <form onSubmit={handleWorkoutPasswordSubmit} className="flex flex-col gap-4 max-w-sm mx-auto py-8 text-center">
+                                        <Lock className="mx-auto h-10 w-10 text-muted-foreground" />
+                                        <h3 className="font-semibold">Treino Protegido</h3>
+                                        <p className="text-muted-foreground text-sm">Este treino também é protegido por senha.</p>
                                         <Input
+                                            id="workout-password-input"
                                             type="password"
                                             value={workoutPassword}
                                             onChange={(e) => setWorkoutPassword(e.target.value)}
@@ -186,7 +153,6 @@ export default function PortalClientPage({ student, initialWorkouts }: PortalCli
                                         <Button type="submit">Acessar Treino</Button>
                                     </form>
                                 ) : (
-                                    // 3b. Detalhes do TREINO
                                     <div className="space-y-4">
                                         {(selectedWorkout.exercises as any[]).map((exercise: any, index: number) => (
                                             <div key={index} className="p-4 border rounded-lg">
