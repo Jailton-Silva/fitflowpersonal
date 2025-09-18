@@ -5,9 +5,11 @@ import { CheckCircle, Star, Clock, Check } from 'lucide-react';
 import PlanSelectionForm from './_components/plan-selection-form';
 import { getCachedPricingData } from '@/lib/stripe-pricing-cache';
 import { formatPrice } from '@/lib/stripe-pricing';
+import { cookies } from 'next/headers';
 
 async function getTrainerProfile() {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     const {
         data: { user },

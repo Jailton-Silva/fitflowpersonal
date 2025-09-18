@@ -4,13 +4,15 @@ import { UserMetrics } from "./_components/user-metrics";
 import { createClient } from "@/lib/supabase/server";
 import { format, subDays } from "date-fns";
 import { AdminMetrics } from "./_components/admin-metrics";
+import { cookies } from "next/headers";
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
 

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 interface CreateTrainer {
   name: string;
@@ -16,7 +17,8 @@ export const createTrainerAction = async ({
   password,
   phone
 }: CreateTrainer): Promise<{ success: boolean; message: string }> => {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   try {
     // 1. Criar usuário na autenticação

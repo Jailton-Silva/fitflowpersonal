@@ -4,6 +4,7 @@ import type { EngagementData } from "@/components/dashboard/engagement-chart";
 import type { ProgressData } from "@/components/dashboard/progress-chart";
 import { createClient } from "@/lib/supabase/server";
 import { differenceInDays, endOfWeek, format, parse, startOfWeek, subDays, sub } from "date-fns";
+import { cookies } from "next/headers";
 
 interface GetDashboardData {
   to: string;
@@ -11,7 +12,8 @@ interface GetDashboardData {
 }
 
 export const getDashboardData = async ({ from, to }: GetDashboardData) => {
-  const db = await createClient();
+  const cookieStore = cookies();
+  const db = createClient(cookieStore);
   const { data: { user } } = await db.auth.getUser();
 
   const emptyData = {

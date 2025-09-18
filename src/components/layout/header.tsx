@@ -15,9 +15,11 @@ import { ThemeToggle } from "../theme-toggle";
 import { NavContent } from "./sidebar";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { cookies } from "next/headers";
 
 export async function Header() {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: trainer } = user ? await supabase.from('trainers').select('avatar_url').eq('user_id', user.id).single() : { data: null };
@@ -25,8 +27,9 @@ export async function Header() {
 
   const signOut = async () => {
     "use server";
-    const supabase = createClient();
-    (await supabase).auth.signOut();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
+    await supabase.auth.signOut();
     return redirect("/login");
   };
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 interface SignIn {
   email: string;
@@ -8,7 +9,8 @@ interface SignIn {
 }
 
 export const signInAction = async ({ email, password }: SignIn) => {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,

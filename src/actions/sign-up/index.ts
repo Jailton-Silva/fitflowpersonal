@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 interface SignUp {
   name: string;
@@ -21,7 +22,8 @@ export const signUpAction = async ({
     return { success: false, message: "Aceite os termos de uso da plataforma" }
   }
 
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const { data, error } = await supabase.auth.signUp({
     email,

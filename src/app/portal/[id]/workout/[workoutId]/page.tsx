@@ -6,7 +6,8 @@ import WorkoutClientPage from "./client-page";
 import { cookies } from "next/headers";
 
 async function getWorkoutPortalData(studentId: string, workoutId: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     // A busca do aluno não precisa mais da senha
     const { data: student, error: studentError } = await supabase

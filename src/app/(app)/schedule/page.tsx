@@ -4,9 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MonthView } from "@/components/schedule/month-view";
 import { WeekView } from "@/components/schedule/week-view";
 import { ScheduleFilters } from "@/components/schedule/schedule-filters";
+import { cookies } from "next/headers";
 
 async function getScheduleData(studentId?: string, status?: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { appointments: [], students: [] };

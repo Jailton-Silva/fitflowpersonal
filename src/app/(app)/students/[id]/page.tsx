@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Workout, StudentMeasurement, WorkoutSession, Student } from "@/lib/definitions";
 import StudentDetailClient from "./client-page";
+import { cookies } from "next/headers";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
 async function getStudentPageData(studentId: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

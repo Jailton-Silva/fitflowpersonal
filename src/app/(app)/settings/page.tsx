@@ -3,9 +3,11 @@ import {createClient} from '@/lib/supabase/server';
 import {notFound} from 'next/navigation';
 import SettingsClientPage from './settings-client-page';
 import { Trainer, User } from '@/lib/definitions';
+import { cookies } from 'next/headers';
 
 async function getTrainerProfile() {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const {
     data: {user},
   } = await supabase.auth.getUser();

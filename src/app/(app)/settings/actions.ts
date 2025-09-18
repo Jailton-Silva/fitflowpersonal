@@ -5,6 +5,7 @@ import {revalidatePath} from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 const passwordSchema = z.object({
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
@@ -12,7 +13,8 @@ const passwordSchema = z.object({
 
 
 export async function updateTrainerProfile(userId: string, formData: FormData) {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const name = formData.get('name') as string;
   const phone = formData.get('phone') as string;
@@ -43,7 +45,8 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
         return { error: 'Nenhum arquivo enviado.' };
     }
     
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     const filePath = `trainer-${trainerId}/${file.name}-${new Date().getTime()}`;
 
     // Upload to storage
@@ -81,7 +84,8 @@ export async function uploadTrainerAvatar(trainerId: string, formData: FormData)
 }
 
 export async function updateUserPassword(prevState: any, formData: FormData) {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const password = formData.get('password') as string;
   
@@ -108,7 +112,8 @@ export async function updateUserPassword(prevState: any, formData: FormData) {
 }
 
 export async function deleteUserAccount() {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const { data: { user }, error: getUserError } = await supabase.auth.getUser();
   

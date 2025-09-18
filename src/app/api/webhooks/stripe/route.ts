@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { updateTrainerFromStripe, mapStripeStatusToInternal, getPlanFromPriceId } from '@/lib/stripe-utils';
+import { cookies } from 'next/headers';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -20,6 +21,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const cookieStore = cookies();
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
           try {
             if (session.payment_status === 'paid') {
               // Pagamento bem-sucedido - o billing_cycle_end será buscado automaticamente
-              await updateTrainerFromStripe({
+              await updateTrainerFromStripe(cookieStore, {
                 customerId,
                 subscriptionId,
                 status: 'active',
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
               });
             } else {
               // Pagamento falhou ou foi cancelado
-              await updateTrainerFromStripe({
+              await updateTrainerFromStripe(cookieStore, {
                 customerId,
                 subscriptionId,
                 status: 'unpaid',
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
             ? new Date(currentPeriodEnd * 1000).toISOString()
             : undefined;
 
-          await updateTrainerFromStripe({
+          await updateTrainerFromStripe(cookieStore, {
             customerId,
             subscriptionId: subscription.id,
             status: internalStatus,
@@ -108,7 +110,7 @@ export async function POST(request: NextRequest) {
         });
 
         try {
-          await updateTrainerFromStripe({
+          await updateTrainerFromStripe(cookieStore, {
             customerId,
             subscriptionId: subscription.id,
             status: 'canceled',
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
         });
 
         try {
-          await updateTrainerFromStripe({
+          await updateTrainerFromStripe(cookieStore, {
             customerId,
             subscriptionId,
             status: 'active'
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
         });
 
         try {
-          await updateTrainerFromStripe({
+          await updateTrainerFromStripe(cookieStore, {
             customerId,
             subscriptionId,
             status: 'past_due'

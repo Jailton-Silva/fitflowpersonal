@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Workout } from "@/lib/definitions";
 import WorkoutDetailClient from "./client-page";
 import { WorkoutExerciseCard, WorkoutExerciseRow, WorkoutExerciseHeader } from "@/components/workouts/workout-exercise-list";
+import { cookies } from "next/headers";
 
 async function getWorkoutDetails(workoutId: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         notFound();

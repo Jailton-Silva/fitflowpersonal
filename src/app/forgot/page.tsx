@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/auth/submit-button";
 
@@ -25,7 +25,8 @@ export default function ForgotPasswordPage({
     "use server";
 
     const email = formData.get("email") as string;
-    const supabase = createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     
     // Para produção, é mais robusto usar uma variável de ambiente que define a URL do site.
     // Garanta que NEXT_PUBLIC_SITE_URL esteja configurada no seu projeto Vercel

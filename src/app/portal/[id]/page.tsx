@@ -6,7 +6,8 @@ import { cookies } from "next/headers";
 import StudentDetailClient from "./student-detail-client";
 
 async function getPortalData(studentId: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     // Realiza todas as consultas em paralelo para melhor performance
     const [studentResult, workoutsResult, measurementsResult, sessionsResult] = await Promise.all([

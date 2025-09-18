@@ -4,6 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 const StudentFormSchema = z.object({
   id: z.string().optional(),
@@ -19,7 +20,8 @@ const StudentFormSchema = z.object({
 });
 
 export async function saveStudent(formData: FormData) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     const rawFormData = Object.fromEntries(formData.entries());
 
     const validatedFields = StudentFormSchema.safeParse(rawFormData);
@@ -69,7 +71,8 @@ const AccessPasswordSchema = z.object({
 });
 
 export async function updateStudentAccessPassword(prevState: any, formData: FormData) {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const rawFormData = Object.fromEntries(formData.entries());
 
   const validatedFields = AccessPasswordSchema.safeParse(rawFormData);

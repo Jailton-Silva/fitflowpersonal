@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 
 const planSchema = z.object({
   plan: z.enum(['Start', 'Pro', 'Elite']),
@@ -10,7 +11,8 @@ const planSchema = z.object({
 });
 
 export async function updateUserPlan(prevState: any, formData: FormData) {
-  const supabase = await createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const rawFormData = Object.fromEntries(formData.entries());
 
   const validation = planSchema.safeParse(rawFormData);

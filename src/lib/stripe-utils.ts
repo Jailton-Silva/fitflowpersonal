@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
 import { Trainer } from '@/lib/definitions';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 export interface StripeWebhookData {
   customerId: string;
@@ -25,8 +26,8 @@ async function getSubscriptionDetails(subscriptionId: string) {
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return {
-      currentPeriodEnd: subscription.items.data[0].current_period_end,
-      currentPeriodStart: subscription.items.data[0].current_period_start,
+      currentPeriodEnd: subscription.current_period_end,
+      currentPeriodStart: subscription.current_period_start,
       status: subscription.status,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     };
@@ -39,8 +40,8 @@ async function getSubscriptionDetails(subscriptionId: string) {
 /**
  * Atualiza os dados do trainer baseado nos eventos do Stripe
  */
-export async function updateTrainerFromStripe(data: StripeWebhookData) {
-  const supabase = await createClient();
+export async function updateTrainerFromStripe(cookieStore: ReadonlyRequestCookies, data: StripeWebhookData) {
+  const supabase = createClient(cookieStore);
 
   const updateData: Partial<Trainer> = {
     stripe_customer_id: data.customerId,

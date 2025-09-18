@@ -1,12 +1,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
     // A função createClient é assíncrona e deve ser chamada com await.
     // As credenciais de ANOM KEY usadas aqui devem ter as permissões de RLS
     // no Supabase para ler a tabela 'students'.
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     try {
         const { studentId, password } = await req.json();

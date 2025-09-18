@@ -14,7 +14,7 @@ interface LoginResponse {
 export async function portalLogin(email: string, password: string): Promise<LoginResponse> {
     noStore();
     const cookieStore = cookies();
-    const supabase = await createClient();
+    const supabase = createClient(cookieStore);
 
     if (!email || !password) {
         return { success: false, error: "E-mail e senha são obrigatórios." };
@@ -71,7 +71,7 @@ export async function updateStudentProfile(
 ): Promise<UpdateProfileResponse> {
     noStore();
     const cookieStore = cookies();
-    const supabase = await createClient();
+    const supabase = createClient(cookieStore);
 
     // 1. Verifica se o usuário está autenticado para esta ação
     const sessionCookie = cookieStore.get(`portal-session-${studentId}`);

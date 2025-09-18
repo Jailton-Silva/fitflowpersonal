@@ -3,9 +3,11 @@
 import WorkoutBuilder from "@/components/workouts/workout-builder";
 import { Exercise, Student, Workout } from "@/lib/definitions";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 async function getWorkoutInitialData(templateId?: string) {
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
