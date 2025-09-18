@@ -16,7 +16,7 @@ import { updateStudentProfile } from "@/app/portal/actions";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 
 
@@ -88,6 +88,7 @@ const MeasurementsHistoryCard = ({ measurements }: { measurements: StudentMeasur
     );
 };
 
+/*
 const EvolutionChartCard = ({ measurements }: { measurements: StudentMeasurement[] }) => {
     if (measurements.length < 2) return null; // Gráfico precisa de pelo menos 2 pontos
 
@@ -95,7 +96,7 @@ const EvolutionChartCard = ({ measurements }: { measurements: StudentMeasurement
         .map(m => ({
             date: formatSafeDate(m.created_at),
             Peso: m.weight,
-            "Gordura Corporal (%)": m.body_fat_percentage,
+            "Gordura Corporal (%|)": m.body_fat_percentage,
         }))
         .reverse(); // Recharts precisa dos dados em ordem cronológica
 
@@ -121,6 +122,7 @@ const EvolutionChartCard = ({ measurements }: { measurements: StudentMeasurement
         </Card>
     );
 };
+*/
 
 const SessionsHistoryCard = ({ sessions }: { sessions: (WorkoutSession & { workouts: { name: string } | null })[] }) => {
     if (sessions.length === 0) return null;
@@ -305,7 +307,7 @@ export default function StudentDetailClient({ student, workouts, measurements, s
 
                     {/* Novos componentes de histórico e gráfico renderizados aqui */}
                     <MeasurementsHistoryCard measurements={measurements} />
-                    <EvolutionChartCard measurements={measurements} />
+                    {/* <EvolutionChartCard measurements={measurements} /> */}
                 </div>
 
                 {/* Linha de Baixo: Histórico de Sessões */}
