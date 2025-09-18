@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Calendar as CalendarIcon, History, PlusCircle, Lock, User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Edit } from "lucide-react";
+import { Activity, Calendar as CalendarIcon, History, PlusCircle, Lock, User, Cake, Ruler, Weight, Dumbbell, Shield, Phone, Edit, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
@@ -33,6 +33,14 @@ type StudentDetailClientProps = {
     initialSessions?: EnrichedWorkoutSession[];
 }
 
+function PageSkeleton() {
+    return (
+        <div className="flex items-center justify-center h-96">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+    );
+}
+
 export default function StudentDetailClient({ student, initialWorkouts = [], initialMeasurements = [], initialSessions = [] }: StudentDetailClientProps) {
     
     const [isClient, setIsClient] = useState(false);
@@ -44,24 +52,18 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
     const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null);
 
     const handleCopyWorkoutLink = (workoutId: string) => {
-        if (typeof window !== "undefined") {
-            const workoutUrl = `${window.location.origin}/portal/${student.id}/workout/${workoutId}`;
-            navigator.clipboard.writeText(workoutUrl).then(() => {
-                toast({
-                    title: "Sucesso!",
-                    description: "Link do treino copiado para a área de transferência.",
-                });
-                setCopiedWorkoutId(workoutId);
-                setTimeout(() => setCopiedWorkoutId(null), 3000);
-            }).catch(err => {
-                console.error("Failed to copy text: ", err);
-                toast({
-                    title: "Erro!",
-                    description: "Não foi possível copiar o link.",
-                    variant: "destructive",
-                });
-            });
-        }
+        // Garante que o link copiado SEMPRE aponte para o site em produção.
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflowpersonal.vercel.app';
+        const workoutUrl = `${siteUrl}/portal/${student.id}/workout/${workoutId}`;
+
+        navigator.clipboard.writeText(workoutUrl).then(() => {
+            toast({ title: "Sucesso!", description: "Link do treino copiado para a área de transferência." });
+            setCopiedWorkoutId(workoutId);
+            setTimeout(() => setCopiedWorkoutId(null), 3000);
+        }).catch(err => {
+            console.error("Failed to copy text: ", err);
+            toast({ title: "Erro!", description: "Não foi possível copiar o link.", variant: "destructive" });
+        });
     };
 
     const [measurementsFilter, setMeasurementsFilter] = useState<{ text: string; range?: DateRange }>({ text: "" });
@@ -121,6 +123,10 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
 
     const age = student.birth_date ? differenceInYears(new Date(), new Date(student.birth_date)) : 'N/A';
 
+    if (!isClient) {
+        return <PageSkeleton />;
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -146,15 +152,13 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                     )}
                 </div>
                  <div className="shrink-0 flex flex-col sm:flex-row gap-2">
-                    {isClient && 
-                        <StudentForm student={student}>
-                            <Button variant="outline">
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar Aluno
-                            </Button>
-                        </StudentForm>
-                    }
-                    {isClient && <CopyPortalLinkButton studentId={student.id} />}
+                    <StudentForm student={student}>
+                        <Button variant="outline">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar Aluno
+                        </Button>
+                    </StudentForm>
+                    <CopyPortalLinkButton studentId={student.id} />
                  </div>
             </div>
 
@@ -172,24 +176,19 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* CORREÇÃO: Envolvendo o StudentAccessForm com a verificação isClient */}
-                {isClient && (
-                    <Card className="lg:col-span-2">
-                        <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Lock className="mr-2"/> Acesso ao Portal do Aluno</CardTitle></CardHeader>
-                        <CardContent>
-                            <StudentAccessForm student={student} />
-                        </CardContent>
-                    </Card>
-                )}
+                <Card className="lg:col-span-2">
+                    <CardHeader><CardTitle className="text-lg font-headline flex items-center"><Lock className="mr-2"/> Acesso ao Portal do Aluno</CardTitle></CardHeader>
+                    <CardContent>
+                        <StudentAccessForm student={student} />
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <CardTitle className="text-lg font-headline flex items-center"><Activity className="mr-2"/> Histórico de Medições</CardTitle>
-                            {isClient && 
-                                <MeasurementForm studentId={student.id}>
-                                    <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova Medição</Button>
-                                </MeasurementForm>
-                            }
+                            <MeasurementForm studentId={student.id}>
+                                <Button size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Nova Medição</Button>
+                            </MeasurementForm>
                         </div>
                         <div className="flex flex-col md:flex-row gap-2 pt-2">
                             <Input 
@@ -253,12 +252,10 @@ export default function StudentDetailClient({ student, initialWorkouts = [], ini
                                                     Ver Plano
                                                 </Link>
                                         </Button>
-                                        {isClient &&
-                                                <CopyWorkoutLinkButton 
-                                                    onClick={() => handleCopyWorkoutLink(workout.id)}
-                                                    isCopied={copiedWorkoutId === workout.id}
-                                                />
-                                            }
+                                        <CopyWorkoutLinkButton 
+                                            onClick={() => handleCopyWorkoutLink(workout.id)}
+                                            isCopied={copiedWorkoutId === workout.id}
+                                        />
                                     </div>
                                 </li>
                             ))}
