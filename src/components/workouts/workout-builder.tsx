@@ -400,7 +400,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                         <Input {...form.register(`exercises.${index}.rest`)} placeholder="Descanso (s)" />
                     </div>
                   </div>
-                )) eyeliner}
+                ))}
                  {fields.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhum exercício adicionado ainda.</p>}
               </CardContent>
             </Card>
@@ -422,7 +422,7 @@ export default function WorkoutBuilder({ students, exercises, workout, defaultSt
                                     Adicionar
                                 </Button>
                             </div>
-                        )) eyeliner}
+                        ))}
                     </div>
                 </CardContent>
              </Card>
