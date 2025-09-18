@@ -1,12 +1,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
-    const cookieStore = cookies();
-    // Usar o cliente admin para buscar a senha do aluno no servidor
-    const supabase = createClient(cookieStore, { isAdmin: true });
+    // A função createClient é assíncrona e deve ser chamada com await.
+    // As credenciais de ANOM KEY usadas aqui devem ter as permissões de RLS
+    // no Supabase para ler a tabela 'students'.
+    const supabase = await createClient();
 
     try {
         const { studentId, password } = await req.json();
@@ -23,11 +23,14 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (error || !data) {
+            console.error("API Verify Password - Student not found:", error);
             return NextResponse.json({ error: "Aluno não encontrado." }, { status: 404 });
         }
 
-        // Compara a senha fornecida com a senha armazenada (de forma segura)
-        // Esta é uma comparação simples. Para produção, use um sistema de hash como bcrypt.
+        // Compara a senha fornecida com a senha armazenada
+        // NOTA: Esta é uma comparação simples. Em um ambiente de produção real, 
+        // a senha deve ser armazenada como um hash (ex: usando bcrypt) e a comparação
+        // deve ser feita com a função apropriada do bcrypt.
         const isMatch = data.access_password === password;
 
         if (isMatch) {
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest) {
         }
 
     } catch (error: any) {
-        console.error("API Verify Password Error:", error);
+        console.error("API Verify Password - Internal Error:", error);
         return NextResponse.json({ error: "Ocorreu um erro interno no servidor." }, { status: 500 });
     }
 }

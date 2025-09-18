@@ -3,14 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import PortalClientPage from "./client-page";
 import { Student, Workout } from "@/lib/definitions";
-import { cookies } from "next/headers";
 
-// Esta função busca os dados no servidor usando a SERVICE_ROLE para bypassar RLS,
-// que é necessário para uma página pública como o portal.
+// Esta função busca os dados no servidor. 
+// A criação do cliente Supabase aqui usará as credenciais de ANOM KEY,
+// portanto, as políticas de RLS no Supabase devem permitir a leitura pública
+// dos dados necessários para o portal.
 async function getPortalData(studentId: string) {
-    const cookieStore = cookies();
-    // IMPORTANTE: Criamos um Supabase Admin Client para ler os dados do aluno sem depender de um usuário logado.
-    const supabase = createClient(cookieStore, { isAdmin: true });
+    // A função createClient é assíncrona e deve ser chamada com await.
+    const supabase = await createClient();
 
     // 1. Busca os dados do aluno pelo ID
     const { data: student, error: studentError } = await supabase
