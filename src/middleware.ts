@@ -1,6 +1,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "./lib/supabase/server";
+import { cookies } from "next/headers";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -8,83 +9,44 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   });
-
-  const supabase = createClient(request.cookies);
+  
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const { data: { session } } = await supabase.auth.getSession();
   const { pathname } = request.nextUrl;
 
-  // Protect admin route
-  // if (pathname.startsWith('/admin')) {
-  //     if (!session) {
-  //         return NextResponse.redirect(new URL("/login", request.url));
-  //     }
-
-  //     const { data: trainer } = await supabase
-  //       .from('trainers')
-  //       .select('role')
-  //       .eq('user_id', session.user.id)
-  //       .single();
-      
-  //     if (trainer?.role !== 'admin') {
-  //         return NextResponse.redirect(new URL("/dashboard", request.url));
-  //     }
-  // }
-
-  // Protect authenticated routes for trainers
-  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing"];
+  // Protect authenticated trainer routes
+  const trainerProtectedPaths = ["/dashboard", "/students", "/workouts", "/schedule", "/exercises", "/templates", "/settings", "/billing", "/admin"];
   if (!session && trainerProtectedPaths.some(p => pathname.startsWith(p))) {
     const url = new URL("/login", request.url);
-    url.searchParams.set("redirectedFrom", pathname);
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
   // Redirect authenticated trainers from public auth pages
   const publicAuthPaths = ["/login", "/signup", "/forgot", "/reset-password"];
   if (session && publicAuthPaths.some(p => pathname.startsWith(p))) {
-    // Exception: Allow access to reset-password if there's a recovery token,
-    // as the user might be logged in on one device but trying to reset from another.
-    if (pathname === '/reset-password' && request.nextUrl.searchParams.has('code')) {
-        return response;
-    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Protect student portal route
-  if (pathname.startsWith('/public/student/') && pathname.endsWith('/portal')) {
-      const studentId = pathname.split('/')[3];
-      const isAuthenticated = request.cookies.get(`student-${studentId}-auth`)?.value === "true";
-      
-      const { data: student } = await supabase.from('students').select('access_password').eq('id', studentId).single();
-
-      // If student has a password and is not authenticated, redirect to login page for the student portal
-      if (student?.access_password && !isAuthenticated) {
-         const studentLoginPage = new URL(pathname.replace('/portal', ''), request.url);
-         return NextResponse.redirect(studentLoginPage);
-      }
-  }
-
+  // Handle student portal access.
+  // This logic is now simpler: if you're going to the main portal page without a session,
+  // we let it through, as that page handles the login.
+  // If you're trying to access a sub-page of a portal, the page itself will validate the cookie.
+  // This avoids complex middleware logic.
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", 
-    "/students/:path*", 
-    "/workouts/:path*", 
-    "/templates/:path*",
-    "/schedule/:path*", 
-    "/exercises/:path*", 
-    "/settings",
-    "/billing",
-    "/admin/:path*",
-    "/login", 
-    "/signup",
-    "/forgot",
-    "/reset-password",
-    "/auth/callback",
-    "/public/workout/:path*",
-    "/public/student/:path*"
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json).*)',
 ],
 };

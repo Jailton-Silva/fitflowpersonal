@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -17,8 +18,7 @@ const trainerNavItems = [
 ];
 
 const adminNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: Shield },
-    { href: "/trainers", label: "Treinadores", icon: Users },
+    { href: "/admin", label: "Admin Dashboard", icon: Shield },
 ]
 
 const secondaryNavItems = [

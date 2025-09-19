@@ -23,7 +23,7 @@ async function getWorkoutPortalData(studentId: string, workoutId: string) {
 
     const { data: workout, error: workoutError } = await supabase
         .from('workouts')
-        .select('*')
+        .select('*, students(id, name, avatar_url)')
         .eq('id', workoutId)
         .eq('student_id', studentId)
         .single();

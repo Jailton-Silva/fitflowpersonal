@@ -1,7 +1,6 @@
 
 "use client";
 
-import { verifyPassword } from "@/app/public/workout/[id]/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,20 +9,33 @@ import { Lock, Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { useEffect } from "react";
 import { useActionState } from "react";
+import { portalLogin } from "@/app/portal/actions";
+import { useRouter } from "next/navigation";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
         <Button type="submit" className="w-full ripple" disabled={pending}>
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Acessar Treino
+            Acessar Portal
         </Button>
     )
 }
 
-export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
+export function WorkoutPasswordForm({ email }: { email: string }) {
     const { toast } = useToast();
-    const [state, formAction] = useActionState(verifyPassword, { error: null });
+    const router = useRouter();
+
+    const loginAction = async (prevState: any, formData: FormData) => {
+        const password = formData.get('password') as string;
+        const response = await portalLogin(email, password);
+        if (response.success && response.studentId) {
+            router.push(`/portal/${response.studentId}`);
+        }
+        return { error: response.error };
+    }
+    
+    const [state, formAction] = useActionState(loginAction, { error: null });
 
     useEffect(() => {
         if (state?.error) {
@@ -43,18 +55,19 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                         <Lock className="mx-auto h-8 w-8 text-primary" />
                         <CardTitle className="text-2xl font-headline mt-4">Acesso Restrito</CardTitle>
                         <CardDescription>
-                            Este treino é protegido por senha. Por favor, insira a senha para visualizar.
+                            Este portal é protegido. Por favor, insira sua senha de acesso.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Input 
-                            type="text"
-                            name="username"
-                            autoComplete="username"
-                            className="hidden"
-                            defaultValue={`workout-${workoutId}`}
-                        />
                         <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            className="hidden"
+                            readOnly
+                            value={email}
+                        />
+                         <Input
                             id="password"
                             name="password"
                             type="password"
@@ -62,7 +75,6 @@ export function WorkoutPasswordForm({ workoutId }: { workoutId: string }) {
                             required
                             autoComplete="current-password"
                         />
-                        <input type="hidden" name="workoutId" value={workoutId} />
                         <SubmitButton />
                     </CardContent>
                 </form>

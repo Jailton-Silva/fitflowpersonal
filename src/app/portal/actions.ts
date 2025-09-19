@@ -4,6 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { finish } from "node:stream";
 
 interface LoginResponse {
     success: boolean;
@@ -52,19 +53,13 @@ export async function portalLogin(email: string, password: string): Promise<Logi
     return { success: true, studentId: student.id };
 }
 
-// --- NOVA FUNÇÃO ---
+// --- FUNÇÃO PARA ATUALIZAR PERFIL ---
 
 interface UpdateProfileResponse {
     success: boolean;
     error?: string;
 }
 
-/**
- * Atualiza as informações de perfil de um aluno.
- * @param studentId O ID do aluno a ser atualizado.
- * @param data Os dados a serem atualizados (telefone, tema).
- * @returns Um objeto indicando sucesso ou falha na operação.
- */
 export async function updateStudentProfile(
     studentId: string,
     data: { phone?: string; }
@@ -73,7 +68,6 @@ export async function updateStudentProfile(
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
 
-    // 1. Verifica se o usuário está autenticado para esta ação
     const sessionCookie = cookieStore.get(`portal-session-${studentId}`);
     if (!sessionCookie) {
         return { success: false, error: "Acesso não autorizado." };
@@ -83,7 +77,6 @@ export async function updateStudentProfile(
         return { success: false, error: "Dados inválidos para atualização." };
     }
 
-    // 2. Atualiza os dados no Supabase
     const { error } = await supabase
         .from('students')
         .update(data)
@@ -94,8 +87,92 @@ export async function updateStudentProfile(
         return { success: false, error: "Não foi possível salvar as alterações." };
     }
 
-    // 3. Revalida o caminho para garantir que a página seja renderizada novamente com os dados atualizados
     revalidatePath(`/portal/${studentId}`);
 
     return { success: true };
+}
+
+// --- FUNÇÃO PARA FINALIZAR TREINO ---
+
+interface FinishWorkoutResponse {
+    error?: string;
+}
+
+export async function finishWorkoutSession(sessionId: string): Promise<FinishWorkoutResponse> {
+    noStore();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
+    
+    const { data: session, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .select('student_id')
+        .eq('id', sessionId)
+        .single();
+    
+    if (sessionError || !session) {
+        return { error: 'Sessão de treino não encontrada.' };
+    }
+
+    const sessionCookie = cookieStore.get(`portal-session-${session.student_id}`);
+    if (!sessionCookie) {
+        return { error: "Acesso não autorizado." };
+    }
+
+    const { error } = await supabase
+        .from('workout_sessions')
+        .update({ completed_at: new Date().toISOString() })
+        .eq('id', sessionId);
+
+    if (error) {
+        return { error: "Não foi possível finalizar o treino. " + error.message };
+    }
+
+    revalidatePath(`/portal/${session.student_id}`);
+    
+    return {};
+}
+
+// --- FUNÇÃO PARA ATUALIZAR EXERCÍCIOS COMPLETOS ---
+
+export async function updateCompletedExercises(sessionId: string, exerciseId: string, isCompleted: boolean) {
+    noStore();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
+
+    const { data: session, error: fetchError } = await supabase
+        .from('workout_sessions')
+        .select('completed_exercises, student_id')
+        .eq('id', sessionId)
+        .single();
+    
+    if (fetchError || !session) {
+        return { error: 'Sessão de treino não encontrada.' };
+    }
+
+    const sessionCookie = cookieStore.get(`portal-session-${session.student_id}`);
+    if (!sessionCookie) {
+        return { error: "Acesso não autorizado." };
+    }
+
+    const currentCompleted = session.completed_exercises || [];
+
+    let updatedCompleted: string[];
+    if (isCompleted) {
+        updatedCompleted = [...new Set([...currentCompleted, exerciseId])];
+    } else {
+        updatedCompleted = currentCompleted.filter(id => id !== exerciseId);
+    }
+    
+    const { error } = await supabase
+        .from('workout_sessions')
+        .update({ completed_exercises: updatedCompleted })
+        .eq('id', sessionId);
+    
+    if (error) {
+        return { error: "Não foi possível atualizar o exercício. " + error.message };
+    }
+
+    revalidatePath(`/portal/${session.student_id}`);
+
+    return { };
 }

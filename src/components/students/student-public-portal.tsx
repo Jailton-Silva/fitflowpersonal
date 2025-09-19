@@ -2,12 +2,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Workout, Measurement, WorkoutSession, Student } from "@/lib/definitions";
-import StudentPortalClient from "@/app/public/student/[id]/portal/client-page";
+import StudentPortalClient from "@/app/portal/[id]/student-detail-client";
+import { cookies } from "next/headers";
 
 type EnrichedWorkoutSession = WorkoutSession & { workouts: { name: string } | null };
 
 async function getStudentPortalData(studentId: string) {
-    const supabase = createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     
     const studentPromise = supabase.from('students').select('*').eq('id', studentId).single();
     
@@ -44,7 +46,7 @@ async function getStudentPortalData(studentId: string) {
      if (sessionsResult.error) console.error("Erro ao buscar sessões:", sessionsResult.error);
 
     return {
-        student: studentResult.data,
+        student: studentResult.data as Student,
         workouts: (workoutsResult.data as Workout[]) || [],
         measurements: (measurementsResult.data as Measurement[]) || [],
         sessions: (sessionsResult.data as EnrichedWorkoutSession[]) || [],
@@ -56,11 +58,11 @@ export async function StudentPublicPortal({ studentId }: { studentId: string }) 
     const { student, workouts, measurements, sessions } = await getStudentPortalData(studentId);
     
     return (
-        <StudentPortalClient 
+        <StudentPortalClient
             student={student} 
-            initialWorkouts={workouts}
-            initialMeasurements={measurements}
-            initialSessions={sessions}
+            workouts={workouts}
+            measurements={measurements}
+            sessions={sessions}
         />
     );
 }

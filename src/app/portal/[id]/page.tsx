@@ -13,7 +13,6 @@ async function getPortalData(studentId: string) {
     const [studentResult, workoutsResult, measurementsResult, sessionsResult] = await Promise.all([
         supabase.from('students').select('*').eq('id', studentId).single(),
         supabase.from('workouts').select('*').eq('student_id', studentId).in('status', ['active', 'not-started']).order('created_at', { ascending: false }),
-        // CORREÇÃO: O nome da tabela foi corrigido de 'student_measurements' para 'measurements'
         supabase.from('measurements').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
         supabase.from('workout_sessions').select('*, workouts(name)').eq('student_id', studentId).order('started_at', { ascending: false })
     ]);
@@ -34,7 +33,7 @@ async function getPortalData(studentId: string) {
         student: student as Student,
         workouts: (workoutsResult.data as Workout[]) || [],
         measurements: (measurementsResult.data as StudentMeasurement[]) || [],
-        sessions: (sessionsResult.data as WorkoutSession[]) || [],
+        sessions: (sessionsResult.data as (WorkoutSession & { workouts: { name: string } | null })[]) || [],
     };
 }
 

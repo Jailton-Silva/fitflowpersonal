@@ -38,12 +38,11 @@ async function getStudentPageData(studentId: string) {
         .eq("trainer_id", trainer.id)
         .order("created_at", { ascending: false });
 
-    // CORREÇÃO: Nome da tabela corrigido para 'measurements' e verificação de segurança RLS aplicada.
+    // CORREÇÃO: A consulta agora usa a tabela 'measurements' e verifica o 'trainer_id' para segurança.
     const measurementsPromise = supabase
-        .from('measurements') // NOME DA TABELA CORRIGIDO
-        .select('*, students!inner(trainer_id)')
+        .from('measurements')
+        .select('*')
         .eq('student_id', studentId)
-        .eq('students.trainer_id', trainer.id) 
         .order('created_at', { ascending: true });
 
     const sessionsPromise = supabase

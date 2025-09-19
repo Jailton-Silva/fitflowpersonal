@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PublicHeader from "../layout/public-header";
-import { finishWorkoutSession } from "@/app/public/workout/[id]/actions";
+import { finishWorkoutSession } from "@/app/portal/actions";
 
 // Combined function to get relevant session data
 async function getSessionData(workoutId: string) {
@@ -164,7 +164,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
             if(error) {
                  toast({
                     title: "Erro ao finalizar treino",
-                    description: error.error,
+                    description: error,
                     variant: "destructive",
                 });
             } else {
@@ -198,7 +198,7 @@ export default function PublicWorkoutView({ workout }: { workout: Workout }) {
                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                             <div>
                                 <Button variant="link" asChild className="p-0 h-auto mb-2 no-print">
-                                    <Link href={`/public/student/${workout.student_id}/portal`}>
+                                    <Link href={`/portal/${workout.student_id}`}>
                                         <ArrowLeft className="mr-2 h-4 w-4" />
                                         Voltar ao Portal
                                     </Link>
